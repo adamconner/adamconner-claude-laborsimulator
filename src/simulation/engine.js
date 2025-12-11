@@ -339,7 +339,7 @@ class SimulationEngine {
         newState.labor_market.unemployment_rate =
             ((laborForce - employed) / laborForce) * 100;
         newState.labor_market.unemployment_rate =
-            Math.max(0, Math.min(30, newState.labor_market.unemployment_rate));
+            Math.max(0, Math.min(50, newState.labor_market.unemployment_rate));
 
         // Update job openings (inverse relationship with unemployment)
         const urChange = newState.labor_market.unemployment_rate - state.labor_market.unemployment_rate;

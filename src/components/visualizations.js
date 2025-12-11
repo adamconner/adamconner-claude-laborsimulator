@@ -68,7 +68,7 @@ class VisualizationManager {
                 scales: {
                     y: {
                         beginAtZero: true,
-                        max: 20,
+                        max: Math.max(45, Math.ceil(Math.max(...data.map(d => d.labor_market.unemployment_rate)) / 5) * 5 + 5),
                         title: {
                             display: true,
                             text: 'Rate (%)'
