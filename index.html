@@ -100,6 +100,17 @@
                 <button class="btn btn-primary btn-block btn-lg" onclick="runSimulation()">
                     Run Simulation
                 </button>
+                <button class="btn btn-outline btn-block" style="margin-top: 8px;" onclick="resetToDefaults()">
+                    Reset to Defaults
+                </button>
+            </div>
+
+            <!-- Saved Simulations -->
+            <div class="sidebar-section">
+                <h3>Saved Simulations</h3>
+                <div id="savedSimulationsList">
+                    <p style="font-size: 0.875rem; color: var(--gray-400);">No saved simulations</p>
+                </div>
             </div>
         </aside>
 
@@ -109,8 +120,9 @@
             <header class="header">
                 <h1>AI Labor Market Impact Analysis</h1>
                 <div class="header-actions">
+                    <button class="btn btn-success" onclick="saveSimulation()">Save Simulation</button>
                     <button class="btn btn-outline" onclick="exportResults()">Export Results</button>
-                    <button class="btn btn-secondary" onclick="resetSimulation()">Reset</button>
+                    <button class="btn btn-secondary" onclick="resetToDefaults()">Reset to Defaults</button>
                 </div>
             </header>
 
@@ -434,6 +446,23 @@
             <div style="display: flex; gap: 12px; margin-top: 24px;">
                 <button class="btn btn-primary" onclick="addIntervention()">Add Intervention</button>
                 <button class="btn btn-secondary" onclick="hideInterventionModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Saved Simulations Modal -->
+    <div id="savedSimulationsModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: var(--gray-100); border-radius: 8px; padding: 24px; max-width: 700px; width: 90%; max-height: 80vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3>Saved Simulations</h3>
+                <button class="btn btn-secondary btn-sm" onclick="hideSavedSimulationsModal()">Close</button>
+            </div>
+            <div id="savedSimulationsContent">
+                <!-- Populated by JavaScript -->
+            </div>
+            <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--gray-300); display: flex; justify-content: space-between;">
+                <button class="btn btn-danger btn-sm" onclick="clearAllSavedSimulations()">Delete All Saved Simulations</button>
+                <button class="btn btn-secondary" onclick="hideSavedSimulationsModal()">Close</button>
             </div>
         </div>
     </div>

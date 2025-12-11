@@ -10,6 +10,19 @@ let interventionSystem;
 let vizManager;
 let currentResults = null;
 
+// Default configuration values
+const DEFAULT_CONFIG = {
+    scenarioName: 'My Scenario',
+    targetYear: '2029',
+    targetUR: 10,
+    aiAdoption: 70,
+    automationPace: 'moderate',
+    adoptionCurve: 's_curve'
+};
+
+// Storage key for saved simulations
+const STORAGE_KEY = 'ai_labor_simulator_saved_simulations';
+
 /**
  * Initialize the application
  */
@@ -36,6 +49,7 @@ async function initApp() {
         populateInterventionTypes();
         createHistoricalChart();
         createSectorChart();
+        updateSavedSimulationsList();
 
         console.log('AI Labor Market Simulator initialized');
     } catch (error) {
@@ -644,21 +658,28 @@ function exportResults() {
 }
 
 /**
- * Reset simulation
+ * Reset simulation to defaults
  */
 function resetSimulation() {
+    resetToDefaults();
+}
+
+/**
+ * Reset all settings to default values
+ */
+function resetToDefaults() {
     currentResults = null;
     interventionSystem.interventions = [];
 
-    // Reset form values
-    document.getElementById('scenarioName').value = 'My Scenario';
-    document.getElementById('targetYear').value = '2029';
-    document.getElementById('targetUR').value = 10;
-    document.getElementById('urValue').textContent = '10.0';
-    document.getElementById('aiAdoption').value = 70;
-    document.getElementById('aiValue').textContent = '70';
-    document.getElementById('automationPace').value = 'moderate';
-    document.getElementById('adoptionCurve').value = 's_curve';
+    // Reset form values to defaults
+    document.getElementById('scenarioName').value = DEFAULT_CONFIG.scenarioName;
+    document.getElementById('targetYear').value = DEFAULT_CONFIG.targetYear;
+    document.getElementById('targetUR').value = DEFAULT_CONFIG.targetUR;
+    document.getElementById('urValue').textContent = DEFAULT_CONFIG.targetUR.toFixed(1);
+    document.getElementById('aiAdoption').value = DEFAULT_CONFIG.aiAdoption;
+    document.getElementById('aiValue').textContent = DEFAULT_CONFIG.aiAdoption;
+    document.getElementById('automationPace').value = DEFAULT_CONFIG.automationPace;
+    document.getElementById('adoptionCurve').value = DEFAULT_CONFIG.adoptionCurve;
 
     updateInterventionsList();
 
@@ -677,6 +698,258 @@ function resetSimulation() {
     showSection('snapshot');
     document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.nav-tab')[0].classList.add('active');
+}
+
+/**
+ * Get all saved simulations from localStorage
+ */
+function getSavedSimulations() {
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        return saved ? JSON.parse(saved) : [];
+    } catch (error) {
+        console.error('Error loading saved simulations:', error);
+        return [];
+    }
+}
+
+/**
+ * Save current simulation
+ */
+function saveSimulation() {
+    if (!currentResults) {
+        alert('No simulation results to save. Please run a simulation first.');
+        return;
+    }
+
+    const name = prompt('Enter a name for this simulation:', currentResults.scenario.name);
+    if (!name) return;
+
+    const simulations = getSavedSimulations();
+
+    const simulationToSave = {
+        id: Date.now(),
+        name: name,
+        savedAt: new Date().toISOString(),
+        config: {
+            scenarioName: currentResults.scenario.name,
+            targetYear: currentResults.scenario.timeframe.end_year,
+            targetUR: currentResults.scenario.targets.unemployment_rate,
+            aiAdoption: currentResults.scenario.targets.ai_adoption_rate,
+            automationPace: currentResults.scenario.targets.automation_pace,
+            adoptionCurve: currentResults.scenario.ai_parameters.adoption_curve
+        },
+        interventions: interventionSystem.interventions.map(i => ({
+            type: i.type,
+            parameters: i.parameters,
+            active: i.active
+        })),
+        results: currentResults,
+        summary: currentResults.summary
+    };
+
+    simulations.push(simulationToSave);
+
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(simulations));
+        updateSavedSimulationsList();
+        alert(`Simulation "${name}" saved successfully!`);
+    } catch (error) {
+        console.error('Error saving simulation:', error);
+        alert('Failed to save simulation. Storage may be full.');
+    }
+}
+
+/**
+ * Load a saved simulation
+ */
+function loadSavedSimulation(id) {
+    const simulations = getSavedSimulations();
+    const simulation = simulations.find(s => s.id === id);
+
+    if (!simulation) {
+        alert('Simulation not found.');
+        return;
+    }
+
+    // Load config into form
+    document.getElementById('scenarioName').value = simulation.config.scenarioName;
+    document.getElementById('targetYear').value = simulation.config.targetYear;
+    document.getElementById('targetUR').value = simulation.config.targetUR;
+    document.getElementById('urValue').textContent = simulation.config.targetUR;
+    document.getElementById('aiAdoption').value = simulation.config.aiAdoption;
+    document.getElementById('aiValue').textContent = simulation.config.aiAdoption;
+    document.getElementById('automationPace').value = simulation.config.automationPace;
+    document.getElementById('adoptionCurve').value = simulation.config.adoptionCurve;
+
+    // Load interventions
+    interventionSystem.interventions = [];
+    for (const intervention of simulation.interventions) {
+        interventionSystem.addIntervention(intervention.type, intervention.parameters, {
+            active: intervention.active
+        });
+    }
+    updateInterventionsList();
+
+    // Load results
+    currentResults = simulation.results;
+    displaySimulationResults(currentResults);
+
+    // Switch to simulation tab
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById('simulation-section').classList.add('active');
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-tab')[2].classList.add('active');
+
+    // Close modal if open
+    hideSavedSimulationsModal();
+}
+
+/**
+ * Delete a saved simulation
+ */
+function deleteSavedSimulation(id, event) {
+    if (event) event.stopPropagation();
+
+    if (!confirm('Are you sure you want to delete this simulation?')) {
+        return;
+    }
+
+    const simulations = getSavedSimulations();
+    const filtered = simulations.filter(s => s.id !== id);
+
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+        updateSavedSimulationsList();
+    } catch (error) {
+        console.error('Error deleting simulation:', error);
+        alert('Failed to delete simulation.');
+    }
+}
+
+/**
+ * Update the saved simulations list in sidebar
+ */
+function updateSavedSimulationsList() {
+    const container = document.getElementById('savedSimulationsList');
+    if (!container) return;
+
+    const simulations = getSavedSimulations();
+
+    if (simulations.length === 0) {
+        container.innerHTML = '<p style="font-size: 0.875rem; color: var(--gray-400);">No saved simulations</p>';
+        return;
+    }
+
+    let html = '';
+    // Show most recent 3 simulations
+    const recentSimulations = simulations.slice(-3).reverse();
+
+    for (const sim of recentSimulations) {
+        const date = new Date(sim.savedAt).toLocaleDateString();
+        html += `
+            <div class="saved-sim-card" onclick="loadSavedSimulation(${sim.id})" style="
+                background: var(--gray-700);
+                border-radius: 6px;
+                padding: 10px;
+                margin-bottom: 8px;
+                cursor: pointer;
+                transition: background 0.2s;
+            " onmouseover="this.style.background='var(--gray-600)'" onmouseout="this.style.background='var(--gray-700)'">
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <div>
+                        <div style="font-weight: 500; font-size: 0.875rem;">${sim.name}</div>
+                        <div style="font-size: 0.75rem; color: var(--gray-400);">${date}</div>
+                        <div style="font-size: 0.75rem; color: var(--gray-400);">
+                            UR: ${sim.summary.labor_market_changes.unemployment_rate.final}%
+                        </div>
+                    </div>
+                    <button class="btn btn-sm" style="padding: 2px 6px; background: var(--gray-600); font-size: 0.7rem;"
+                            onclick="deleteSavedSimulation(${sim.id}, event)">X</button>
+                </div>
+            </div>
+        `;
+    }
+
+    if (simulations.length > 3) {
+        html += `
+            <button class="btn btn-outline btn-block btn-sm" onclick="showSavedSimulationsModal()" style="margin-top: 8px;">
+                View All (${simulations.length})
+            </button>
+        `;
+    }
+
+    container.innerHTML = html;
+}
+
+/**
+ * Show saved simulations modal
+ */
+function showSavedSimulationsModal() {
+    const simulations = getSavedSimulations();
+    const modal = document.getElementById('savedSimulationsModal');
+
+    let html = '';
+    if (simulations.length === 0) {
+        html = '<p style="text-align: center; color: var(--gray-500);">No saved simulations</p>';
+    } else {
+        for (const sim of simulations.slice().reverse()) {
+            const date = new Date(sim.savedAt).toLocaleDateString();
+            const time = new Date(sim.savedAt).toLocaleTimeString();
+            html += `
+                <div class="card" style="margin-bottom: 12px; cursor: pointer;" onclick="loadSavedSimulation(${sim.id})">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div>
+                            <h4 style="margin-bottom: 4px;">${sim.name}</h4>
+                            <p style="font-size: 0.875rem; color: var(--gray-500); margin-bottom: 8px;">
+                                Saved: ${date} at ${time}
+                            </p>
+                            <div style="display: flex; gap: 16px; font-size: 0.875rem;">
+                                <span><strong>Target Year:</strong> ${sim.config.targetYear}</span>
+                                <span><strong>Final UR:</strong> ${sim.summary.labor_market_changes.unemployment_rate.final}%</span>
+                                <span><strong>AI Adoption:</strong> ${sim.summary.ai_impact.ai_adoption.final}%</span>
+                            </div>
+                            ${sim.interventions.length > 0 ? `
+                                <div style="margin-top: 8px; font-size: 0.75rem; color: var(--gray-400);">
+                                    Interventions: ${sim.interventions.filter(i => i.active).map(i => i.type.replace(/_/g, ' ')).join(', ')}
+                                </div>
+                            ` : ''}
+                        </div>
+                        <button class="btn btn-danger btn-sm" onclick="deleteSavedSimulation(${sim.id}, event)">Delete</button>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    document.getElementById('savedSimulationsContent').innerHTML = html;
+    modal.style.display = 'flex';
+}
+
+/**
+ * Hide saved simulations modal
+ */
+function hideSavedSimulationsModal() {
+    document.getElementById('savedSimulationsModal').style.display = 'none';
+}
+
+/**
+ * Clear all saved simulations
+ */
+function clearAllSavedSimulations() {
+    if (!confirm('Are you sure you want to delete ALL saved simulations? This cannot be undone.')) {
+        return;
+    }
+
+    try {
+        localStorage.removeItem(STORAGE_KEY);
+        updateSavedSimulationsList();
+        hideSavedSimulationsModal();
+        alert('All saved simulations have been deleted.');
+    } catch (error) {
+        console.error('Error clearing simulations:', error);
+        alert('Failed to clear simulations.');
+    }
 }
 
 // Initialize on page load
