@@ -1,0 +1,21 @@
+{
+  "name": "ai-labor-market-simulator",
+  "version": "1.0.0",
+  "description": "Simulate and analyze AI's potential impact on labor markets using real economic data",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server -p 8080 -c-1",
+    "dev": "npx http-server -p 8080 -c-1 -o"
+  },
+  "keywords": [
+    "ai",
+    "labor-market",
+    "economics",
+    "simulation",
+    "unemployment",
+    "workforce"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {}
+}

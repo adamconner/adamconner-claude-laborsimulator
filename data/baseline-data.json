@@ -1,0 +1,260 @@
+{
+  "metadata": {
+    "generated": "2024-12",
+    "sources": ["BLS", "FRED", "Census", "ONET"],
+    "description": "Baseline economic snapshot for AI labor market simulation"
+  },
+  "labor_market": {
+    "total_employment": {
+      "value": 161200000,
+      "unit": "persons",
+      "source": "BLS",
+      "date": "2024-10"
+    },
+    "unemployment_rate": {
+      "value": 4.1,
+      "unit": "percent",
+      "source": "BLS",
+      "date": "2024-10"
+    },
+    "labor_force_participation": {
+      "value": 62.6,
+      "unit": "percent",
+      "source": "BLS",
+      "date": "2024-10"
+    },
+    "job_openings": {
+      "value": 7440000,
+      "unit": "positions",
+      "source": "JOLTS",
+      "date": "2024-09"
+    },
+    "quits_rate": {
+      "value": 2.1,
+      "unit": "percent",
+      "source": "JOLTS",
+      "date": "2024-09"
+    }
+  },
+  "wages": {
+    "median_weekly_earnings": {
+      "value": 1165,
+      "unit": "USD",
+      "source": "BLS",
+      "date": "2024-Q3"
+    },
+    "average_hourly_earnings": {
+      "value": 35.46,
+      "unit": "USD",
+      "source": "BLS",
+      "date": "2024-10"
+    },
+    "real_wage_growth": {
+      "value": 1.4,
+      "unit": "percent_yoy",
+      "source": "BLS",
+      "date": "2024-10"
+    }
+  },
+  "productivity": {
+    "labor_productivity_growth": {
+      "value": 2.2,
+      "unit": "percent_yoy",
+      "source": "BLS",
+      "date": "2024-Q3"
+    },
+    "output_per_hour": {
+      "value": 118.3,
+      "unit": "index_2017_100",
+      "source": "BLS",
+      "date": "2024-Q3"
+    },
+    "unit_labor_costs": {
+      "value": 0.5,
+      "unit": "percent_yoy",
+      "source": "BLS",
+      "date": "2024-Q3"
+    }
+  },
+  "sectors": {
+    "technology": {
+      "employment": 6200000,
+      "growth_rate": 3.2,
+      "median_wage": 104500,
+      "automation_exposure": 0.25
+    },
+    "healthcare": {
+      "employment": 17100000,
+      "growth_rate": 2.8,
+      "median_wage": 52200,
+      "automation_exposure": 0.35
+    },
+    "retail": {
+      "employment": 15200000,
+      "growth_rate": -0.5,
+      "median_wage": 31500,
+      "automation_exposure": 0.72
+    },
+    "manufacturing": {
+      "employment": 13000000,
+      "growth_rate": -0.3,
+      "median_wage": 52400,
+      "automation_exposure": 0.68
+    },
+    "transportation": {
+      "employment": 6700000,
+      "growth_rate": 1.1,
+      "median_wage": 48900,
+      "automation_exposure": 0.78
+    },
+    "finance": {
+      "employment": 6900000,
+      "growth_rate": 0.8,
+      "median_wage": 74500,
+      "automation_exposure": 0.54
+    },
+    "professional_services": {
+      "employment": 23500000,
+      "growth_rate": 2.1,
+      "median_wage": 78200,
+      "automation_exposure": 0.38
+    },
+    "food_services": {
+      "employment": 12400000,
+      "growth_rate": 1.5,
+      "median_wage": 28100,
+      "automation_exposure": 0.65
+    },
+    "education": {
+      "employment": 14300000,
+      "growth_rate": 1.2,
+      "median_wage": 55800,
+      "automation_exposure": 0.27
+    },
+    "construction": {
+      "employment": 8200000,
+      "growth_rate": 1.8,
+      "median_wage": 54700,
+      "automation_exposure": 0.42
+    },
+    "government": {
+      "employment": 23400000,
+      "growth_rate": 0.6,
+      "median_wage": 56300,
+      "automation_exposure": 0.32
+    }
+  },
+  "demographics": {
+    "working_age_population": {
+      "value": 210000000,
+      "unit": "persons",
+      "source": "Census"
+    },
+    "employment_by_education": {
+      "less_than_high_school": {
+        "employment": 9800000,
+        "unemployment_rate": 6.8,
+        "automation_exposure": 0.72
+      },
+      "high_school": {
+        "employment": 36200000,
+        "unemployment_rate": 4.8,
+        "automation_exposure": 0.58
+      },
+      "some_college": {
+        "employment": 35600000,
+        "unemployment_rate": 3.8,
+        "automation_exposure": 0.48
+      },
+      "bachelors_plus": {
+        "employment": 58400000,
+        "unemployment_rate": 2.4,
+        "automation_exposure": 0.32
+      }
+    },
+    "employment_by_age": {
+      "16_24": {
+        "employment": 20100000,
+        "unemployment_rate": 9.1,
+        "lfpr": 55.2
+      },
+      "25_34": {
+        "employment": 36800000,
+        "unemployment_rate": 4.2,
+        "lfpr": 83.4
+      },
+      "35_44": {
+        "employment": 33500000,
+        "unemployment_rate": 3.2,
+        "lfpr": 83.6
+      },
+      "45_54": {
+        "employment": 31200000,
+        "unemployment_rate": 3.0,
+        "lfpr": 81.2
+      },
+      "55_plus": {
+        "employment": 39600000,
+        "unemployment_rate": 3.1,
+        "lfpr": 38.4
+      }
+    }
+  },
+  "ai_indicators": {
+    "ai_job_postings_share": {
+      "value": 2.3,
+      "unit": "percent",
+      "trend": "increasing",
+      "yoy_change": 45
+    },
+    "ai_investment": {
+      "value": 189,
+      "unit": "billion_USD",
+      "year": 2024
+    },
+    "companies_using_ai": {
+      "value": 35,
+      "unit": "percent",
+      "source": "McKinsey"
+    },
+    "ai_patents_filed": {
+      "value": 142000,
+      "unit": "patents",
+      "year": 2023
+    }
+  },
+  "historical_trends": {
+    "unemployment_rate": [
+      {"year": 2019, "value": 3.7},
+      {"year": 2020, "value": 8.1},
+      {"year": 2021, "value": 5.4},
+      {"year": 2022, "value": 3.6},
+      {"year": 2023, "value": 3.6},
+      {"year": 2024, "value": 4.1}
+    ],
+    "labor_productivity": [
+      {"year": 2019, "value": 1.8},
+      {"year": 2020, "value": 2.5},
+      {"year": 2021, "value": 2.0},
+      {"year": 2022, "value": 0.6},
+      {"year": 2023, "value": 1.3},
+      {"year": 2024, "value": 2.2}
+    ],
+    "real_wage_growth": [
+      {"year": 2019, "value": 1.1},
+      {"year": 2020, "value": 4.8},
+      {"year": 2021, "value": -1.2},
+      {"year": 2022, "value": -2.1},
+      {"year": 2023, "value": 0.8},
+      {"year": 2024, "value": 1.4}
+    ],
+    "job_openings_millions": [
+      {"year": 2019, "value": 7.2},
+      {"year": 2020, "value": 6.8},
+      {"year": 2021, "value": 10.7},
+      {"year": 2022, "value": 11.2},
+      {"year": 2023, "value": 8.8},
+      {"year": 2024, "value": 7.4}
+    ]
+  }
+}

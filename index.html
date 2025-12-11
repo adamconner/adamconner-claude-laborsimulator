@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Labor Market Impact Simulator</title>
+    <link rel="stylesheet" href="public/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>AI Labor Market Simulator</h2>
+                <p style="font-size: 0.875rem; color: var(--gray-400); margin-top: 8px;">
+                    Model AI's impact on employment
+                </p>
+            </div>
+
+            <!-- Scenario Configuration -->
+            <div class="sidebar-section">
+                <h3>Scenario Configuration</h3>
+
+                <div class="form-group">
+                    <label>Scenario Name</label>
+                    <input type="text" id="scenarioName" value="My Scenario" placeholder="Enter scenario name">
+                </div>
+
+                <div class="form-group">
+                    <label>Target Year</label>
+                    <select id="targetYear">
+                        <option value="2026">2026 (2 years)</option>
+                        <option value="2027">2027 (3 years)</option>
+                        <option value="2028">2028 (4 years)</option>
+                        <option value="2029" selected>2029 (5 years)</option>
+                        <option value="2034">2034 (10 years)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Target Unemployment Rate: <span id="urValue">10.0</span>%</label>
+                    <input type="range" id="targetUR" min="2" max="20" step="0.5" value="10">
+                </div>
+
+                <div class="form-group">
+                    <label>AI Adoption Rate: <span id="aiValue">70</span>%</label>
+                    <input type="range" id="aiAdoption" min="20" max="100" step="5" value="70">
+                </div>
+
+                <div class="form-group">
+                    <label>Automation Pace</label>
+                    <select id="automationPace">
+                        <option value="slow">Slow</option>
+                        <option value="moderate" selected>Moderate</option>
+                        <option value="fast">Fast</option>
+                        <option value="accelerating">Accelerating</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Adoption Curve</label>
+                    <select id="adoptionCurve">
+                        <option value="linear">Linear</option>
+                        <option value="s_curve" selected>S-Curve (Logistic)</option>
+                        <option value="exponential">Exponential</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Preset Scenarios -->
+            <div class="sidebar-section">
+                <h3>Preset Scenarios</h3>
+                <button class="preset-btn" onclick="loadPreset('moderate')">
+                    <div class="title">Moderate Disruption</div>
+                    <div class="desc">8% unemployment, gradual AI adoption</div>
+                </button>
+                <button class="preset-btn" onclick="loadPreset('rapid')">
+                    <div class="title">Rapid Automation</div>
+                    <div class="desc">12% unemployment, accelerated AI</div>
+                </button>
+                <button class="preset-btn" onclick="loadPreset('managed')">
+                    <div class="title">Managed Transition</div>
+                    <div class="desc">6% unemployment with interventions</div>
+                </button>
+            </div>
+
+            <!-- Interventions -->
+            <div class="sidebar-section">
+                <h3>Policy Interventions</h3>
+                <div id="interventionsList"></div>
+                <button class="btn btn-outline btn-block btn-sm" onclick="showInterventionModal()">
+                    + Add Intervention
+                </button>
+            </div>
+
+            <!-- Run Simulation -->
+            <div class="sidebar-section">
+                <button class="btn btn-primary btn-block btn-lg" onclick="runSimulation()">
+                    Run Simulation
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <h1>AI Labor Market Impact Analysis</h1>
+                <div class="header-actions">
+                    <button class="btn btn-outline" onclick="exportResults()">Export Results</button>
+                    <button class="btn btn-secondary" onclick="resetSimulation()">Reset</button>
+                </div>
+            </header>
+
+            <!-- Navigation Tabs -->
+            <nav class="nav-tabs">
+                <button class="nav-tab active" onclick="showSection('snapshot')">Current Snapshot</button>
+                <button class="nav-tab" onclick="showSection('indicators')">AI Indicators</button>
+                <button class="nav-tab" onclick="showSection('simulation')">Simulation Results</button>
+                <button class="nav-tab" onclick="showSection('sectors')">Sector Analysis</button>
+                <button class="nav-tab" onclick="showSection('interventions')">Intervention Impact</button>
+            </nav>
+
+            <!-- Current Snapshot Section -->
+            <section id="snapshot-section" class="section active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="label">Unemployment Rate</div>
+                        <div class="value" id="stat-ur">4.1%</div>
+                        <div class="change positive">↓ 0.2% from last month</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Total Employment</div>
+                        <div class="value" id="stat-emp">161.2M</div>
+                        <div class="change positive">↑ +145K jobs</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Labor Force Participation</div>
+                        <div class="value" id="stat-lfpr">62.6%</div>
+                        <div class="change">Unchanged</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Job Openings</div>
+                        <div class="value" id="stat-jo">7.4M</div>
+                        <div class="change negative">↓ -1.8M YoY</div>
+                    </div>
+                </div>
+
+                <div class="card-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Historical Unemployment Trend</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="historicalChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Labor Market Health</h3>
+                        </div>
+                        <div class="indicator-list">
+                            <div class="indicator-item">
+                                <div>
+                                    <div class="indicator-name">Average Hourly Earnings</div>
+                                    <div class="indicator-source">BLS, Oct 2024</div>
+                                </div>
+                                <div class="indicator-value">$35.46</div>
+                            </div>
+                            <div class="indicator-item">
+                                <div>
+                                    <div class="indicator-name">Real Wage Growth</div>
+                                    <div class="indicator-source">BLS, Oct 2024</div>
+                                </div>
+                                <div class="indicator-value">+1.4%</div>
+                            </div>
+                            <div class="indicator-item">
+                                <div>
+                                    <div class="indicator-name">Productivity Growth</div>
+                                    <div class="indicator-source">BLS, Q3 2024</div>
+                                </div>
+                                <div class="indicator-value">+2.2%</div>
+                            </div>
+                            <div class="indicator-item">
+                                <div>
+                                    <div class="indicator-name">Quits Rate</div>
+                                    <div class="indicator-source">JOLTS, Sep 2024</div>
+                                </div>
+                                <div class="indicator-value">2.1%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Employment by Sector</h3>
+                    </div>
+                    <div class="chart-container large">
+                        <canvas id="sectorEmploymentChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- AI Indicators Section -->
+            <section id="indicators-section" class="section">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="label">Companies Using AI</div>
+                        <div class="value">35%</div>
+                        <div class="change positive">↑ Growing rapidly</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">AI Investment (2024)</div>
+                        <div class="value">$189B</div>
+                        <div class="change positive">↑ +45% YoY</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">AI Job Postings</div>
+                        <div class="value">2.3%</div>
+                        <div class="change positive">↑ of all postings</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">AI Patents Filed</div>
+                        <div class="value">142K</div>
+                        <div class="change">2023</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Proposed AI Impact Indicators to Track</h3>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Indicator</th>
+                                <th>Category</th>
+                                <th>Source</th>
+                                <th>Frequency</th>
+                                <th>AI Relevance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Automation Exposure Index</strong></td>
+                                <td>AI Impact</td>
+                                <td>Calculated</td>
+                                <td>Annual</td>
+                                <td><span class="tag tag-high">Critical</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>AI Adoption Rate</strong></td>
+                                <td>AI Impact</td>
+                                <td>Census/Surveys</td>
+                                <td>Quarterly</td>
+                                <td><span class="tag tag-high">Critical</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Displaced Worker Ratio</strong></td>
+                                <td>AI Impact</td>
+                                <td>BLS + Calculated</td>
+                                <td>Monthly</td>
+                                <td><span class="tag tag-high">Critical</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Task Automation Rate</strong></td>
+                                <td>AI Impact</td>
+                                <td>Estimated</td>
+                                <td>Annual</td>
+                                <td><span class="tag tag-high">Critical</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>AI-Related Job Creation</strong></td>
+                                <td>AI Impact</td>
+                                <td>BLS/Indeed</td>
+                                <td>Monthly</td>
+                                <td><span class="tag tag-high">Critical</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Productivity-Wage Gap</strong></td>
+                                <td>Productivity</td>
+                                <td>BLS</td>
+                                <td>Annual</td>
+                                <td><span class="tag tag-high">High</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Skill Mismatch Index</strong></td>
+                                <td>Skills</td>
+                                <td>Calculated</td>
+                                <td>Annual</td>
+                                <td><span class="tag tag-high">High</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Wage Polarization</strong></td>
+                                <td>Wages</td>
+                                <td>BLS</td>
+                                <td>Annual</td>
+                                <td><span class="tag tag-high">High</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Labor Share of Income</strong></td>
+                                <td>Wages</td>
+                                <td>BLS/FRED</td>
+                                <td>Quarterly</td>
+                                <td><span class="tag tag-high">High</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>U-6 Underemployment Rate</strong></td>
+                                <td>Labor Market</td>
+                                <td>BLS</td>
+                                <td>Monthly</td>
+                                <td><span class="tag tag-high">High</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>AI Skill Premium</strong></td>
+                                <td>AI Impact</td>
+                                <td>Calculated</td>
+                                <td>Annual</td>
+                                <td><span class="tag tag-medium">Medium</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Retraining Participation Rate</strong></td>
+                                <td>Skills</td>
+                                <td>DOL</td>
+                                <td>Annual</td>
+                                <td><span class="tag tag-medium">Medium</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Simulation Results Section -->
+            <section id="simulation-section" class="section">
+                <div id="simulation-results">
+                    <div class="card" style="text-align: center; padding: 60px;">
+                        <h3 style="margin-bottom: 16px;">No Simulation Run Yet</h3>
+                        <p style="color: var(--gray-500); margin-bottom: 24px;">
+                            Configure your scenario parameters and click "Run Simulation" to see projected impacts.
+                        </p>
+                        <button class="btn btn-primary" onclick="runSimulation()">Run Simulation</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sector Analysis Section -->
+            <section id="sectors-section" class="section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Sector Automation Exposure</h3>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Sector</th>
+                                <th>Employment</th>
+                                <th>Automation Exposure</th>
+                                <th>Risk Level</th>
+                                <th>Jobs at Risk</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sectorTableBody">
+                            <!-- Populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Employment by Risk Level</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="riskLevelChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Jobs at Risk Summary</h3>
+                        </div>
+                        <div class="indicator-list" id="riskSummary">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Intervention Impact Section -->
+            <section id="interventions-section" class="section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Available Policy Interventions</h3>
+                    </div>
+                    <div class="card-grid" id="interventionTypes">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+
+                <div id="intervention-results" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Intervention Impact Analysis</h3>
+                        </div>
+                        <div class="chart-container large">
+                            <canvas id="interventionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Intervention Modal -->
+    <div id="interventionModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 8px; padding: 24px; max-width: 500px; width: 90%;">
+            <h3 style="margin-bottom: 16px;">Add Policy Intervention</h3>
+            <div class="form-group">
+                <label style="color: var(--gray-700);">Intervention Type</label>
+                <select id="interventionType" onchange="updateInterventionParams()" style="color: var(--gray-900);">
+                    <option value="ubi">Universal Basic Income</option>
+                    <option value="job_retraining">Job Retraining Programs</option>
+                    <option value="wage_subsidy">Wage Subsidies</option>
+                    <option value="reduced_workweek">Reduced Work Week</option>
+                    <option value="robot_tax">Automation Tax</option>
+                    <option value="education_subsidy">Education Subsidy</option>
+                    <option value="job_guarantee">Federal Job Guarantee</option>
+                    <option value="transition_assistance">Transition Assistance</option>
+                </select>
+            </div>
+            <div id="interventionParams"></div>
+            <div style="display: flex; gap: 12px; margin-top: 24px;">
+                <button class="btn btn-primary" onclick="addIntervention()">Add Intervention</button>
+                <button class="btn btn-secondary" onclick="hideInterventionModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="src/data/economic-data.js"></script>
+    <script src="src/models/indicators.js"></script>
+    <script src="src/simulation/engine.js"></script>
+    <script src="src/simulation/interventions.js"></script>
+    <script src="src/utils/calculations.js"></script>
+    <script src="src/components/visualizations.js"></script>
+    <script src="src/app.js"></script>
+</body>
+</html>
