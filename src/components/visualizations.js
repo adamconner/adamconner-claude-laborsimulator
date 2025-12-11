@@ -27,8 +27,31 @@ class VisualizationManager {
     initDefaults() {
         if (typeof Chart !== 'undefined') {
             Chart.defaults.font.family = "'Inter', 'Segoe UI', sans-serif";
-            Chart.defaults.color = '#374151';
+
+            // Detect dark mode and set appropriate colors
+            const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+            if (isDarkMode) {
+                Chart.defaults.color = '#e5e7eb';
+                Chart.defaults.borderColor = '#374151';
+                Chart.defaults.scales.linear.grid = { color: '#374151' };
+                Chart.defaults.scales.category.grid = { color: '#374151' };
+            } else {
+                Chart.defaults.color = '#374151';
+            }
+
             Chart.defaults.plugins.legend.labels.usePointStyle = true;
+
+            // Listen for color scheme changes
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                if (e.matches) {
+                    Chart.defaults.color = '#e5e7eb';
+                    Chart.defaults.borderColor = '#374151';
+                } else {
+                    Chart.defaults.color = '#374151';
+                    Chart.defaults.borderColor = '#e5e7eb';
+                }
+            });
         }
     }
 

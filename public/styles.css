@@ -737,35 +737,209 @@ input[type="range"]::-webkit-slider-thumb {
 
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
+    :root {
+        --gray-50: #1f2937;
+        --gray-100: #374151;
+        --gray-200: #4b5563;
+        --gray-300: #6b7280;
+    }
+
+    body {
+        background-color: #111827;
+        color: #f3f4f6;
+    }
+
     .main-content {
-        background: var(--gray-900);
+        background: #111827;
     }
 
     .card,
     .header,
     .stat-card,
     .summary-card {
-        background: var(--gray-800);
-        color: var(--gray-100);
+        background: #1f2937;
+        color: #f3f4f6;
     }
 
     .card-header {
-        border-color: var(--gray-700);
+        border-color: #374151;
+    }
+
+    .card-header h3 {
+        color: #f3f4f6;
+    }
+
+    /* Header */
+    .header h1 {
+        color: #f3f4f6;
+    }
+
+    /* Navigation tabs */
+    .nav-tabs {
+        background: #1f2937;
+    }
+
+    .nav-tab {
+        color: #9ca3af;
+    }
+
+    .nav-tab:hover {
+        background: #374151;
+        color: #f3f4f6;
+    }
+
+    .nav-tab.active {
+        background: var(--primary);
+        color: white;
+    }
+
+    /* Stats */
+    .stat-card .label {
+        color: #9ca3af;
+    }
+
+    .stat-card .value {
+        color: #f3f4f6;
+    }
+
+    .stat-card .change {
+        color: #9ca3af;
+    }
+
+    /* Summary cards */
+    .summary-card h4 {
+        color: #9ca3af;
+    }
+
+    .stat-value {
+        color: #f3f4f6;
+    }
+
+    .stat-change span {
+        color: #9ca3af;
+    }
+
+    /* Tables */
+    .data-table {
+        color: #f3f4f6;
     }
 
     .data-table th {
-        color: var(--gray-400);
+        color: #9ca3af;
     }
 
     .data-table td {
-        border-color: var(--gray-700);
+        border-color: #374151;
+        color: #e5e7eb;
     }
 
+    .data-table tr:hover {
+        background: #374151;
+    }
+
+    /* Indicator list */
+    .indicator-item {
+        border-color: #374151;
+    }
+
+    .indicator-name {
+        color: #f3f4f6;
+    }
+
+    .indicator-value {
+        color: #f3f4f6;
+    }
+
+    .indicator-source {
+        color: #9ca3af;
+    }
+
+    /* Forms */
     input[type="text"],
     input[type="number"],
     select {
-        background: var(--gray-700);
-        border-color: var(--gray-600);
-        color: white;
+        background: #374151;
+        border-color: #4b5563;
+        color: #f3f4f6;
+    }
+
+    input[type="text"]::placeholder {
+        color: #9ca3af;
+    }
+
+    /* Buttons */
+    .btn-secondary {
+        background: #374151;
+        color: #f3f4f6;
+    }
+
+    .btn-secondary:hover {
+        background: #4b5563;
+    }
+
+    .btn-outline {
+        border-color: #4b5563;
+        color: #e5e7eb;
+    }
+
+    .btn-outline:hover {
+        background: #374151;
+    }
+
+    /* Progress bar */
+    .progress-bar {
+        background: #374151;
+    }
+
+    /* Tags - increase contrast */
+    .tag-high {
+        background: rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+    }
+
+    .tag-medium {
+        background: rgba(245, 158, 11, 0.2);
+        color: #fcd34d;
+    }
+
+    .tag-low {
+        background: rgba(16, 185, 129, 0.2);
+        color: #6ee7b7;
+    }
+
+    /* Loading */
+    .loading {
+        color: #9ca3af;
+    }
+
+    .spinner {
+        border-color: #374151;
+        border-top-color: var(--primary);
+    }
+
+    /* Modals */
+    #interventionModal > div,
+    #savedSimulationsModal > div {
+        background: #1f2937 !important;
+        color: #f3f4f6;
+    }
+
+    #interventionModal label,
+    #savedSimulationsModal label {
+        color: #e5e7eb !important;
+    }
+
+    #interventionModal h3,
+    #savedSimulationsModal h3 {
+        color: #f3f4f6;
+    }
+
+    #savedSimulationsModal > div > div:last-child {
+        border-color: #374151 !important;
+    }
+
+    /* Chart text - handled by Chart.js defaults but ensure canvas area is visible */
+    canvas {
+        filter: none;
     }
 }
