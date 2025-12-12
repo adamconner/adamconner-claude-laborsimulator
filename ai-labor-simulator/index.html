@@ -229,130 +229,112 @@
 
             <!-- AI Indicators Section -->
             <section id="indicators-section" class="section">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="label">Companies Using AI</div>
-                        <div class="value">35%</div>
-                        <div class="change positive">↑ Growing rapidly</div>
+                <!-- Real Indicators (Current Data) -->
+                <div class="card" style="margin-bottom: 24px;">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3>Real AI Indicators (Current Data)</h3>
+                        <span class="tag tag-low">Verified Sources</span>
                     </div>
-                    <div class="stat-card">
-                        <div class="label">AI Investment (2024)</div>
-                        <div class="value">$189B</div>
-                        <div class="change positive">↑ +45% YoY</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="label">AI Job Postings</div>
-                        <div class="value">2.3%</div>
-                        <div class="change positive">↑ of all postings</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="label">AI Patents Filed</div>
-                        <div class="value">142K</div>
-                        <div class="change">2023</div>
+                    <div class="stats-grid" style="margin-top: 16px;">
+                        <div class="stat-card">
+                            <div class="label">Companies Using AI</div>
+                            <div class="value">35%</div>
+                            <div class="change positive">↑ McKinsey Survey</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">AI Investment (2024)</div>
+                            <div class="value">$189B</div>
+                            <div class="change positive">Stanford AI Index</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">GenAI Weekly Users</div>
+                            <div class="value">23%</div>
+                            <div class="change positive">Census RPS Survey</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">AI Job Postings</div>
+                            <div class="value">2.3%</div>
+                            <div class="change">Indeed/LinkedIn</div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Proposed AI Impact Indicators to Track</h3>
+                <!-- Hypothetical Indicators -->
+                <div class="card" style="margin-bottom: 24px; border-left: 4px solid var(--warning);">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                        <div>
+                            <h3>Hypothetical AI Impact Indicators</h3>
+                            <p style="font-size: 0.75rem; color: var(--gray-500); margin-top: 4px;">
+                                Research-based metrics that would measure AI's labor market impact if tracked systematically
+                            </p>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-sm btn-outline" onclick="resetAllHypotheticalIndicators()">Reset All</button>
+                            <button class="btn btn-sm btn-primary" onclick="showCustomIndicatorModal()">+ Add Custom</button>
+                        </div>
                     </div>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Indicator</th>
-                                <th>Category</th>
-                                <th>Source</th>
-                                <th>Frequency</th>
-                                <th>AI Relevance</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><strong>Automation Exposure Index</strong></td>
-                                <td>AI Impact</td>
-                                <td>Calculated</td>
-                                <td>Annual</td>
-                                <td><span class="tag tag-high">Critical</span></td>
-                            </tr>
-                            <tr>
-                                <td><strong>AI Adoption Rate</strong></td>
-                                <td>AI Impact</td>
-                                <td>Census/Surveys</td>
-                                <td>Quarterly</td>
-                                <td><span class="tag tag-high">Critical</span></td>
-                            </tr>
-                            <tr>
-                                <td><strong>Displaced Worker Ratio</strong></td>
-                                <td>AI Impact</td>
-                                <td>BLS + Calculated</td>
-                                <td>Monthly</td>
-                                <td><span class="tag tag-high">Critical</span></td>
-                            </tr>
-                            <tr>
-                                <td><strong>Task Automation Rate</strong></td>
-                                <td>AI Impact</td>
-                                <td>Estimated</td>
-                                <td>Annual</td>
-                                <td><span class="tag tag-high">Critical</span></td>
-                            </tr>
-                            <tr>
-                                <td><strong>AI-Related Job Creation</strong></td>
-                                <td>AI Impact</td>
-                                <td>BLS/Indeed</td>
-                                <td>Monthly</td>
-                                <td><span class="tag tag-high">Critical</span></td>
-                            </tr>
-                            <tr>
-                                <td><strong>Productivity-Wage Gap</strong></td>
-                                <td>Productivity</td>
-                                <td>BLS</td>
-                                <td>Annual</td>
-                                <td><span class="tag tag-high">High</span></td>
-                            </tr>
-                            <tr>
-                                <td><strong>Skill Mismatch Index</strong></td>
-                                <td>Skills</td>
-                                <td>Calculated</td>
-                                <td>Annual</td>
-                                <td><span class="tag tag-high">High</span></td>
-                            </tr>
-                            <tr>
-                                <td><strong>Wage Polarization</strong></td>
-                                <td>Wages</td>
-                                <td>BLS</td>
-                                <td>Annual</td>
-                                <td><span class="tag tag-high">High</span></td>
-                            </tr>
-                            <tr>
-                                <td><strong>Labor Share of Income</strong></td>
-                                <td>Wages</td>
-                                <td>BLS/FRED</td>
-                                <td>Quarterly</td>
-                                <td><span class="tag tag-high">High</span></td>
-                            </tr>
-                            <tr>
-                                <td><strong>U-6 Underemployment Rate</strong></td>
-                                <td>Labor Market</td>
-                                <td>BLS</td>
-                                <td>Monthly</td>
-                                <td><span class="tag tag-high">High</span></td>
-                            </tr>
-                            <tr>
-                                <td><strong>AI Skill Premium</strong></td>
-                                <td>AI Impact</td>
-                                <td>Calculated</td>
-                                <td>Annual</td>
-                                <td><span class="tag tag-medium">Medium</span></td>
-                            </tr>
-                            <tr>
-                                <td><strong>Retraining Participation Rate</strong></td>
-                                <td>Skills</td>
-                                <td>DOL</td>
-                                <td>Annual</td>
-                                <td><span class="tag tag-medium">Medium</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
+
+                    <div id="hypotheticalIndicatorsList" style="margin-top: 16px;">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Data Sources Reference -->
+                <div class="card">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3>Research Sources & Methodology</h3>
+                        <button class="btn btn-sm btn-outline" onclick="toggleSourcesDetails()">Show Details</button>
+                    </div>
+                    <div id="sourcesDetails" style="display: none; margin-top: 16px;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Source</th>
+                                    <th>Organization</th>
+                                    <th>Indicators Derived</th>
+                                    <th>Link</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Anthropic Economic Index</strong></td>
+                                    <td>Anthropic</td>
+                                    <td>Task Automation Rate, Human-AI Collaboration</td>
+                                    <td><a href="https://www.anthropic.com/economic-index" target="_blank" style="color: var(--primary);">View</a></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Iceberg Index</strong></td>
+                                    <td>MIT / Oak Ridge</td>
+                                    <td>Skills Transformation Score</td>
+                                    <td><a href="https://iceberg.mit.edu" target="_blank" style="color: var(--primary);">View</a></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>AIOE Index</strong></td>
+                                    <td>Felten, Raj, Seamans</td>
+                                    <td>AI Occupational Exposure</td>
+                                    <td><a href="https://www.aeaweb.org/articles?id=10.1257/pandp.20181019" target="_blank" style="color: var(--primary);">View</a></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Budget Lab Analysis</strong></td>
+                                    <td>Yale</td>
+                                    <td>Job Displacement Velocity</td>
+                                    <td><a href="https://budgetlab.yale.edu" target="_blank" style="color: var(--primary);">View</a></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>IMF Working Papers</strong></td>
+                                    <td>IMF</td>
+                                    <td>Regional Vulnerability, Labor Share</td>
+                                    <td><a href="https://www.imf.org/en/Publications/WP" target="_blank" style="color: var(--primary);">View</a></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>GenAI & Jobs Report</strong></td>
+                                    <td>ILO</td>
+                                    <td>Human-AI Collaboration Index</td>
+                                    <td><a href="https://www.ilo.org" target="_blank" style="color: var(--primary);">View</a></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </section>
 
@@ -478,6 +460,121 @@
         </div>
     </div>
 
+    <!-- Custom Indicator Modal -->
+    <div id="customIndicatorModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 8px; padding: 24px; max-width: 600px; width: 90%; max-height: 85vh; overflow-y: auto;">
+            <h3 style="margin-bottom: 16px; color: var(--gray-800);">Add Custom Indicator</h3>
+            <p style="font-size: 0.875rem; color: var(--gray-600); margin-bottom: 16px;">
+                Create your own hypothetical indicator to track in the simulation.
+            </p>
+
+            <div class="form-group">
+                <label style="color: var(--gray-700);">Indicator Name *</label>
+                <input type="text" id="customIndName" placeholder="e.g., AI Freelancer Displacement Rate"
+                       style="color: var(--gray-900); width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 6px;">
+            </div>
+
+            <div class="form-group">
+                <label style="color: var(--gray-700);">Short Name (4 chars)</label>
+                <input type="text" id="customIndShortName" placeholder="e.g., AFDR" maxlength="6"
+                       style="color: var(--gray-900); width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 6px;">
+            </div>
+
+            <div class="form-group">
+                <label style="color: var(--gray-700);">Description</label>
+                <textarea id="customIndDescription" placeholder="What does this indicator measure?"
+                          style="color: var(--gray-900); width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 6px; min-height: 60px;"></textarea>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="form-group">
+                    <label style="color: var(--gray-700);">Initial Value *</label>
+                    <input type="number" id="customIndValue" placeholder="0" step="0.1"
+                           style="color: var(--gray-900); width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 6px;">
+                </div>
+
+                <div class="form-group">
+                    <label style="color: var(--gray-700);">Unit</label>
+                    <select id="customIndUnit" style="color: var(--gray-900); width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 6px;">
+                        <option value="percent">Percent (%)</option>
+                        <option value="index_0_100">Index (0-100)</option>
+                        <option value="millions">Millions</option>
+                        <option value="thousands">Thousands</option>
+                        <option value="ratio">Ratio</option>
+                        <option value="currency">Currency ($)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="form-group">
+                    <label style="color: var(--gray-700);">Min Value</label>
+                    <input type="number" id="customIndMin" placeholder="0" step="0.1"
+                           style="color: var(--gray-900); width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 6px;">
+                </div>
+
+                <div class="form-group">
+                    <label style="color: var(--gray-700);">Max Value</label>
+                    <input type="number" id="customIndMax" placeholder="100" step="0.1"
+                           style="color: var(--gray-900); width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 6px;">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label style="color: var(--gray-700);">Category</label>
+                <select id="customIndCategory" style="color: var(--gray-900); width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 6px;">
+                    <option value="custom">Custom</option>
+                    <option value="automation">Task Automation</option>
+                    <option value="displacement">Job Displacement</option>
+                    <option value="creation">Job Creation</option>
+                    <option value="wages">Wage Impacts</option>
+                    <option value="skills">Skills & Training</option>
+                    <option value="geographic">Geographic Impact</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label style="color: var(--gray-700);">Linked Real Metrics (affects how this changes)</label>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+                    <label style="display: flex; align-items: center; gap: 4px; font-size: 0.875rem; color: var(--gray-600);">
+                        <input type="checkbox" id="link_unemployment" value="unemployment_rate"> Unemployment Rate
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 4px; font-size: 0.875rem; color: var(--gray-600);">
+                        <input type="checkbox" id="link_ai_adoption" value="ai_adoption"> AI Adoption
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 4px; font-size: 0.875rem; color: var(--gray-600);">
+                        <input type="checkbox" id="link_productivity" value="productivity_growth"> Productivity
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 4px; font-size: 0.875rem; color: var(--gray-600);">
+                        <input type="checkbox" id="link_wages" value="wage_growth"> Wage Growth
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label style="color: var(--gray-700);">Icon</label>
+                <select id="customIndIcon" style="color: var(--gray-900); width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 6px;">
+                    <option value="📊">📊 Chart</option>
+                    <option value="📈">📈 Growth</option>
+                    <option value="📉">📉 Decline</option>
+                    <option value="🎯">🎯 Target</option>
+                    <option value="💼">💼 Jobs</option>
+                    <option value="💰">💰 Money</option>
+                    <option value="🤖">🤖 Robot</option>
+                    <option value="⚡">⚡ Speed</option>
+                    <option value="🌱">🌱 Growth</option>
+                    <option value="⚠️">⚠️ Warning</option>
+                    <option value="📌">📌 Pin</option>
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 12px; margin-top: 24px;">
+                <button class="btn btn-primary" onclick="saveCustomIndicator()">Add Indicator</button>
+                <button class="btn btn-secondary" onclick="hideCustomIndicatorModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <!-- AI Settings Modal -->
     <div id="aiSettingsModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
         <div style="background: white; border-radius: 8px; padding: 24px; max-width: 500px; width: 90%;">
@@ -505,6 +602,7 @@
     <!-- Scripts -->
     <script src="src/data/economic-data.js"></script>
     <script src="src/models/indicators.js"></script>
+    <script src="src/models/hypothetical-indicators.js"></script>
     <script src="src/simulation/engine.js"></script>
     <script src="src/simulation/interventions.js"></script>
     <script src="src/utils/calculations.js"></script>

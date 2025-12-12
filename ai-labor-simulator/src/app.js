@@ -51,6 +51,7 @@ async function initApp() {
         createSectorChart();
         updateSavedSimulationsList();
         updateAISettingsStatus();
+        renderHypotheticalIndicators();
 
         console.log('AI Labor Market Simulator initialized');
     } catch (error) {
@@ -989,6 +990,352 @@ function clearAllSavedSimulations() {
         console.error('Error clearing simulations:', error);
         alert('Failed to clear simulations.');
     }
+}
+
+// ==========================================
+// Hypothetical Indicators Functions
+// ==========================================
+
+/**
+ * Render hypothetical indicators list
+ */
+function renderHypotheticalIndicators() {
+    const container = document.getElementById('hypotheticalIndicatorsList');
+    if (!container || typeof hypotheticalIndicators === 'undefined') return;
+
+    const allIndicators = hypotheticalIndicators.getAllIndicators();
+    const categoryNames = hypotheticalIndicators.getCategoryDisplayNames();
+
+    // Group by category
+    const grouped = {};
+    Object.values(allIndicators).forEach(ind => {
+        const cat = ind.category || 'other';
+        if (!grouped[cat]) grouped[cat] = [];
+        grouped[cat].push(ind);
+    });
+
+    let html = '';
+
+    Object.entries(grouped).forEach(([category, indicators]) => {
+        html += `
+            <div style="margin-bottom: 20px;">
+                <h4 style="font-size: 0.875rem; color: var(--gray-600); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">
+                    ${categoryNames[category] || category}
+                </h4>
+                <div style="display: grid; gap: 12px;">
+        `;
+
+        indicators.forEach(ind => {
+            const isAdjusted = ind.manuallyAdjusted;
+            const isCustom = ind.isCustom;
+            const trendIcon = ind.trend === 'increasing' ? '↑' : ind.trend === 'decreasing' ? '↓' : '→';
+            const trendClass = ind.trend === 'increasing' ? 'positive' : ind.trend === 'decreasing' ? 'negative' : '';
+
+            html += `
+                <div class="hypothetical-indicator-card" style="
+                    background: var(--gray-50);
+                    border: 1px solid ${isAdjusted ? 'var(--warning)' : 'var(--gray-200)'};
+                    border-radius: 8px;
+                    padding: 16px;
+                    ${isAdjusted ? 'border-left: 3px solid var(--warning);' : ''}
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 1.25rem;">${ind.icon}</span>
+                            <div>
+                                <div style="font-weight: 600; color: var(--gray-800);">
+                                    ${ind.name}
+                                    ${isCustom ? '<span class="tag tag-medium" style="margin-left: 8px; font-size: 0.65rem;">Custom</span>' : ''}
+                                    ${isAdjusted ? '<span class="tag tag-high" style="margin-left: 8px; font-size: 0.65rem;">Adjusted</span>' : ''}
+                                </div>
+                                <div style="font-size: 0.75rem; color: var(--gray-500);">${ind.shortName} • ${ind.source}</div>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 1.5rem; font-weight: 700; color: var(--gray-800);">
+                                ${formatIndicatorValue(ind.value, ind.unit)}
+                            </div>
+                            <div class="change ${trendClass}" style="font-size: 0.75rem;">
+                                ${trendIcon} ${ind.trend}
+                            </div>
+                        </div>
+                    </div>
+
+                    <p style="font-size: 0.8rem; color: var(--gray-600); margin-bottom: 12px;">
+                        ${ind.description}
+                    </p>
+
+                    <div style="margin-bottom: 8px;">
+                        <label style="font-size: 0.75rem; color: var(--gray-500); display: flex; justify-content: space-between;">
+                            <span>Adjust Value</span>
+                            <span>${ind.range.min} - ${ind.range.max}</span>
+                        </label>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <input type="range"
+                                   id="slider_${ind.id}"
+                                   min="${ind.range.min}"
+                                   max="${ind.range.max}"
+                                   step="${(ind.range.max - ind.range.min) / 100}"
+                                   value="${ind.value}"
+                                   onchange="updateIndicatorValue('${ind.id}', this.value)"
+                                   style="flex: 1;">
+                            <input type="number"
+                                   id="input_${ind.id}"
+                                   value="${ind.value.toFixed(1)}"
+                                   min="${ind.range.min}"
+                                   max="${ind.range.max}"
+                                   step="0.1"
+                                   onchange="updateIndicatorValue('${ind.id}', this.value)"
+                                   style="width: 70px; padding: 4px 8px; border: 1px solid var(--gray-300); border-radius: 4px; color: var(--gray-800);">
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="font-size: 0.7rem; color: var(--gray-400);">
+                            Linked: ${ind.linkedMetrics.length > 0 ? ind.linkedMetrics.join(', ') : 'None'}
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            ${isAdjusted ? `
+                                <button class="btn btn-sm btn-outline" onclick="resetIndicator('${ind.id}')" style="font-size: 0.7rem; padding: 2px 8px;">
+                                    Reset
+                                </button>
+                            ` : ''}
+                            ${isCustom ? `
+                                <button class="btn btn-sm btn-danger" onclick="deleteCustomIndicator('${ind.id}')" style="font-size: 0.7rem; padding: 2px 8px;">
+                                    Delete
+                                </button>
+                            ` : ''}
+                            <button class="btn btn-sm btn-outline" onclick="showIndicatorDetails('${ind.id}')" style="font-size: 0.7rem; padding: 2px 8px;">
+                                Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += `
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+/**
+ * Format indicator value with appropriate unit
+ */
+function formatIndicatorValue(value, unit) {
+    switch (unit) {
+        case 'percent':
+        case 'percent_workers':
+        case 'percent_jobs_exposed':
+        case 'percent_augmented':
+        case 'percent_premium':
+        case 'percent_monthly':
+        case 'percent_new_roles':
+        case 'percent_annual_change':
+            return `${value.toFixed(1)}%`;
+        case 'index_0_100':
+            return value.toFixed(0);
+        case 'millions':
+            return `${value.toFixed(1)}M`;
+        case 'thousands':
+            return `${value.toFixed(0)}K`;
+        case 'currency':
+            return `$${value.toFixed(0)}`;
+        case 'ratio':
+            return value.toFixed(2);
+        default:
+            return value.toFixed(1);
+    }
+}
+
+/**
+ * Update indicator value from slider/input
+ */
+function updateIndicatorValue(id, value) {
+    if (typeof hypotheticalIndicators === 'undefined') return;
+
+    const numValue = parseFloat(value);
+    hypotheticalIndicators.setIndicatorValue(id, numValue);
+
+    // Update both slider and input
+    const slider = document.getElementById(`slider_${id}`);
+    const input = document.getElementById(`input_${id}`);
+    if (slider) slider.value = numValue;
+    if (input) input.value = numValue.toFixed(1);
+
+    // Re-render to show adjusted state
+    renderHypotheticalIndicators();
+}
+
+/**
+ * Reset a single indicator
+ */
+function resetIndicator(id) {
+    if (typeof hypotheticalIndicators === 'undefined') return;
+    hypotheticalIndicators.resetIndicator(id);
+    renderHypotheticalIndicators();
+}
+
+/**
+ * Reset all hypothetical indicators
+ */
+function resetAllHypotheticalIndicators() {
+    if (!confirm('Reset all hypothetical indicators to their default values?')) return;
+    if (typeof hypotheticalIndicators === 'undefined') return;
+    hypotheticalIndicators.resetAllIndicators();
+    renderHypotheticalIndicators();
+}
+
+/**
+ * Show indicator details modal
+ */
+function showIndicatorDetails(id) {
+    if (typeof hypotheticalIndicators === 'undefined') return;
+
+    const ind = hypotheticalIndicators.getIndicator(id);
+    if (!ind) return;
+
+    const linkedInfo = Object.entries(ind.linkageFormula)
+        .map(([metric, coef]) => `${metric}: ${coef > 0 ? '+' : ''}${coef}`)
+        .join(', ') || 'None';
+
+    alert(`${ind.icon} ${ind.name} (${ind.shortName})
+
+Description:
+${ind.description}
+
+Methodology:
+${ind.methodology}
+
+Source: ${ind.source}
+${ind.sourceUrl ? `URL: ${ind.sourceUrl}` : ''}
+
+Current Value: ${formatIndicatorValue(ind.value, ind.unit)}
+Base Value: ${formatIndicatorValue(ind.baseValue, ind.unit)}
+Range: ${ind.range.min} - ${ind.range.max}
+
+Linkage Coefficients:
+${linkedInfo}
+
+Confidence: ${ind.confidence}
+Trend: ${ind.trend}`);
+}
+
+/**
+ * Toggle sources details visibility
+ */
+function toggleSourcesDetails() {
+    const details = document.getElementById('sourcesDetails');
+    if (details) {
+        details.style.display = details.style.display === 'none' ? 'block' : 'none';
+    }
+}
+
+/**
+ * Show custom indicator modal
+ */
+function showCustomIndicatorModal() {
+    document.getElementById('customIndicatorModal').style.display = 'flex';
+
+    // Reset form
+    document.getElementById('customIndName').value = '';
+    document.getElementById('customIndShortName').value = '';
+    document.getElementById('customIndDescription').value = '';
+    document.getElementById('customIndValue').value = '';
+    document.getElementById('customIndMin').value = '0';
+    document.getElementById('customIndMax').value = '100';
+    document.getElementById('customIndCategory').value = 'custom';
+    document.getElementById('customIndIcon').value = '📊';
+
+    // Reset checkboxes
+    document.getElementById('link_unemployment').checked = false;
+    document.getElementById('link_ai_adoption').checked = false;
+    document.getElementById('link_productivity').checked = false;
+    document.getElementById('link_wages').checked = false;
+}
+
+/**
+ * Hide custom indicator modal
+ */
+function hideCustomIndicatorModal() {
+    document.getElementById('customIndicatorModal').style.display = 'none';
+}
+
+/**
+ * Save custom indicator
+ */
+function saveCustomIndicator() {
+    if (typeof hypotheticalIndicators === 'undefined') return;
+
+    const name = document.getElementById('customIndName').value.trim();
+    const value = parseFloat(document.getElementById('customIndValue').value);
+
+    if (!name) {
+        alert('Please enter an indicator name.');
+        return;
+    }
+
+    if (isNaN(value)) {
+        alert('Please enter a valid initial value.');
+        return;
+    }
+
+    const linkedMetrics = [];
+    const linkageFormula = {};
+
+    if (document.getElementById('link_unemployment').checked) {
+        linkedMetrics.push('unemployment_rate');
+        linkageFormula.unemployment_rate = 0.2;
+    }
+    if (document.getElementById('link_ai_adoption').checked) {
+        linkedMetrics.push('ai_adoption');
+        linkageFormula.ai_adoption = 0.3;
+    }
+    if (document.getElementById('link_productivity').checked) {
+        linkedMetrics.push('productivity_growth');
+        linkageFormula.productivity_growth = 0.2;
+    }
+    if (document.getElementById('link_wages').checked) {
+        linkedMetrics.push('wage_growth');
+        linkageFormula.wage_growth = 0.15;
+    }
+
+    const config = {
+        name,
+        shortName: document.getElementById('customIndShortName').value.trim() || name.substring(0, 4).toUpperCase(),
+        description: document.getElementById('customIndDescription').value.trim(),
+        value,
+        unit: document.getElementById('customIndUnit').value,
+        range: {
+            min: parseFloat(document.getElementById('customIndMin').value) || 0,
+            max: parseFloat(document.getElementById('customIndMax').value) || 100
+        },
+        category: document.getElementById('customIndCategory').value,
+        icon: document.getElementById('customIndIcon').value,
+        linkedMetrics,
+        linkageFormula
+    };
+
+    hypotheticalIndicators.addCustomIndicator(config);
+    hideCustomIndicatorModal();
+    renderHypotheticalIndicators();
+
+    alert(`Custom indicator "${name}" created successfully!`);
+}
+
+/**
+ * Delete custom indicator
+ */
+function deleteCustomIndicator(id) {
+    if (!confirm('Are you sure you want to delete this custom indicator?')) return;
+    if (typeof hypotheticalIndicators === 'undefined') return;
+
+    hypotheticalIndicators.removeCustomIndicator(id);
+    renderHypotheticalIndicators();
 }
 
 // ==========================================
