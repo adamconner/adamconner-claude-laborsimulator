@@ -50,6 +50,7 @@ async function initApp() {
         createHistoricalChart();
         createSectorChart();
         updateSavedSimulationsList();
+        updateAISettingsStatus();
 
         console.log('AI Labor Market Simulator initialized');
     } catch (error) {
@@ -385,8 +386,41 @@ function displaySimulationResults(results) {
     const resultsDiv = document.getElementById('simulation-results');
     const summary = results.summary;
 
+    // Check if AI summary is available
+    const hasApiKey = typeof aiSummaryService !== 'undefined' && aiSummaryService.hasApiKey();
+    const aiSummarySection = `
+        <div class="card" id="aiSummaryCard" style="margin-bottom: 24px; border-left: 4px solid var(--primary);">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 1.25rem;">&#129302;</span> AI Analysis
+                </h3>
+                ${hasApiKey ? `
+                    <button class="btn btn-sm btn-outline" onclick="regenerateAISummary()" id="regenerateBtn">
+                        Regenerate
+                    </button>
+                ` : ''}
+            </div>
+            <div id="aiSummaryContent" style="line-height: 1.7;">
+                ${hasApiKey ? `
+                    <div style="display: flex; align-items: center; gap: 12px; color: var(--gray-500);">
+                        <div class="spinner" style="width: 20px; height: 20px; border-width: 2px;"></div>
+                        <span>Generating AI analysis...</span>
+                    </div>
+                ` : `
+                    <p style="color: var(--gray-500);">
+                        Configure your Gemini API key to get AI-powered analysis of your simulation results.
+                    </p>
+                    <button class="btn btn-primary btn-sm" onclick="showAISettingsModal()" style="margin-top: 12px;">
+                        Configure API Key
+                    </button>
+                `}
+            </div>
+        </div>
+    `;
+
     resultsDiv.innerHTML = `
         <div class="fade-in">
+            ${aiSummarySection}
             ${vizManager.createSummaryHTML(summary)}
 
             <div class="card-grid">
@@ -502,6 +536,11 @@ function displaySimulationResults(results) {
             results.results[results.results.length - 1].sectors
         );
     }, 100);
+
+    // Generate AI summary if API key is configured
+    if (typeof aiSummaryService !== 'undefined' && aiSummaryService.hasApiKey()) {
+        generateAISummary(results);
+    }
 }
 
 /**
@@ -949,6 +988,151 @@ function clearAllSavedSimulations() {
     } catch (error) {
         console.error('Error clearing simulations:', error);
         alert('Failed to clear simulations.');
+    }
+}
+
+// ==========================================
+// AI Summary Functions
+// ==========================================
+
+/**
+ * Update AI settings status in sidebar
+ */
+function updateAISettingsStatus() {
+    const statusDiv = document.getElementById('aiSettingsStatus');
+    if (!statusDiv) return;
+
+    if (typeof aiSummaryService !== 'undefined' && aiSummaryService.hasApiKey()) {
+        statusDiv.innerHTML = `
+            <p style="font-size: 0.875rem; color: var(--secondary);">
+                &#10003; API key configured
+            </p>
+        `;
+    } else {
+        statusDiv.innerHTML = `
+            <p style="font-size: 0.875rem; color: var(--gray-400);">API key not configured</p>
+        `;
+    }
+}
+
+/**
+ * Show AI settings modal
+ */
+function showAISettingsModal() {
+    const modal = document.getElementById('aiSettingsModal');
+    const input = document.getElementById('geminiApiKey');
+
+    // Load existing key (masked)
+    if (typeof aiSummaryService !== 'undefined' && aiSummaryService.hasApiKey()) {
+        const key = aiSummaryService.getApiKey();
+        input.value = key;
+    } else {
+        input.value = '';
+    }
+
+    modal.style.display = 'flex';
+}
+
+/**
+ * Hide AI settings modal
+ */
+function hideAISettingsModal() {
+    document.getElementById('aiSettingsModal').style.display = 'none';
+}
+
+/**
+ * Save AI API key
+ */
+function saveAIApiKey() {
+    const key = document.getElementById('geminiApiKey').value.trim();
+
+    if (!key) {
+        alert('Please enter an API key.');
+        return;
+    }
+
+    if (typeof aiSummaryService !== 'undefined') {
+        aiSummaryService.setApiKey(key);
+        updateAISettingsStatus();
+        hideAISettingsModal();
+        alert('API key saved successfully! AI analysis will be available when you run simulations.');
+
+        // If we have current results, offer to generate summary
+        if (currentResults) {
+            if (confirm('Would you like to generate an AI analysis for the current simulation?')) {
+                generateAISummary(currentResults);
+            }
+        }
+    }
+}
+
+/**
+ * Clear AI API key
+ */
+function clearAIApiKey() {
+    if (!confirm('Are you sure you want to remove your API key?')) {
+        return;
+    }
+
+    if (typeof aiSummaryService !== 'undefined') {
+        aiSummaryService.clearApiKey();
+        document.getElementById('geminiApiKey').value = '';
+        updateAISettingsStatus();
+        hideAISettingsModal();
+        alert('API key removed.');
+    }
+}
+
+/**
+ * Generate AI summary for simulation results
+ */
+async function generateAISummary(results) {
+    const contentDiv = document.getElementById('aiSummaryContent');
+    if (!contentDiv) return;
+
+    // Show loading state
+    contentDiv.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 12px; color: var(--gray-500);">
+            <div class="spinner" style="width: 20px; height: 20px; border-width: 2px;"></div>
+            <span>Generating AI analysis...</span>
+        </div>
+    `;
+
+    try {
+        const summary = await aiSummaryService.generateSummary(results);
+
+        // Format the summary with proper paragraphs
+        const formattedSummary = summary
+            .split('\n\n')
+            .map(para => `<p style="margin-bottom: 16px;">${para.replace(/\n/g, '<br>')}</p>`)
+            .join('');
+
+        contentDiv.innerHTML = `
+            <div class="ai-summary-text">
+                ${formattedSummary}
+            </div>
+            <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--gray-200); font-size: 0.75rem; color: var(--gray-400);">
+                Generated by Google Gemini AI &bull; Analysis based on simulation parameters and results
+            </div>
+        `;
+    } catch (error) {
+        console.error('AI Summary error:', error);
+        contentDiv.innerHTML = `
+            <div style="color: var(--danger);">
+                <p style="margin-bottom: 8px;"><strong>Error generating AI analysis:</strong></p>
+                <p style="margin-bottom: 12px;">${error.message}</p>
+                <button class="btn btn-sm btn-outline" onclick="regenerateAISummary()">Try Again</button>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Regenerate AI summary
+ */
+function regenerateAISummary() {
+    if (currentResults) {
+        generateAISummary(currentResults);
     }
 }
 
