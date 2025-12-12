@@ -1,0 +1,596 @@
+{
+  "metadata": {
+    "generated": "2024-12",
+    "description": "Baseline economic snapshot for AI labor market simulation"
+  },
+  "data_sources": {
+    "real": {
+      "description": "Actual government and institutional data sources",
+      "sources": [
+        {
+          "id": "bls",
+          "name": "Bureau of Labor Statistics (BLS)",
+          "type": "government",
+          "url": "https://www.bls.gov/",
+          "data_provided": ["Employment", "Unemployment", "Wages", "Productivity", "JOLTS"],
+          "update_frequency": "Monthly/Quarterly"
+        },
+        {
+          "id": "fred",
+          "name": "Federal Reserve Economic Data (FRED)",
+          "type": "government",
+          "url": "https://fred.stlouisfed.org/",
+          "data_provided": ["GDP", "Interest Rates", "Labor Share", "Economic Indicators"],
+          "update_frequency": "Varies"
+        },
+        {
+          "id": "census",
+          "name": "U.S. Census Bureau",
+          "type": "government",
+          "url": "https://www.census.gov/",
+          "data_provided": ["Demographics", "Population", "Income Distribution"],
+          "update_frequency": "Annual/Decennial"
+        },
+        {
+          "id": "adp",
+          "name": "ADP National Employment Report",
+          "type": "private",
+          "url": "https://adpemploymentreport.com/",
+          "data_provided": ["Private Sector Employment", "Wage Growth"],
+          "update_frequency": "Monthly"
+        },
+        {
+          "id": "jolts",
+          "name": "Job Openings and Labor Turnover Survey",
+          "type": "government",
+          "url": "https://www.bls.gov/jlt/",
+          "data_provided": ["Job Openings", "Hires", "Separations", "Quits"],
+          "update_frequency": "Monthly"
+        },
+        {
+          "id": "onet",
+          "name": "O*NET (Occupational Information Network)",
+          "type": "government",
+          "url": "https://www.onetonline.org/",
+          "data_provided": ["Occupation Skills", "Task Descriptions", "Job Requirements"],
+          "update_frequency": "Annual"
+        }
+      ]
+    },
+    "hypothetical": {
+      "description": "Proposed data sources that would help measure AI's impact on labor markets (not currently available at scale)",
+      "sources": [
+        {
+          "id": "ai_task_displacement_index",
+          "name": "AI Task Displacement Index",
+          "type": "proposed_government",
+          "description": "Real-time tracking of tasks being automated by AI across industries",
+          "data_provided": ["Task automation rates", "Human-AI task allocation", "Displacement velocity"],
+          "why_needed": "Current data tracks jobs, not tasks. AI often automates portions of jobs, not entire roles.",
+          "potential_methodology": "Survey employers quarterly on task allocation between humans and AI systems",
+          "update_frequency": "Quarterly"
+        },
+        {
+          "id": "ai_augmentation_productivity_survey",
+          "name": "AI Augmentation Productivity Survey",
+          "type": "proposed_government",
+          "description": "Measures productivity gains from AI tools across occupations",
+          "data_provided": ["Productivity multiplier by occupation", "AI tool adoption by task type", "Time savings metrics"],
+          "why_needed": "Need to distinguish productivity gains from AI augmentation vs. displacement",
+          "potential_methodology": "BLS supplement survey measuring output changes with AI tool adoption",
+          "update_frequency": "Quarterly"
+        },
+        {
+          "id": "ai_skills_demand_tracker",
+          "name": "AI Skills Demand Tracker",
+          "type": "proposed_private",
+          "description": "Tracks demand for AI-complementary skills vs. automatable skills",
+          "data_provided": ["Skills premium trends", "Emerging skill categories", "Declining skill demand"],
+          "why_needed": "Job postings don't capture evolving skill requirements within existing roles",
+          "potential_methodology": "NLP analysis of job postings combined with employer surveys",
+          "update_frequency": "Monthly"
+        },
+        {
+          "id": "enterprise_ai_deployment_census",
+          "name": "Enterprise AI Deployment Census",
+          "type": "proposed_government",
+          "description": "Comprehensive survey of AI adoption across all U.S. businesses",
+          "data_provided": ["AI adoption rate by industry/size", "AI use cases deployed", "Workforce impact reported"],
+          "why_needed": "Current surveys (McKinsey, etc.) are not comprehensive or standardized",
+          "potential_methodology": "Census Bureau annual supplement on technology adoption",
+          "update_frequency": "Annual"
+        },
+        {
+          "id": "ai_displacement_claims_tracker",
+          "name": "AI Displacement Claims Tracker",
+          "type": "proposed_government",
+          "description": "Track unemployment claims specifically citing AI/automation as cause",
+          "data_provided": ["AI-attributed job losses", "Industry concentration", "Demographics of displaced"],
+          "why_needed": "No current way to distinguish AI displacement from other job losses",
+          "potential_methodology": "Add AI/automation checkbox to unemployment insurance claims",
+          "update_frequency": "Monthly"
+        },
+        {
+          "id": "ai_job_creation_registry",
+          "name": "AI Job Creation Registry",
+          "type": "proposed_government",
+          "description": "Track new job categories and roles created due to AI",
+          "data_provided": ["New AI-related occupations", "Growth in AI-adjacent roles", "Net job creation vs. displacement"],
+          "why_needed": "BLS occupation codes lag behind rapidly emerging AI roles",
+          "potential_methodology": "Quarterly employer survey on new role creation with AI category flags",
+          "update_frequency": "Quarterly"
+        },
+        {
+          "id": "ai_wage_impact_index",
+          "name": "AI Wage Impact Index",
+          "type": "proposed_research",
+          "description": "Measures wage changes attributable to AI adoption by occupation",
+          "data_provided": ["Wage growth/decline by AI exposure", "Wage polarization metrics", "Geographic wage impacts"],
+          "why_needed": "Need to isolate AI's wage effects from other factors",
+          "potential_methodology": "Econometric analysis combining wage data with AI adoption measures",
+          "update_frequency": "Quarterly"
+        },
+        {
+          "id": "ai_training_gap_assessment",
+          "name": "AI Training Gap Assessment",
+          "type": "proposed_government",
+          "description": "Measures worker skills vs. AI-era requirements",
+          "data_provided": ["Skills mismatch index", "Retraining needs by occupation", "Training program effectiveness"],
+          "why_needed": "No systematic measurement of workforce readiness for AI transition",
+          "potential_methodology": "Worker skills assessments combined with employer requirement surveys",
+          "update_frequency": "Annual"
+        },
+        {
+          "id": "ai_hours_worked_tracker",
+          "name": "AI Hours Worked Tracker",
+          "type": "proposed_government",
+          "description": "Track changes in hours worked as AI adoption increases",
+          "data_provided": ["Hours reduction by occupation", "Underemployment due to AI", "Work-sharing trends"],
+          "why_needed": "AI may reduce hours before eliminating jobs entirely",
+          "potential_methodology": "BLS Current Population Survey supplement on AI and work hours",
+          "update_frequency": "Monthly"
+        },
+        {
+          "id": "ai_geographic_impact_index",
+          "name": "AI Geographic Impact Index",
+          "type": "proposed_research",
+          "description": "Regional vulnerability and adaptation to AI disruption",
+          "data_provided": ["Metro area AI exposure scores", "Regional economic resilience", "Local labor market transitions"],
+          "why_needed": "AI impact varies dramatically by region based on industry mix",
+          "potential_methodology": "Combine occupation-level AI exposure with regional employment data",
+          "update_frequency": "Annual"
+        },
+        {
+          "id": "ai_income_distribution_tracker",
+          "name": "AI Income Distribution Tracker",
+          "type": "proposed_research",
+          "description": "Tracks how AI affects income inequality across demographics",
+          "data_provided": ["Gini coefficient changes", "Income gains/losses by percentile", "Capital vs. labor share shifts"],
+          "why_needed": "AI may significantly alter income distribution patterns",
+          "potential_methodology": "Link tax and survey data with AI adoption metrics",
+          "update_frequency": "Annual"
+        },
+        {
+          "id": "ai_startup_labor_impact",
+          "name": "AI Startup Labor Impact Index",
+          "type": "proposed_private",
+          "description": "Measures job creation and destruction from AI startups",
+          "data_provided": ["Jobs created by AI companies", "Jobs displaced by AI products", "Net startup ecosystem impact"],
+          "why_needed": "AI startups may create fewer jobs than traditional startups",
+          "potential_methodology": "VC/startup database analysis combined with employment impacts",
+          "update_frequency": "Quarterly"
+        }
+      ]
+    }
+  },
+  "labor_market": {
+    "total_employment": {
+      "value": 161200000,
+      "unit": "persons",
+      "source": "bls",
+      "source_type": "real",
+      "date": "2024-10"
+    },
+    "unemployment_rate": {
+      "value": 4.1,
+      "unit": "percent",
+      "source": "bls",
+      "source_type": "real",
+      "date": "2024-10"
+    },
+    "labor_force_participation": {
+      "value": 62.6,
+      "unit": "percent",
+      "source": "bls",
+      "source_type": "real",
+      "date": "2024-10"
+    },
+    "job_openings": {
+      "value": 7440000,
+      "unit": "positions",
+      "source": "jolts",
+      "source_type": "real",
+      "date": "2024-09"
+    },
+    "quits_rate": {
+      "value": 2.1,
+      "unit": "percent",
+      "source": "jolts",
+      "source_type": "real",
+      "date": "2024-09"
+    }
+  },
+  "wages": {
+    "median_weekly_earnings": {
+      "value": 1165,
+      "unit": "USD",
+      "source": "bls",
+      "source_type": "real",
+      "date": "2024-Q3"
+    },
+    "average_hourly_earnings": {
+      "value": 35.46,
+      "unit": "USD",
+      "source": "bls",
+      "source_type": "real",
+      "date": "2024-10"
+    },
+    "real_wage_growth": {
+      "value": 1.4,
+      "unit": "percent_yoy",
+      "source": "bls",
+      "source_type": "real",
+      "date": "2024-10"
+    }
+  },
+  "productivity": {
+    "labor_productivity_growth": {
+      "value": 2.2,
+      "unit": "percent_yoy",
+      "source": "bls",
+      "source_type": "real",
+      "date": "2024-Q3"
+    },
+    "output_per_hour": {
+      "value": 118.3,
+      "unit": "index_2017_100",
+      "source": "bls",
+      "source_type": "real",
+      "date": "2024-Q3"
+    },
+    "unit_labor_costs": {
+      "value": 0.5,
+      "unit": "percent_yoy",
+      "source": "bls",
+      "source_type": "real",
+      "date": "2024-Q3"
+    }
+  },
+  "sectors": {
+    "technology": {
+      "employment": 6200000,
+      "growth_rate": 3.2,
+      "median_wage": 104500,
+      "automation_exposure": 0.25,
+      "source_type": "real",
+      "automation_source_type": "hypothetical"
+    },
+    "healthcare": {
+      "employment": 17100000,
+      "growth_rate": 2.8,
+      "median_wage": 52200,
+      "automation_exposure": 0.35,
+      "source_type": "real",
+      "automation_source_type": "hypothetical"
+    },
+    "retail": {
+      "employment": 15200000,
+      "growth_rate": -0.5,
+      "median_wage": 31500,
+      "automation_exposure": 0.72,
+      "source_type": "real",
+      "automation_source_type": "hypothetical"
+    },
+    "manufacturing": {
+      "employment": 13000000,
+      "growth_rate": -0.3,
+      "median_wage": 52400,
+      "automation_exposure": 0.68,
+      "source_type": "real",
+      "automation_source_type": "hypothetical"
+    },
+    "transportation": {
+      "employment": 6700000,
+      "growth_rate": 1.1,
+      "median_wage": 48900,
+      "automation_exposure": 0.78,
+      "source_type": "real",
+      "automation_source_type": "hypothetical"
+    },
+    "finance": {
+      "employment": 6900000,
+      "growth_rate": 0.8,
+      "median_wage": 74500,
+      "automation_exposure": 0.54,
+      "source_type": "real",
+      "automation_source_type": "hypothetical"
+    },
+    "professional_services": {
+      "employment": 23500000,
+      "growth_rate": 2.1,
+      "median_wage": 78200,
+      "automation_exposure": 0.38,
+      "source_type": "real",
+      "automation_source_type": "hypothetical"
+    },
+    "food_services": {
+      "employment": 12400000,
+      "growth_rate": 1.5,
+      "median_wage": 28100,
+      "automation_exposure": 0.65,
+      "source_type": "real",
+      "automation_source_type": "hypothetical"
+    },
+    "education": {
+      "employment": 14300000,
+      "growth_rate": 1.2,
+      "median_wage": 55800,
+      "automation_exposure": 0.27,
+      "source_type": "real",
+      "automation_source_type": "hypothetical"
+    },
+    "construction": {
+      "employment": 8200000,
+      "growth_rate": 1.8,
+      "median_wage": 54700,
+      "automation_exposure": 0.42,
+      "source_type": "real",
+      "automation_source_type": "hypothetical"
+    },
+    "government": {
+      "employment": 23400000,
+      "growth_rate": 0.6,
+      "median_wage": 56300,
+      "automation_exposure": 0.32,
+      "source_type": "real",
+      "automation_source_type": "hypothetical"
+    }
+  },
+  "demographics": {
+    "working_age_population": {
+      "value": 210000000,
+      "unit": "persons",
+      "source": "census",
+      "source_type": "real"
+    },
+    "employment_by_education": {
+      "less_than_high_school": {
+        "employment": 9800000,
+        "unemployment_rate": 6.8,
+        "automation_exposure": 0.72,
+        "source_type": "real",
+        "automation_source_type": "hypothetical"
+      },
+      "high_school": {
+        "employment": 36200000,
+        "unemployment_rate": 4.8,
+        "automation_exposure": 0.58,
+        "source_type": "real",
+        "automation_source_type": "hypothetical"
+      },
+      "some_college": {
+        "employment": 35600000,
+        "unemployment_rate": 3.8,
+        "automation_exposure": 0.48,
+        "source_type": "real",
+        "automation_source_type": "hypothetical"
+      },
+      "bachelors_plus": {
+        "employment": 58400000,
+        "unemployment_rate": 2.4,
+        "automation_exposure": 0.32,
+        "source_type": "real",
+        "automation_source_type": "hypothetical"
+      }
+    },
+    "employment_by_age": {
+      "16_24": {
+        "employment": 20100000,
+        "unemployment_rate": 9.1,
+        "lfpr": 55.2,
+        "source_type": "real"
+      },
+      "25_34": {
+        "employment": 36800000,
+        "unemployment_rate": 4.2,
+        "lfpr": 83.4,
+        "source_type": "real"
+      },
+      "35_44": {
+        "employment": 33500000,
+        "unemployment_rate": 3.2,
+        "lfpr": 83.6,
+        "source_type": "real"
+      },
+      "45_54": {
+        "employment": 31200000,
+        "unemployment_rate": 3.0,
+        "lfpr": 81.2,
+        "source_type": "real"
+      },
+      "55_plus": {
+        "employment": 39600000,
+        "unemployment_rate": 3.1,
+        "lfpr": 38.4,
+        "source_type": "real"
+      }
+    }
+  },
+  "ai_indicators": {
+    "real": {
+      "ai_job_postings_share": {
+        "value": 2.3,
+        "unit": "percent",
+        "trend": "increasing",
+        "yoy_change": 45,
+        "source": "Indeed/LinkedIn",
+        "source_type": "real",
+        "notes": "Percentage of job postings mentioning AI skills"
+      },
+      "ai_investment": {
+        "value": 189,
+        "unit": "billion_USD",
+        "year": 2024,
+        "source": "Stanford AI Index",
+        "source_type": "real",
+        "notes": "Global private AI investment"
+      },
+      "companies_using_ai": {
+        "value": 35,
+        "unit": "percent",
+        "source": "McKinsey",
+        "source_type": "real",
+        "notes": "Survey-based estimate of firms using AI in at least one function"
+      },
+      "ai_patents_filed": {
+        "value": 142000,
+        "unit": "patents",
+        "year": 2023,
+        "source": "USPTO/WIPO",
+        "source_type": "real",
+        "notes": "AI-related patent applications filed"
+      },
+      "generative_ai_users": {
+        "value": 100,
+        "unit": "million_US_adults",
+        "source": "Pew Research",
+        "source_type": "real",
+        "notes": "Estimated US adults who have used generative AI tools"
+      },
+      "ai_compute_growth": {
+        "value": 4.2,
+        "unit": "times_per_year",
+        "source": "Epoch AI",
+        "source_type": "real",
+        "notes": "Annual growth in compute used for AI training"
+      }
+    },
+    "hypothetical": {
+      "ai_task_displacement_rate": {
+        "value": 8.5,
+        "unit": "percent",
+        "source": "ai_task_displacement_index",
+        "source_type": "hypothetical",
+        "description": "Estimated % of work tasks automated by AI (modeled)",
+        "confidence": "low",
+        "notes": "Would come from AI Task Displacement Index if it existed"
+      },
+      "ai_augmented_worker_productivity": {
+        "value": 23,
+        "unit": "percent_increase",
+        "source": "ai_augmentation_productivity_survey",
+        "source_type": "hypothetical",
+        "description": "Estimated productivity gain for AI-augmented workers",
+        "confidence": "medium",
+        "notes": "Based on limited academic studies, not systematic measurement"
+      },
+      "ai_skills_premium": {
+        "value": 15,
+        "unit": "percent_wage_premium",
+        "source": "ai_skills_demand_tracker",
+        "source_type": "hypothetical",
+        "description": "Wage premium for AI-complementary skills",
+        "confidence": "medium",
+        "notes": "Would come from systematic skills tracking if available"
+      },
+      "ai_displacement_claims": {
+        "value": 125000,
+        "unit": "monthly_claims",
+        "source": "ai_displacement_claims_tracker",
+        "source_type": "hypothetical",
+        "description": "Estimated unemployment claims due to AI/automation",
+        "confidence": "low",
+        "notes": "Currently no tracking mechanism exists"
+      },
+      "ai_new_job_creation_rate": {
+        "value": 85000,
+        "unit": "monthly_jobs",
+        "source": "ai_job_creation_registry",
+        "source_type": "hypothetical",
+        "description": "New jobs in AI-created categories",
+        "confidence": "low",
+        "notes": "Would require new job classification tracking"
+      },
+      "ai_hours_reduction": {
+        "value": 3.2,
+        "unit": "percent_reduction",
+        "source": "ai_hours_worked_tracker",
+        "source_type": "hypothetical",
+        "description": "Reduction in hours worked due to AI productivity",
+        "confidence": "low",
+        "notes": "Not currently tracked separately from overall hours changes"
+      },
+      "ai_income_shift_to_capital": {
+        "value": 0.8,
+        "unit": "percent_annual_shift",
+        "source": "ai_income_distribution_tracker",
+        "source_type": "hypothetical",
+        "description": "Annual shift from labor to capital share due to AI",
+        "confidence": "low",
+        "notes": "Requires isolation of AI effects from other factors"
+      },
+      "ai_training_gap_index": {
+        "value": 42,
+        "unit": "index_0_100",
+        "source": "ai_training_gap_assessment",
+        "source_type": "hypothetical",
+        "description": "Gap between current worker skills and AI-era requirements",
+        "confidence": "medium",
+        "notes": "Based on occupation skill requirements analysis"
+      },
+      "net_ai_job_impact": {
+        "value": -40000,
+        "unit": "monthly_net_jobs",
+        "source": "ai_job_creation_registry",
+        "source_type": "hypothetical",
+        "description": "Net job impact (creation minus displacement)",
+        "confidence": "low",
+        "notes": "Would require both displacement and creation tracking"
+      }
+    }
+  },
+  "historical_trends": {
+    "unemployment_rate": [
+      {"year": 2019, "value": 3.7},
+      {"year": 2020, "value": 8.1},
+      {"year": 2021, "value": 5.4},
+      {"year": 2022, "value": 3.6},
+      {"year": 2023, "value": 3.6},
+      {"year": 2024, "value": 4.1}
+    ],
+    "labor_productivity": [
+      {"year": 2019, "value": 1.8},
+      {"year": 2020, "value": 2.5},
+      {"year": 2021, "value": 2.0},
+      {"year": 2022, "value": 0.6},
+      {"year": 2023, "value": 1.3},
+      {"year": 2024, "value": 2.2}
+    ],
+    "real_wage_growth": [
+      {"year": 2019, "value": 1.1},
+      {"year": 2020, "value": 4.8},
+      {"year": 2021, "value": -1.2},
+      {"year": 2022, "value": -2.1},
+      {"year": 2023, "value": 0.8},
+      {"year": 2024, "value": 1.4}
+    ],
+    "job_openings_millions": [
+      {"year": 2019, "value": 7.2},
+      {"year": 2020, "value": 6.8},
+      {"year": 2021, "value": 10.7},
+      {"year": 2022, "value": 11.2},
+      {"year": 2023, "value": 8.8},
+      {"year": 2024, "value": 7.4}
+    ]
+  }
+}
