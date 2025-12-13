@@ -591,8 +591,11 @@ function displaySimulationResults(results) {
                     </h3>
                     <span style="font-size: 0.875rem; color: var(--gray-500);">Animate through simulation years</span>
                 </div>
-                <div id="timeline-player-container">
-                    <!-- Timeline player will be rendered here -->
+                <div id="timeline-player-container" style="padding: 20px;">
+                    <div style="text-align: center; color: var(--gray-500);">
+                        <div class="spinner" style="margin: 0 auto 12px; width: 24px; height: 24px;"></div>
+                        <p>Loading timeline player...</p>
+                    </div>
                 </div>
             </div>
 
