@@ -227,9 +227,14 @@ class TimelineUI {
      * Render the timeline UI
      */
     render() {
-        if (!this.container) return;
+        if (!this.container) {
+            console.error('Timeline container not found');
+            return;
+        }
 
         const years = this.player.years;
+        console.log('Rendering timeline with years:', years.length > 0 ? `${years[0]} to ${years[years.length-1]}` : 'empty');
+
         if (years.length === 0) {
             this.container.innerHTML = '<p style="text-align: center; color: var(--gray-500);">Run a simulation to see the timeline player.</p>';
             return;
@@ -486,10 +491,26 @@ let timelineUI = null;
  * Initialize timeline with simulation results
  */
 function initializeTimeline(simulationResults) {
+    console.log('Initializing timeline player...');
+
+    // Check if container exists
+    const container = document.getElementById('timeline-player-container');
+    if (!container) {
+        console.warn('Timeline container not found, retrying...');
+        // Retry after a short delay
+        setTimeout(() => initializeTimeline(simulationResults), 100);
+        return false;
+    }
+
     if (timelinePlayer.initialize(simulationResults)) {
+        console.log('Timeline player initialized with', timelinePlayer.years.length, 'data points');
         timelineUI = new TimelineUI('timeline-player-container', timelinePlayer);
         timelineUI.render();
+        console.log('Timeline UI rendered');
         return true;
+    } else {
+        console.warn('Failed to initialize timeline player - no data');
+        container.innerHTML = '<p style="text-align: center; color: var(--gray-500); padding: 20px;">No timeline data available.</p>';
     }
     return false;
 }
