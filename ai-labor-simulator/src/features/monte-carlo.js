@@ -146,17 +146,17 @@ class MonteCarloSimulation {
         const finalResult = result.results[result.results.length - 1];
         const yearlyResults = this.getYearlySnapshots(result.results);
 
+        // Use correct property paths from simulation engine's generateSummary
         return {
             // Final state metrics
-            final_unemployment: summary.labor_market_changes.unemployment.final,
+            final_unemployment: parseFloat(summary.labor_market_changes.unemployment_rate.final),
             final_employment: finalResult.labor_market.total_employment,
-            cumulative_displacement: summary.labor_market_changes.cumulative_displacement,
-            cumulative_new_jobs: summary.labor_market_changes.cumulative_new_jobs,
-            net_job_change: summary.labor_market_changes.cumulative_new_jobs - summary.labor_market_changes.cumulative_displacement,
+            cumulative_displacement: summary.ai_impact.cumulative_displacement,
+            cumulative_new_jobs: summary.ai_impact.cumulative_new_jobs,
+            net_job_change: summary.ai_impact.net_impact,
             final_ai_adoption: finalResult.ai_adoption,
-            final_gdp_change: summary.economic_changes.gdp_change,
             final_productivity: finalResult.productivity.growth_rate,
-            final_wage_growth: summary.economic_changes.wage_change,
+            final_wage_growth: parseFloat(summary.wages.average_hourly.change_percent),
 
             // Yearly trajectory
             yearly: yearlyResults
@@ -193,7 +193,6 @@ class MonteCarloSimulation {
             'cumulative_new_jobs',
             'net_job_change',
             'final_ai_adoption',
-            'final_gdp_change',
             'final_productivity',
             'final_wage_growth'
         ];
