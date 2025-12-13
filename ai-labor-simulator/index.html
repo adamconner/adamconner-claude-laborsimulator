@@ -10,8 +10,12 @@
 </head>
 <body>
     <div class="app-container">
+        <!-- Sidebar Overlay (for mobile) -->
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeMobileMenu()"></div>
+
         <!-- Sidebar -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
+            <button class="sidebar-close" id="sidebarClose" onclick="closeMobileMenu()" aria-label="Close menu">&times;</button>
             <div class="sidebar-header">
                 <h2>AI Labor Market Simulator</h2>
                 <p style="font-size: 0.875rem; color: var(--gray-400); margin-top: 8px;">
@@ -138,6 +142,7 @@
         <main class="main-content">
             <!-- Header -->
             <header class="header">
+                <button class="mobile-menu-toggle" id="mobileMenuToggle" onclick="openMobileMenu()" aria-label="Open menu">☰</button>
                 <h1>AI Labor Market Impact Analysis</h1>
                 <div class="header-actions">
                     <button class="btn btn-success" onclick="saveSimulation()">Save Simulation</button>

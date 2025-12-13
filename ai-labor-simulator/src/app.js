@@ -2720,5 +2720,46 @@ function showShareButton() {
     }
 }
 
+// ==========================================
+// Mobile Menu Functions
+// ==========================================
+
+/**
+ * Open mobile menu
+ */
+function openMobileMenu() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+
+    if (sidebar) sidebar.classList.add('open');
+    if (overlay) overlay.classList.add('active');
+
+    // Prevent body scroll when menu is open
+    document.body.style.overflow = 'hidden';
+}
+
+/**
+ * Close mobile menu
+ */
+function closeMobileMenu() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+
+    if (sidebar) sidebar.classList.remove('open');
+    if (overlay) overlay.classList.remove('active');
+
+    // Restore body scroll
+    document.body.style.overflow = '';
+}
+
+/**
+ * Close mobile menu on escape key
+ */
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeMobileMenu();
+    }
+});
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', initApp);
