@@ -1,6 +1,6 @@
 /**
  * Timeline Player
- * Animated playback of simulation results through time
+ * Animated playback of simulation results through time with visual graphs
  */
 
 class TimelinePlayer {
@@ -57,6 +57,13 @@ class TimelinePlayer {
             return null;
         }
         return this.simulationData.timeline[Math.min(index, this.simulationData.timeline.length - 1)];
+    }
+
+    /**
+     * Get all timeline data
+     */
+    getAllData() {
+        return this.simulationData?.timeline || [];
     }
 
     /**
@@ -209,18 +216,87 @@ class TimelinePlayer {
 }
 
 /**
- * Timeline UI Component
- * Renders the timeline player controls and display
+ * Timeline UI Component with Visual Charts
+ * Renders the timeline player controls, display, and animated graphs
  */
 class TimelineUI {
     constructor(containerId, player) {
         this.container = document.getElementById(containerId);
         this.player = player;
         this.animatedMetrics = {};
+        this.charts = {};
+        this.metricConfigs = [
+            {
+                key: 'unemployment_rate',
+                label: 'Unemployment Rate',
+                unit: '%',
+                color: '#ef4444',
+                colorLight: 'rgba(239, 68, 68, 0.2)',
+                decimals: 1,
+                extract: (d) => this.getNumber(d.labor_market?.unemployment_rate ?? d.unemployment_rate ?? 0)
+            },
+            {
+                key: 'ai_adoption',
+                label: 'AI Adoption',
+                unit: '%',
+                color: '#10b981',
+                colorLight: 'rgba(16, 185, 129, 0.2)',
+                decimals: 0,
+                extract: (d) => {
+                    const raw = d.ai_adoption;
+                    return (typeof raw === 'object' ? this.getNumber(raw?.rate) : this.getNumber(raw)) * 100;
+                }
+            },
+            {
+                key: 'productivity',
+                label: 'Productivity Growth',
+                unit: '%',
+                color: '#6366f1',
+                colorLight: 'rgba(99, 102, 241, 0.2)',
+                decimals: 1,
+                extract: (d) => {
+                    const raw = d.productivity;
+                    return typeof raw === 'object' ? this.getNumber(raw?.growth_rate) : this.getNumber(raw);
+                }
+            },
+            {
+                key: 'employment',
+                label: 'Total Employment',
+                unit: 'M',
+                color: '#3b82f6',
+                colorLight: 'rgba(59, 130, 246, 0.2)',
+                decimals: 1,
+                extract: (d) => this.getNumber(d.labor_market?.total_employment ?? d.labor_market?.employment ?? d.employment ?? 0) / 1e6,
+                formatValue: (v) => v.toFixed(1) + 'M'
+            }
+        ];
 
         // Bind player events
         this.player.onYearChange = (index, data) => this.handleYearChange(index, data);
         this.player.onPlayStateChange = (isPlaying) => this.handlePlayStateChange(isPlaying);
+    }
+
+    /**
+     * Helper to safely get numeric value
+     */
+    getNumber(val) {
+        if (typeof val === 'number') return val;
+        if (typeof val === 'object' && val !== null) return 0;
+        return parseFloat(val) || 0;
+    }
+
+    /**
+     * Extract all metric values from timeline data
+     */
+    extractMetricSeries() {
+        const allData = this.player.getAllData();
+        const series = {};
+
+        for (const config of this.metricConfigs) {
+            series[config.key] = allData.map(d => config.extract(d));
+        }
+
+        return series;
     }
 
     /**
@@ -240,140 +316,197 @@ class TimelineUI {
             return;
         }
 
+        const metricSeries = this.extractMetricSeries();
+
         this.container.innerHTML = `
             <div class="timeline-player">
-                <!-- Current Year Display -->
-                <div class="timeline-year-display">
-                    <span class="timeline-year-label">Year</span>
-                    <span class="timeline-year-value" id="timeline-current-year">${years[0]}</span>
+                <!-- Header with Year and Controls -->
+                <div class="timeline-header">
+                    <div class="timeline-year-display">
+                        <span class="timeline-year-label">Year</span>
+                        <span class="timeline-year-value" id="timeline-current-year">${years[0]}</span>
+                    </div>
+
+                    <div class="timeline-controls">
+                        <button class="timeline-btn" onclick="timelinePlayer.goToStart()" title="Go to start">⏮</button>
+                        <button class="timeline-btn" onclick="timelinePlayer.stepBackward()" title="Previous year">◀</button>
+                        <button class="timeline-btn timeline-btn-play" id="timeline-play-btn" onclick="timelinePlayer.toggle()" title="Play/Pause">
+                            <span id="timeline-play-icon">▶</span>
+                        </button>
+                        <button class="timeline-btn" onclick="timelinePlayer.stepForward()" title="Next year">▶</button>
+                        <button class="timeline-btn" onclick="timelinePlayer.goToEnd()" title="Go to end">⏭</button>
+
+                        <select class="timeline-speed-select" id="timeline-speed" onchange="timelineUI.handleSpeedChange(this.value)" title="Playback speed">
+                            <option value="2000">0.5x</option>
+                            <option value="1000" selected>1x</option>
+                            <option value="500">2x</option>
+                            <option value="250">4x</option>
+                        </select>
+                    </div>
                 </div>
 
-                <!-- Animated Metrics -->
-                <div class="timeline-metrics" id="timeline-metrics">
-                    ${this.renderMetrics(this.player.getYearData(0))}
+                <!-- Visual Timeline Scrubber -->
+                <div class="timeline-scrubber">
+                    <div class="timeline-track">
+                        ${years.map((year, i) => `
+                            <div class="timeline-tick ${i === 0 ? 'active' : ''}"
+                                 data-index="${i}"
+                                 onclick="timelineUI.handleTickClick(${i})"
+                                 title="${year}">
+                                <div class="timeline-tick-dot"></div>
+                                ${i === 0 || i === years.length - 1 || i % Math.ceil(years.length / 5) === 0 ?
+                                  `<span class="timeline-tick-label">${year}</span>` : ''}
+                            </div>
+                        `).join('')}
+                        <div class="timeline-track-line"></div>
+                        <div class="timeline-track-progress" id="timeline-track-progress"></div>
+                    </div>
                 </div>
 
-                <!-- Timeline Slider -->
-                <div class="timeline-slider-container">
-                    <span class="timeline-year-marker">${years[0]}</span>
-                    <input type="range"
-                           class="timeline-slider"
-                           id="timeline-slider"
-                           min="0"
-                           max="${years.length - 1}"
-                           value="0"
-                           oninput="timelineUI.handleSliderChange(this.value)">
-                    <span class="timeline-year-marker">${years[years.length - 1]}</span>
+                <!-- Charts Grid -->
+                <div class="timeline-charts-grid">
+                    ${this.metricConfigs.map(config => this.renderChartCard(config, metricSeries[config.key])).join('')}
                 </div>
+            </div>
+        `;
 
-                <!-- Playback Controls -->
-                <div class="timeline-controls">
-                    <button class="timeline-btn" onclick="timelinePlayer.goToStart()" title="Go to start">
-                        <span>⏮</span>
-                    </button>
-                    <button class="timeline-btn" onclick="timelinePlayer.stepBackward()" title="Previous year">
-                        <span>◀</span>
-                    </button>
-                    <button class="timeline-btn timeline-btn-play" id="timeline-play-btn" onclick="timelinePlayer.toggle()" title="Play/Pause">
-                        <span id="timeline-play-icon">▶</span>
-                    </button>
-                    <button class="timeline-btn" onclick="timelinePlayer.stepForward()" title="Next year">
-                        <span>▶</span>
-                    </button>
-                    <button class="timeline-btn" onclick="timelinePlayer.goToEnd()" title="Go to end">
-                        <span>⏭</span>
-                    </button>
+        // Initialize charts after DOM is ready
+        requestAnimationFrame(() => this.initializeCharts(metricSeries));
+    }
+
+    /**
+     * Render a chart card for a metric
+     */
+    renderChartCard(config, data) {
+        const currentValue = data[0];
+        const formatValue = config.formatValue || ((v) => v.toFixed(config.decimals) + config.unit);
+
+        return `
+            <div class="timeline-chart-card" data-metric="${config.key}">
+                <div class="timeline-chart-header">
+                    <span class="timeline-chart-label">${config.label}</span>
+                    <span class="timeline-chart-value" id="chart-value-${config.key}" style="color: ${config.color}">
+                        ${formatValue(currentValue)}
+                    </span>
                 </div>
-
-                <!-- Speed Controls -->
-                <div class="timeline-speed">
-                    <label>Speed:</label>
-                    <select id="timeline-speed" onchange="timelineUI.handleSpeedChange(this.value)">
-                        <option value="2000">0.5x</option>
-                        <option value="1000" selected>1x</option>
-                        <option value="500">2x</option>
-                        <option value="250">4x</option>
-                    </select>
-                </div>
-
-                <!-- Progress Indicator -->
-                <div class="timeline-progress">
-                    <div class="timeline-progress-bar" id="timeline-progress-bar" style="width: 0%"></div>
+                <div class="timeline-chart-container">
+                    <canvas id="chart-${config.key}" class="timeline-chart-canvas"></canvas>
                 </div>
             </div>
         `;
     }
 
     /**
-     * Render metrics for a given year
+     * Initialize canvas charts
      */
-    renderMetrics(yearData) {
-        if (!yearData) return '';
+    initializeCharts(metricSeries) {
+        for (const config of this.metricConfigs) {
+            const canvas = document.getElementById(`chart-${config.key}`);
+            if (!canvas) continue;
 
-        // Helper to safely get numeric value
-        const getNumber = (val) => {
-            if (typeof val === 'number') return val;
-            if (typeof val === 'object' && val !== null) return 0;
-            return parseFloat(val) || 0;
-        };
+            const ctx = canvas.getContext('2d');
+            const data = metricSeries[config.key];
 
-        // Extract values from the simulation data structure
-        const unemploymentRate = getNumber(yearData.labor_market?.unemployment_rate ?? yearData.unemployment_rate ?? 0);
-        const employment = getNumber(yearData.labor_market?.total_employment ?? yearData.labor_market?.employment ?? yearData.employment ?? 0);
+            // Set canvas size
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width * window.devicePixelRatio;
+            canvas.height = rect.height * window.devicePixelRatio;
+            canvas.style.width = rect.width + 'px';
+            canvas.style.height = rect.height + 'px';
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
 
-        // ai_adoption is an object with .rate property
-        const aiAdoptionRaw = yearData.ai_adoption;
-        const aiAdoption = typeof aiAdoptionRaw === 'object' ? getNumber(aiAdoptionRaw?.rate) : getNumber(aiAdoptionRaw);
+            // Store chart info
+            this.charts[config.key] = {
+                canvas,
+                ctx,
+                data,
+                config,
+                width: rect.width,
+                height: rect.height
+            };
 
-        // productivity is an object with .growth_rate property
-        const productivityRaw = yearData.productivity;
-        const productivity = typeof productivityRaw === 'object' ? getNumber(productivityRaw?.growth_rate) : getNumber(productivityRaw);
+            this.drawChart(config.key, 0);
+        }
+    }
 
-        // Safe format helper
-        const safeFixed = (v, decimals) => {
-            const num = typeof v === 'number' ? v : parseFloat(v) || 0;
-            return num.toFixed(decimals);
-        };
+    /**
+     * Draw a chart with current year highlighted
+     */
+    drawChart(key, currentIndex) {
+        const chart = this.charts[key];
+        if (!chart) return;
 
-        const metrics = [
-            {
-                key: 'unemployment_rate',
-                label: 'Unemployment',
-                value: unemploymentRate,
-                format: (v) => safeFixed(v, 1) + '%',
-                color: this.getMetricColor(unemploymentRate, 4, 10)
-            },
-            {
-                key: 'employment',
-                label: 'Employment',
-                value: employment,
-                format: (v) => this.formatNumber(typeof v === 'number' ? v : 0),
-                color: 'var(--primary)'
-            },
-            {
-                key: 'ai_adoption',
-                label: 'AI Adoption',
-                value: aiAdoption * 100,
-                format: (v) => safeFixed(v, 0) + '%',
-                color: 'var(--secondary)'
-            },
-            {
-                key: 'productivity',
-                label: 'Productivity',
-                value: productivity,
-                format: (v) => safeFixed(v, 1) + '%',
-                color: 'var(--success)'
-            }
-        ];
+        const { ctx, data, config, width, height } = chart;
+        const padding = { top: 10, right: 10, bottom: 10, left: 10 };
+        const chartWidth = width - padding.left - padding.right;
+        const chartHeight = height - padding.top - padding.bottom;
 
-        return metrics.map(m => `
-            <div class="timeline-metric">
-                <div class="timeline-metric-label">${m.label}</div>
-                <div class="timeline-metric-value" id="metric-${m.key}" style="color: ${m.color}">
-                    ${m.format(m.value)}
-                </div>
-            </div>
-        `).join('');
+        // Clear canvas
+        ctx.clearRect(0, 0, width, height);
+
+        if (data.length < 2) return;
+
+        // Calculate min/max with some padding
+        const minVal = Math.min(...data);
+        const maxVal = Math.max(...data);
+        const range = maxVal - minVal || 1;
+        const yMin = minVal - range * 0.1;
+        const yMax = maxVal + range * 0.1;
+
+        // Helper to convert data point to canvas coordinates
+        const toX = (i) => padding.left + (i / (data.length - 1)) * chartWidth;
+        const toY = (v) => padding.top + chartHeight - ((v - yMin) / (yMax - yMin)) * chartHeight;
+
+        // Draw filled area up to current index
+        ctx.beginPath();
+        ctx.moveTo(toX(0), toY(data[0]));
+        for (let i = 1; i <= currentIndex; i++) {
+            ctx.lineTo(toX(i), toY(data[i]));
+        }
+        ctx.lineTo(toX(currentIndex), height - padding.bottom);
+        ctx.lineTo(toX(0), height - padding.bottom);
+        ctx.closePath();
+        ctx.fillStyle = config.colorLight;
+        ctx.fill();
+
+        // Draw full line (faded)
+        ctx.beginPath();
+        ctx.moveTo(toX(0), toY(data[0]));
+        for (let i = 1; i < data.length; i++) {
+            ctx.lineTo(toX(i), toY(data[i]));
+        }
+        ctx.strokeStyle = 'rgba(150, 150, 150, 0.3)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Draw active line up to current index
+        ctx.beginPath();
+        ctx.moveTo(toX(0), toY(data[0]));
+        for (let i = 1; i <= currentIndex; i++) {
+            ctx.lineTo(toX(i), toY(data[i]));
+        }
+        ctx.strokeStyle = config.color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Draw current point
+        ctx.beginPath();
+        ctx.arc(toX(currentIndex), toY(data[currentIndex]), 5, 0, Math.PI * 2);
+        ctx.fillStyle = config.color;
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Draw vertical line at current position
+        ctx.beginPath();
+        ctx.moveTo(toX(currentIndex), padding.top);
+        ctx.lineTo(toX(currentIndex), height - padding.bottom);
+        ctx.strokeStyle = 'rgba(150, 150, 150, 0.2)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
     }
 
     /**
@@ -388,74 +521,50 @@ class TimelineUI {
             setTimeout(() => yearDisplay.classList.remove('timeline-year-animate'), 300);
         }
 
-        // Update slider
-        const slider = document.getElementById('timeline-slider');
-        if (slider) {
-            slider.value = index;
+        // Update timeline ticks
+        const ticks = document.querySelectorAll('.timeline-tick');
+        ticks.forEach((tick, i) => {
+            tick.classList.toggle('active', i <= index);
+            tick.classList.toggle('current', i === index);
+        });
+
+        // Update track progress
+        const progress = document.getElementById('timeline-track-progress');
+        if (progress) {
+            const percentage = this.player.years.length > 1
+                ? (index / (this.player.years.length - 1)) * 100
+                : 0;
+            progress.style.width = percentage + '%';
         }
 
-        // Update progress bar
-        const progressBar = document.getElementById('timeline-progress-bar');
-        if (progressBar) {
-            progressBar.style.width = this.player.getProgress() + '%';
-        }
+        // Update charts
+        for (const config of this.metricConfigs) {
+            this.drawChart(config.key, index);
 
-        // Update metrics with animation
-        if (data) {
-            // Helper to safely get numeric value
-            const getNumber = (val) => {
-                if (typeof val === 'number') return val;
-                if (typeof val === 'object' && val !== null) return 0;
-                return parseFloat(val) || 0;
-            };
-
-            // Safe format helper
-            const safeFixed = (v, decimals) => {
-                const num = typeof v === 'number' ? v : parseFloat(v) || 0;
-                return num.toFixed(decimals);
-            };
-
-            // Extract values from the simulation data structure
-            const unemploymentRate = getNumber(data.labor_market?.unemployment_rate ?? data.unemployment_rate ?? 0);
-            const employment = getNumber(data.labor_market?.total_employment ?? data.labor_market?.employment ?? data.employment ?? 0);
-
-            // ai_adoption is an object with .rate property
-            const aiAdoptionRaw = data.ai_adoption;
-            const aiAdoption = (typeof aiAdoptionRaw === 'object' ? getNumber(aiAdoptionRaw?.rate) : getNumber(aiAdoptionRaw)) * 100;
-
-            // productivity is an object with .growth_rate property
-            const productivityRaw = data.productivity;
-            const productivity = typeof productivityRaw === 'object' ? getNumber(productivityRaw?.growth_rate) : getNumber(productivityRaw);
-
-            this.animateMetricUpdate('unemployment_rate', unemploymentRate, v => safeFixed(v, 1) + '%');
-            this.animateMetricUpdate('employment', employment, v => this.formatNumber(typeof v === 'number' ? v : 0));
-            this.animateMetricUpdate('ai_adoption', aiAdoption, v => safeFixed(v, 0) + '%');
-            this.animateMetricUpdate('productivity', productivity, v => safeFixed(v, 1) + '%');
+            // Update value display
+            const valueEl = document.getElementById(`chart-value-${config.key}`);
+            if (valueEl && data) {
+                const value = config.extract(data);
+                const formatValue = config.formatValue || ((v) => v.toFixed(config.decimals) + config.unit);
+                this.animateValue(valueEl, value, formatValue);
+            }
         }
     }
 
     /**
-     * Animate metric value update
+     * Animate value change
      */
-    animateMetricUpdate(key, newValue, formatter) {
-        const el = document.getElementById(`metric-${key}`);
-        if (!el) return;
-
-        const oldValue = this.animatedMetrics[key] || newValue;
+    animateValue(el, newValue, formatter) {
+        const key = el.id;
+        const oldValue = this.animatedMetrics[key] ?? newValue;
         this.animatedMetrics[key] = newValue;
 
-        // Add animation class
-        el.classList.add('timeline-metric-animate');
-
-        // Animate the number change
         const duration = 300;
         const startTime = performance.now();
 
         const animate = (currentTime) => {
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / duration, 1);
-
-            // Ease out
             const easeProgress = 1 - Math.pow(1 - progress, 3);
             const currentValue = oldValue + (newValue - oldValue) * easeProgress;
 
@@ -463,8 +572,6 @@ class TimelineUI {
 
             if (progress < 1) {
                 requestAnimationFrame(animate);
-            } else {
-                el.classList.remove('timeline-metric-animate');
             }
         };
 
@@ -487,6 +594,13 @@ class TimelineUI {
     }
 
     /**
+     * Handle tick click
+     */
+    handleTickClick(index) {
+        this.player.seekTo(index);
+    }
+
+    /**
      * Handle slider change
      */
     handleSliderChange(value) {
@@ -498,26 +612,6 @@ class TimelineUI {
      */
     handleSpeedChange(value) {
         this.player.setSpeed(parseInt(value));
-    }
-
-    /**
-     * Get color based on value thresholds
-     */
-    getMetricColor(value, low, high) {
-        if (value <= low) return 'var(--success)';
-        if (value >= high) return 'var(--danger)';
-        return 'var(--warning)';
-    }
-
-    /**
-     * Format large numbers
-     */
-    formatNumber(n) {
-        if (n >= 1e12) return (n / 1e12).toFixed(1) + 'T';
-        if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B';
-        if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
-        if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
-        return n.toFixed(0);
     }
 }
 
