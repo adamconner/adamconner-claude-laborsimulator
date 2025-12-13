@@ -113,16 +113,6 @@
                 </div>
             </div>
 
-            <!-- AI Summary Settings -->
-            <div class="sidebar-section">
-                <h3>AI Analysis Settings</h3>
-                <div id="aiSettingsStatus">
-                    <p style="font-size: 0.875rem; color: var(--gray-400);">API key not configured</p>
-                </div>
-                <button class="btn btn-outline btn-block btn-sm" onclick="showAISettingsModal()">
-                    Configure Gemini API
-                </button>
-            </div>
         </aside>
 
         <!-- Main Content -->
@@ -148,6 +138,7 @@
                 <button class="nav-tab" onclick="showSection('sectors')">Sector Analysis</button>
                 <button class="nav-tab" onclick="showSection('sensitivity')">Sensitivity</button>
                 <button class="nav-tab" onclick="showSection('interventions')">Intervention Impact</button>
+                <button class="nav-tab" onclick="showSection('settings')">Settings</button>
             </nav>
 
             <!-- Current Snapshot Section -->
@@ -518,6 +509,156 @@
                         <div class="chart-container large">
                             <canvas id="interventionChart"></canvas>
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="settings-section" class="section">
+                <div class="card" style="margin-bottom: 24px;">
+                    <div class="card-header">
+                        <h3>API Settings</h3>
+                        <p style="font-size: 0.875rem; color: var(--gray-500); margin-top: 4px;">
+                            Configure API keys to enable live data fetching and AI-powered analysis
+                        </p>
+                    </div>
+
+                    <div style="margin-top: 20px;">
+                        <!-- BLS API Key -->
+                        <div style="background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 8px; padding: 20px; margin-bottom: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                                <div>
+                                    <h4 style="color: var(--gray-800); margin-bottom: 4px;">Bureau of Labor Statistics (BLS) API</h4>
+                                    <p style="font-size: 0.75rem; color: var(--gray-500);">
+                                        Access live employment, unemployment, and wage data
+                                    </p>
+                                </div>
+                                <span id="blsApiStatus" class="tag tag-low">Not Configured</span>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 12px;">
+                                <label style="color: var(--gray-700); font-size: 0.875rem;">API Key</label>
+                                <input type="password" id="blsApiKey" placeholder="Enter your BLS API key"
+                                       style="color: var(--gray-900); width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 6px;">
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <a href="https://www.bls.gov/developers/" target="_blank" style="font-size: 0.75rem; color: var(--primary);">
+                                    Get free API key from BLS
+                                </a>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn btn-sm btn-outline" onclick="clearApiKey('bls')">Clear</button>
+                                    <button class="btn btn-sm btn-primary" onclick="saveApiKey('bls')">Save Key</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- FRED API Key -->
+                        <div style="background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 8px; padding: 20px; margin-bottom: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                                <div>
+                                    <h4 style="color: var(--gray-800); margin-bottom: 4px;">Federal Reserve Economic Data (FRED) API</h4>
+                                    <p style="font-size: 0.75rem; color: var(--gray-500);">
+                                        Access GDP, interest rates, and macroeconomic indicators
+                                    </p>
+                                </div>
+                                <span id="fredApiStatus" class="tag tag-low">Not Configured</span>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 12px;">
+                                <label style="color: var(--gray-700); font-size: 0.875rem;">API Key</label>
+                                <input type="password" id="fredApiKey" placeholder="Enter your FRED API key"
+                                       style="color: var(--gray-900); width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 6px;">
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <a href="https://fred.stlouisfed.org/docs/api/api_key.html" target="_blank" style="font-size: 0.75rem; color: var(--primary);">
+                                    Get free API key from FRED
+                                </a>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn btn-sm btn-outline" onclick="clearApiKey('fred')">Clear</button>
+                                    <button class="btn btn-sm btn-primary" onclick="saveApiKey('fred')">Save Key</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Gemini API Key -->
+                        <div style="background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 8px; padding: 20px; margin-bottom: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                                <div>
+                                    <h4 style="color: var(--gray-800); margin-bottom: 4px;">Google Gemini AI API</h4>
+                                    <p style="font-size: 0.75rem; color: var(--gray-500);">
+                                        Enable AI-powered analysis and summaries of simulation results
+                                    </p>
+                                </div>
+                                <span id="geminiApiStatus" class="tag tag-low">Not Configured</span>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 12px;">
+                                <label style="color: var(--gray-700); font-size: 0.875rem;">API Key</label>
+                                <input type="password" id="geminiApiKeySettings" placeholder="Enter your Gemini API key"
+                                       style="color: var(--gray-900); width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 6px;">
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <a href="https://makersuite.google.com/app/apikey" target="_blank" style="font-size: 0.75rem; color: var(--primary);">
+                                    Get free API key from Google AI Studio
+                                </a>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn btn-sm btn-outline" onclick="clearApiKey('gemini')">Clear</button>
+                                    <button class="btn btn-sm btn-primary" onclick="saveApiKey('gemini')">Save Key</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Data Controls -->
+                <div class="card" style="margin-bottom: 24px;">
+                    <div class="card-header">
+                        <h3>Live Data Fetching</h3>
+                        <p style="font-size: 0.875rem; color: var(--gray-500); margin-top: 4px;">
+                            Fetch latest data from government APIs
+                        </p>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <div id="liveDataStatus" style="background: var(--gray-50); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                            <p style="color: var(--gray-600); font-size: 0.875rem;">
+                                <strong>Current Data Status:</strong> Using cached baseline data from late 2024
+                            </p>
+                            <p style="color: var(--gray-500); font-size: 0.75rem; margin-top: 8px;">
+                                Configure BLS and/or FRED API keys above to enable live data fetching.
+                            </p>
+                        </div>
+                        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                            <button class="btn btn-primary" onclick="fetchLiveData()" id="fetchLiveDataBtn" disabled>
+                                Fetch Live Data
+                            </button>
+                            <button class="btn btn-outline" onclick="resetToBaselineData()">
+                                Reset to Baseline Data
+                            </button>
+                        </div>
+                        <div id="fetchProgress" style="margin-top: 16px; display: none;">
+                            <div class="loading">
+                                <div class="spinner"></div>
+                                <span id="fetchProgressText">Fetching data...</span>
+                            </div>
+                        </div>
+                        <div id="fetchResults" style="margin-top: 16px;"></div>
+                    </div>
+                </div>
+
+                <!-- Data Storage Info -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Data Privacy & Storage</h3>
+                    </div>
+                    <div style="margin-top: 16px; color: var(--gray-600); font-size: 0.875rem; line-height: 1.6;">
+                        <p style="margin-bottom: 12px;">
+                            <strong>API Keys:</strong> All API keys are stored locally in your browser's localStorage.
+                            They are never sent to any server except the respective API providers (BLS, FRED, Google).
+                        </p>
+                        <p style="margin-bottom: 12px;">
+                            <strong>Simulations:</strong> Your saved simulations and settings are stored locally in your browser.
+                        </p>
+                        <p>
+                            <strong>Clearing Data:</strong> Use your browser's "Clear site data" feature to remove all stored data,
+                            or use the individual "Clear" buttons above to remove specific API keys.
+                        </p>
                     </div>
                 </div>
             </section>

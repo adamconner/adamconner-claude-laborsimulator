@@ -23,6 +23,13 @@ const DEFAULT_CONFIG = {
 // Storage key for saved simulations
 const STORAGE_KEY = 'ai_labor_simulator_saved_simulations';
 
+// Storage keys for API keys
+const API_KEYS_STORAGE = {
+    bls: 'ai_labor_sim_bls_api_key',
+    fred: 'ai_labor_sim_fred_api_key',
+    gemini: 'ai_labor_sim_gemini_api_key'
+};
+
 /**
  * Initialize the application
  */
@@ -55,6 +62,7 @@ async function initApp() {
         renderOccupationList();
         renderSensitivityOverview();
         await initializeRealMetrics();
+        initializeSettings();
 
         console.log('AI Labor Market Simulator initialized');
     } catch (error) {
@@ -2036,6 +2044,441 @@ function renderRealMetricsSources() {
     });
 
     container.innerHTML = html;
+}
+
+// ==========================================
+// Settings & API Key Functions
+// ==========================================
+
+/**
+ * Initialize settings page
+ */
+function initializeSettings() {
+    // Load saved API keys into fields
+    loadApiKeyFields();
+
+    // Update status badges
+    updateAllApiStatuses();
+
+    // Update fetch button state
+    updateFetchButtonState();
+}
+
+/**
+ * Load saved API keys into input fields
+ */
+function loadApiKeyFields() {
+    const blsKey = getApiKey('bls');
+    const fredKey = getApiKey('fred');
+    const geminiKey = getApiKey('gemini');
+
+    const blsInput = document.getElementById('blsApiKey');
+    const fredInput = document.getElementById('fredApiKey');
+    const geminiInput = document.getElementById('geminiApiKeySettings');
+
+    if (blsInput && blsKey) blsInput.value = blsKey;
+    if (fredInput && fredKey) fredInput.value = fredKey;
+    if (geminiInput && geminiKey) geminiInput.value = geminiKey;
+}
+
+/**
+ * Get API key from localStorage
+ */
+function getApiKey(service) {
+    const storageKey = API_KEYS_STORAGE[service];
+    if (!storageKey) return null;
+
+    try {
+        return localStorage.getItem(storageKey) || null;
+    } catch (error) {
+        console.error(`Error loading ${service} API key:`, error);
+        return null;
+    }
+}
+
+/**
+ * Save API key
+ */
+function saveApiKey(service) {
+    const inputMap = {
+        bls: 'blsApiKey',
+        fred: 'fredApiKey',
+        gemini: 'geminiApiKeySettings'
+    };
+
+    const inputId = inputMap[service];
+    const input = document.getElementById(inputId);
+
+    if (!input) {
+        alert('Error: Input field not found.');
+        return;
+    }
+
+    const key = input.value.trim();
+
+    if (!key) {
+        alert('Please enter an API key.');
+        return;
+    }
+
+    const storageKey = API_KEYS_STORAGE[service];
+
+    try {
+        localStorage.setItem(storageKey, key);
+
+        // Also update the aiSummaryService if it's the Gemini key
+        if (service === 'gemini' && typeof aiSummaryService !== 'undefined') {
+            aiSummaryService.setApiKey(key);
+        }
+
+        updateAllApiStatuses();
+        updateFetchButtonState();
+
+        const serviceNames = {
+            bls: 'BLS',
+            fred: 'FRED',
+            gemini: 'Gemini'
+        };
+
+        alert(`${serviceNames[service]} API key saved successfully!`);
+    } catch (error) {
+        console.error(`Error saving ${service} API key:`, error);
+        alert('Failed to save API key. Storage may be full.');
+    }
+}
+
+/**
+ * Clear API key
+ */
+function clearApiKey(service) {
+    if (!confirm(`Are you sure you want to remove the ${service.toUpperCase()} API key?`)) {
+        return;
+    }
+
+    const storageKey = API_KEYS_STORAGE[service];
+    const inputMap = {
+        bls: 'blsApiKey',
+        fred: 'fredApiKey',
+        gemini: 'geminiApiKeySettings'
+    };
+
+    try {
+        localStorage.removeItem(storageKey);
+
+        // Clear the input field
+        const input = document.getElementById(inputMap[service]);
+        if (input) input.value = '';
+
+        // Also clear from aiSummaryService if it's the Gemini key
+        if (service === 'gemini' && typeof aiSummaryService !== 'undefined') {
+            aiSummaryService.clearApiKey();
+        }
+
+        updateAllApiStatuses();
+        updateFetchButtonState();
+
+        alert('API key removed.');
+    } catch (error) {
+        console.error(`Error clearing ${service} API key:`, error);
+        alert('Failed to clear API key.');
+    }
+}
+
+/**
+ * Update all API status badges
+ */
+function updateAllApiStatuses() {
+    updateApiStatus('bls', 'blsApiStatus');
+    updateApiStatus('fred', 'fredApiStatus');
+    updateApiStatus('gemini', 'geminiApiStatus');
+
+    // Also update the sidebar AI settings status
+    updateAISettingsStatus();
+}
+
+/**
+ * Update a single API status badge
+ */
+function updateApiStatus(service, elementId) {
+    const statusElement = document.getElementById(elementId);
+    if (!statusElement) return;
+
+    const hasKey = !!getApiKey(service);
+
+    if (hasKey) {
+        statusElement.className = 'tag tag-medium';
+        statusElement.textContent = 'Configured';
+        statusElement.style.background = 'var(--secondary)';
+        statusElement.style.color = 'white';
+    } else {
+        statusElement.className = 'tag tag-low';
+        statusElement.textContent = 'Not Configured';
+        statusElement.style.background = '';
+        statusElement.style.color = '';
+    }
+}
+
+/**
+ * Update fetch button state based on available API keys
+ */
+function updateFetchButtonState() {
+    const fetchBtn = document.getElementById('fetchLiveDataBtn');
+    const statusDiv = document.getElementById('liveDataStatus');
+
+    const hasBlsKey = !!getApiKey('bls');
+    const hasFredKey = !!getApiKey('fred');
+    const hasAnyKey = hasBlsKey || hasFredKey;
+
+    if (fetchBtn) {
+        fetchBtn.disabled = !hasAnyKey;
+    }
+
+    if (statusDiv) {
+        if (hasAnyKey) {
+            const sources = [];
+            if (hasBlsKey) sources.push('BLS');
+            if (hasFredKey) sources.push('FRED');
+
+            statusDiv.innerHTML = `
+                <p style="color: var(--secondary); font-size: 0.875rem;">
+                    <strong>Ready to fetch live data</strong> from ${sources.join(' and ')}
+                </p>
+                <p style="color: var(--gray-500); font-size: 0.75rem; margin-top: 8px;">
+                    Click "Fetch Live Data" to update metrics with the latest available data.
+                </p>
+            `;
+        } else {
+            statusDiv.innerHTML = `
+                <p style="color: var(--gray-600); font-size: 0.875rem;">
+                    <strong>Current Data Status:</strong> Using cached baseline data from late 2024
+                </p>
+                <p style="color: var(--gray-500); font-size: 0.75rem; margin-top: 8px;">
+                    Configure BLS and/or FRED API keys above to enable live data fetching.
+                </p>
+            `;
+        }
+    }
+}
+
+/**
+ * Fetch live data from configured APIs
+ */
+async function fetchLiveData() {
+    const progressDiv = document.getElementById('fetchProgress');
+    const progressText = document.getElementById('fetchProgressText');
+    const resultsDiv = document.getElementById('fetchResults');
+    const fetchBtn = document.getElementById('fetchLiveDataBtn');
+
+    const blsKey = getApiKey('bls');
+    const fredKey = getApiKey('fred');
+
+    if (!blsKey && !fredKey) {
+        alert('Please configure at least one API key to fetch live data.');
+        return;
+    }
+
+    // Show progress
+    if (progressDiv) progressDiv.style.display = 'block';
+    if (fetchBtn) fetchBtn.disabled = true;
+    if (resultsDiv) resultsDiv.innerHTML = '';
+
+    const results = {
+        bls: { success: false, data: null, error: null },
+        fred: { success: false, data: null, error: null }
+    };
+
+    try {
+        // Fetch BLS data if key is available
+        if (blsKey) {
+            if (progressText) progressText.textContent = 'Fetching BLS data...';
+
+            try {
+                const currentYear = new Date().getFullYear();
+                const blsData = await dataService.fetchBLSData(
+                    [
+                        dataService.blsSeries.unemployment_rate,
+                        dataService.blsSeries.total_employment,
+                        dataService.blsSeries.labor_force_participation,
+                        dataService.blsSeries.average_hourly_earnings,
+                        dataService.blsSeries.job_openings
+                    ],
+                    currentYear - 1,
+                    currentYear,
+                    blsKey
+                );
+
+                results.bls.success = true;
+                results.bls.data = blsData;
+
+                // Update the metrics system with new BLS data
+                if (blsData && blsData.length > 0) {
+                    updateMetricsFromBLS(blsData);
+                }
+            } catch (error) {
+                results.bls.error = error.message;
+                console.error('BLS fetch error:', error);
+            }
+        }
+
+        // Fetch FRED data if key is available
+        if (fredKey) {
+            if (progressText) progressText.textContent = 'Fetching FRED data...';
+
+            try {
+                const fredData = await dataService.fetchFREDData(
+                    dataService.fredSeries.real_gdp_growth,
+                    fredKey
+                );
+
+                results.fred.success = true;
+                results.fred.data = fredData;
+            } catch (error) {
+                results.fred.error = error.message;
+                console.error('FRED fetch error:', error);
+            }
+        }
+
+        // Display results
+        displayFetchResults(results);
+
+    } catch (error) {
+        console.error('Fetch error:', error);
+        if (resultsDiv) {
+            resultsDiv.innerHTML = `
+                <div style="background: var(--danger); color: white; padding: 12px; border-radius: 6px;">
+                    <strong>Error:</strong> ${error.message}
+                </div>
+            `;
+        }
+    } finally {
+        if (progressDiv) progressDiv.style.display = 'none';
+        if (fetchBtn) fetchBtn.disabled = false;
+    }
+}
+
+/**
+ * Update metrics from BLS API response
+ */
+function updateMetricsFromBLS(blsData) {
+    if (!blsData || typeof realMetricsSystem === 'undefined') return;
+
+    const seriesMap = {
+        'LNS14000000': 'unemployment_rate',
+        'CES0000000001': 'total_employment',
+        'LNS11300000': 'labor_force_participation',
+        'CES0500000003': 'average_hourly_earnings',
+        'JTS000000000000000JOL': 'job_openings'
+    };
+
+    blsData.forEach(series => {
+        const metricId = seriesMap[series.seriesID];
+        if (metricId && series.data && series.data.length > 0) {
+            // Get the most recent value
+            const latestData = series.data[0];
+            const value = parseFloat(latestData.value);
+
+            if (!isNaN(value)) {
+                // For employment figures, multiply by 1000 (BLS reports in thousands)
+                if (metricId === 'total_employment' || metricId === 'job_openings') {
+                    realMetricsSystem.setMetricValue(metricId, value * 1000);
+                } else {
+                    realMetricsSystem.setMetricValue(metricId, value);
+                }
+            }
+        }
+    });
+
+    // Re-render the metrics display
+    renderRealMetrics();
+}
+
+/**
+ * Display fetch results
+ */
+function displayFetchResults(results) {
+    const resultsDiv = document.getElementById('fetchResults');
+    if (!resultsDiv) return;
+
+    let html = '';
+
+    if (results.bls.success || results.fred.success) {
+        html += `
+            <div style="background: var(--secondary); color: white; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+                <strong>Data updated successfully!</strong>
+            </div>
+        `;
+    }
+
+    if (results.bls.success) {
+        const seriesCount = results.bls.data ? results.bls.data.length : 0;
+        html += `
+            <div style="background: var(--gray-50); border: 1px solid var(--gray-200); padding: 12px; border-radius: 6px; margin-bottom: 8px;">
+                <strong style="color: var(--gray-800);">BLS Data:</strong>
+                <span style="color: var(--secondary);"> ${seriesCount} series updated</span>
+            </div>
+        `;
+    } else if (results.bls.error) {
+        html += `
+            <div style="background: var(--gray-50); border: 1px solid var(--danger); padding: 12px; border-radius: 6px; margin-bottom: 8px;">
+                <strong style="color: var(--danger);">BLS Error:</strong>
+                <span style="color: var(--gray-600);"> ${results.bls.error}</span>
+            </div>
+        `;
+    }
+
+    if (results.fred.success) {
+        html += `
+            <div style="background: var(--gray-50); border: 1px solid var(--gray-200); padding: 12px; border-radius: 6px; margin-bottom: 8px;">
+                <strong style="color: var(--gray-800);">FRED Data:</strong>
+                <span style="color: var(--secondary);"> Updated successfully</span>
+            </div>
+        `;
+    } else if (results.fred.error) {
+        html += `
+            <div style="background: var(--gray-50); border: 1px solid var(--danger); padding: 12px; border-radius: 6px; margin-bottom: 8px;">
+                <strong style="color: var(--danger);">FRED Error:</strong>
+                <span style="color: var(--gray-600);"> ${results.fred.error}</span>
+            </div>
+        `;
+    }
+
+    html += `
+        <p style="font-size: 0.75rem; color: var(--gray-500); margin-top: 12px;">
+            Last updated: ${new Date().toLocaleString()}
+        </p>
+    `;
+
+    resultsDiv.innerHTML = html;
+}
+
+/**
+ * Reset to baseline data
+ */
+function resetToBaselineData() {
+    if (!confirm('Reset all metrics to baseline values? This will undo any live data updates or manual adjustments.')) {
+        return;
+    }
+
+    if (typeof realMetricsSystem !== 'undefined') {
+        realMetricsSystem.resetAllMetrics();
+        renderRealMetrics();
+    }
+
+    if (typeof hypotheticalIndicators !== 'undefined') {
+        hypotheticalIndicators.resetAllIndicators();
+        renderHypotheticalIndicators();
+    }
+
+    const resultsDiv = document.getElementById('fetchResults');
+    if (resultsDiv) {
+        resultsDiv.innerHTML = `
+            <div style="background: var(--secondary); color: white; padding: 12px; border-radius: 6px;">
+                Metrics reset to baseline values.
+            </div>
+        `;
+    }
+
+    updateFetchButtonState();
 }
 
 // Initialize on page load
