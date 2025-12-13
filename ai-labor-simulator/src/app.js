@@ -362,11 +362,11 @@ async function runSimulation() {
         </div>
     `;
 
-    // Switch to simulation tab
+    // Switch to simulation tab (index 3)
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.getElementById('simulation-section').classList.add('active');
     document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.nav-tab')[2].classList.add('active');
+    document.querySelectorAll('.nav-tab')[3].classList.add('active');
 
     try {
         // Create and run scenario
@@ -895,11 +895,11 @@ function loadSavedSimulation(id) {
     currentResults = simulation.results;
     displaySimulationResults(currentResults);
 
-    // Switch to simulation tab
+    // Switch to simulation tab (index 3)
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.getElementById('simulation-section').classList.add('active');
     document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.nav-tab')[2].classList.add('active');
+    document.querySelectorAll('.nav-tab')[3].classList.add('active');
 
     // Close modal if open
     hideSavedSimulationsModal();
