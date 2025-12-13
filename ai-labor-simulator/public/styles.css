@@ -744,3 +744,65 @@ body {
 .main-content {
     background: var(--gray-100) !important;
 }
+
+/* Scenario Comparison Styles */
+.comparison-container {
+    animation: fadeIn 0.3s ease;
+}
+
+.comparison-metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.comparison-metrics .metric-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.comparison-metrics .metric-row:last-child {
+    border-bottom: none;
+}
+
+.comparison-metrics .metric-label {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+}
+
+.comparison-metrics .metric-value {
+    font-weight: 600;
+    color: var(--gray-900);
+}
+
+.comparison-table th,
+.comparison-table td {
+    text-align: center;
+    padding: 10px 12px;
+}
+
+.comparison-table th:first-child,
+.comparison-table td:first-child {
+    text-align: left;
+}
+
+.comparison-table tbody tr:nth-child(even) {
+    background: var(--gray-50);
+}
+
+.comparison-table tbody tr:hover {
+    background: rgba(59, 130, 246, 0.05);
+}
+
+/* Disabled button styles */
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn:disabled:hover {
+    opacity: 0.5;
+}

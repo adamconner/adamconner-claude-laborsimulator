@@ -142,7 +142,10 @@
                 <button class="nav-tab active" onclick="showSection('snapshot')">Current Snapshot</button>
                 <button class="nav-tab" onclick="showSection('indicators')">AI Indicators</button>
                 <button class="nav-tab" onclick="showSection('simulation')">Simulation Results</button>
+                <button class="nav-tab" onclick="showSection('comparison')">Compare Scenarios</button>
+                <button class="nav-tab" onclick="showSection('occupations')">Occupations</button>
                 <button class="nav-tab" onclick="showSection('sectors')">Sector Analysis</button>
+                <button class="nav-tab" onclick="showSection('sensitivity')">Sensitivity</button>
                 <button class="nav-tab" onclick="showSection('interventions')">Intervention Impact</button>
             </nav>
 
@@ -351,6 +354,54 @@
                 </div>
             </section>
 
+            <!-- Scenario Comparison Section -->
+            <section id="comparison-section" class="section">
+                <div class="card" style="margin-bottom: 24px;">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h3>Scenario Comparison</h3>
+                            <p style="font-size: 0.875rem; color: var(--gray-500); margin-top: 4px;">
+                                Compare up to 3 scenarios side-by-side to analyze different outcomes
+                            </p>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <span id="comparisonCount" class="tag tag-medium">0/3 scenarios</span>
+                            <button class="btn btn-sm btn-outline" onclick="clearAllComparisons()" id="clearComparisonBtn" style="display: none;">
+                                Clear All
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div id="comparison-content">
+                    <div class="card" style="text-align: center; padding: 60px;">
+                        <h3 style="margin-bottom: 16px;">No Scenarios to Compare</h3>
+                        <p style="color: var(--gray-500); margin-bottom: 24px;">
+                            Run simulations and click "Add to Comparison" to compare scenarios side-by-side.
+                        </p>
+                        <button class="btn btn-primary" onclick="showSection('simulation'); document.querySelectorAll('.nav-tab')[2].click();">
+                            Run a Simulation
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Occupations Drill-Down Section -->
+            <section id="occupations-section" class="section">
+                <div class="card" style="margin-bottom: 24px;">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h3>Occupation-Level AI Impact Analysis</h3>
+                            <p style="font-size: 0.875rem; color: var(--gray-500); margin-top: 4px;">
+                                Explore how AI may impact specific occupations based on O*NET task analysis
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div id="occupation-content">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </section>
+
             <!-- Sector Analysis Section -->
             <section id="sectors-section" class="section">
                 <div class="card">
@@ -390,6 +441,13 @@
                             <!-- Populated by JavaScript -->
                         </div>
                     </div>
+                </div>
+            </section>
+
+            <!-- Sensitivity Analysis Section -->
+            <section id="sensitivity-section" class="section">
+                <div id="sensitivity-content">
+                    <!-- Populated by JavaScript -->
                 </div>
             </section>
 
@@ -608,6 +666,10 @@
     <script src="src/utils/calculations.js"></script>
     <script src="src/components/visualizations.js"></script>
     <script src="src/services/ai-summary.js"></script>
+    <script src="src/features/scenario-comparison.js"></script>
+    <script src="src/features/occupation-drilldown.js"></script>
+    <script src="src/features/pdf-export.js"></script>
+    <script src="src/features/sensitivity-analysis.js"></script>
     <script src="src/app.js"></script>
 </body>
 </html>

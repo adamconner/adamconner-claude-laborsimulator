@@ -52,6 +52,8 @@ async function initApp() {
         updateSavedSimulationsList();
         updateAISettingsStatus();
         renderHypotheticalIndicators();
+        renderOccupationList();
+        renderSensitivityOverview();
 
         console.log('AI Labor Market Simulator initialized');
     } catch (error) {
@@ -389,17 +391,32 @@ function displaySimulationResults(results) {
 
     // Check if AI summary is available
     const hasApiKey = typeof aiSummaryService !== 'undefined' && aiSummaryService.hasApiKey();
+
+    // Comparison button state
+    const comparisonAvailable = typeof scenarioComparison !== 'undefined';
+    const canAddToComparison = comparisonAvailable && scenarioComparison.canAddMore();
+    const comparisonCount = comparisonAvailable ? scenarioComparison.getCount() : 0;
+
+    const comparisonButton = comparisonAvailable ? `
+        <button id="addToComparisonBtn" class="btn btn-success" onclick="addToComparison()" ${!canAddToComparison ? 'disabled' : ''}>
+            ${canAddToComparison ? `Add to Comparison (${comparisonCount}/3)` : 'Comparison Full (3/3)'}
+        </button>
+    ` : '';
+
     const aiSummarySection = `
         <div class="card" id="aiSummaryCard" style="margin-bottom: 24px; border-left: 4px solid var(--primary);">
             <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
                 <h3 style="display: flex; align-items: center; gap: 8px;">
                     <span style="font-size: 1.25rem;">&#129302;</span> AI Analysis
                 </h3>
-                ${hasApiKey ? `
-                    <button class="btn btn-sm btn-outline" onclick="regenerateAISummary()" id="regenerateBtn">
-                        Regenerate
-                    </button>
-                ` : ''}
+                <div style="display: flex; gap: 8px;">
+                    ${comparisonButton}
+                    ${hasApiKey ? `
+                        <button class="btn btn-sm btn-outline" onclick="regenerateAISummary()" id="regenerateBtn">
+                            Regenerate
+                        </button>
+                    ` : ''}
+                </div>
             </div>
             <div id="aiSummaryContent" style="line-height: 1.7;">
                 ${hasApiKey ? `
@@ -677,9 +694,43 @@ function removeIntervention(id) {
 }
 
 /**
- * Export results
+ * Export results - show options modal
  */
 function exportResults() {
+    if (!currentResults) {
+        alert('No simulation results to export. Please run a simulation first.');
+        return;
+    }
+
+    const choice = confirm('Export as PDF report?\n\nClick OK for PDF report\nClick Cancel for JSON data export');
+
+    if (choice) {
+        exportAsPDF();
+    } else {
+        exportAsJSON();
+    }
+}
+
+/**
+ * Export results as PDF report
+ */
+function exportAsPDF() {
+    if (!currentResults) {
+        alert('No simulation results to export. Please run a simulation first.');
+        return;
+    }
+
+    if (typeof pdfExporter !== 'undefined') {
+        pdfExporter.generateReport(currentResults);
+    } else {
+        alert('PDF export not available.');
+    }
+}
+
+/**
+ * Export results as JSON
+ */
+function exportAsJSON() {
     if (!currentResults) {
         alert('No simulation results to export. Please run a simulation first.');
         return;
@@ -1480,6 +1531,228 @@ async function generateAISummary(results) {
 function regenerateAISummary() {
     if (currentResults) {
         generateAISummary(currentResults);
+    }
+}
+
+// ==========================================
+// Scenario Comparison Functions
+// ==========================================
+
+/**
+ * Render the comparison view
+ */
+function renderComparisonView() {
+    const contentDiv = document.getElementById('comparison-content');
+    const countSpan = document.getElementById('comparisonCount');
+    const clearBtn = document.getElementById('clearComparisonBtn');
+
+    if (!contentDiv || typeof scenarioComparison === 'undefined') return;
+
+    const count = scenarioComparison.getCount();
+
+    // Update count badge
+    if (countSpan) {
+        countSpan.textContent = `${count}/3 scenarios`;
+    }
+
+    // Show/hide clear button
+    if (clearBtn) {
+        clearBtn.style.display = count > 0 ? 'inline-block' : 'none';
+    }
+
+    // Render comparison HTML
+    contentDiv.innerHTML = scenarioComparison.generateComparisonHTML();
+
+    // Render charts if we have 2+ scenarios
+    if (count >= 2) {
+        setTimeout(() => {
+            scenarioComparison.renderCharts();
+        }, 100);
+    }
+}
+
+/**
+ * Add current simulation to comparison
+ */
+function addToComparison() {
+    if (!currentResults) {
+        alert('No simulation results to add. Please run a simulation first.');
+        return;
+    }
+
+    if (typeof scenarioComparison === 'undefined') {
+        alert('Comparison feature not available.');
+        return;
+    }
+
+    const config = {
+        targetYear: currentResults.scenario.timeframe.end_year,
+        targetUR: currentResults.scenario.targets.unemployment_rate,
+        aiAdoption: currentResults.scenario.targets.ai_adoption_rate,
+        automationPace: currentResults.scenario.targets.automation_pace,
+        interventions: currentResults.scenario.interventions
+    };
+
+    const name = currentResults.scenario.name || `Scenario ${scenarioComparison.getCount() + 1}`;
+
+    const result = scenarioComparison.addScenario(name, config, currentResults);
+
+    if (result.success) {
+        // Update the comparison badge in the add button
+        updateComparisonButton();
+
+        alert(`"${name}" added to comparison! Go to "Compare Scenarios" tab to view.`);
+    } else {
+        alert(result.message);
+    }
+}
+
+/**
+ * Update the comparison button badge
+ */
+function updateComparisonButton() {
+    const btn = document.getElementById('addToComparisonBtn');
+    if (btn && typeof scenarioComparison !== 'undefined') {
+        const count = scenarioComparison.getCount();
+        const canAdd = scenarioComparison.canAddMore();
+
+        if (!canAdd) {
+            btn.disabled = true;
+            btn.innerHTML = 'Comparison Full (3/3)';
+        } else {
+            btn.disabled = false;
+            btn.innerHTML = `Add to Comparison (${count}/3)`;
+        }
+    }
+}
+
+/**
+ * Clear all comparisons
+ */
+function clearAllComparisons() {
+    if (!confirm('Are you sure you want to clear all scenarios from comparison?')) {
+        return;
+    }
+
+    if (typeof scenarioComparison !== 'undefined') {
+        scenarioComparison.clearAll();
+        renderComparisonView();
+        updateComparisonButton();
+    }
+}
+
+/**
+ * Remove a scenario from comparison (called from comparison view)
+ */
+function removeFromComparison(id) {
+    if (typeof scenarioComparison !== 'undefined') {
+        scenarioComparison.removeScenario(id);
+        renderComparisonView();
+        updateComparisonButton();
+    }
+}
+
+// ==========================================
+// Occupation Drill-Down Functions
+// ==========================================
+
+/**
+ * Render occupation list
+ */
+function renderOccupationList() {
+    const contentDiv = document.getElementById('occupation-content');
+    if (!contentDiv || typeof occupationDrilldown === 'undefined') return;
+
+    contentDiv.innerHTML = occupationDrilldown.generateOccupationListHTML();
+}
+
+/**
+ * Show occupation details
+ */
+function showOccupationDetails(occupationId) {
+    const contentDiv = document.getElementById('occupation-content');
+    if (!contentDiv || typeof occupationDrilldown === 'undefined') return;
+
+    // Get current scenario parameters
+    const aiAdoptionRate = parseInt(document.getElementById('aiAdoption').value) || 70;
+    const targetYear = parseInt(document.getElementById('targetYear').value) || 2029;
+
+    contentDiv.innerHTML = occupationDrilldown.generateDetailedViewHTML(occupationId, aiAdoptionRate, targetYear);
+}
+
+/**
+ * Hide occupation details and return to list
+ */
+function hideOccupationDetails() {
+    renderOccupationList();
+}
+
+// ==========================================
+// Sensitivity Analysis Functions
+// ==========================================
+
+/**
+ * Render sensitivity analysis overview
+ */
+function renderSensitivityOverview() {
+    const contentDiv = document.getElementById('sensitivity-content');
+    if (!contentDiv || typeof sensitivityAnalysis === 'undefined') return;
+
+    contentDiv.innerHTML = sensitivityAnalysis.generateOverviewHTML();
+}
+
+/**
+ * Run sensitivity analysis for a specific parameter
+ */
+async function runParameterSensitivity(parameterId) {
+    const resultsDiv = document.getElementById('sensitivity-results');
+    if (!resultsDiv || typeof sensitivityAnalysis === 'undefined') return;
+
+    // Show loading state
+    resultsDiv.innerHTML = `
+        <div class="card" style="text-align: center; padding: 40px;">
+            <div class="loading">
+                <div class="spinner"></div>
+                <span>Running sensitivity analysis...</span>
+            </div>
+            <p style="color: var(--gray-500); margin-top: 16px; font-size: 0.875rem;">
+                This may take a moment as multiple simulations are run.
+            </p>
+        </div>
+    `;
+
+    try {
+        // Get current configuration
+        const baseConfig = {
+            name: 'Sensitivity Analysis',
+            end_year: parseInt(document.getElementById('targetYear').value),
+            target_unemployment: parseFloat(document.getElementById('targetUR').value),
+            ai_adoption_rate: parseInt(document.getElementById('aiAdoption').value),
+            automation_pace: document.getElementById('automationPace').value,
+            adoption_curve: document.getElementById('adoptionCurve').value
+        };
+
+        // Run analysis
+        const analysisResults = await sensitivityAnalysis.runAnalysis(
+            parameterId,
+            simulationEngine,
+            baseConfig
+        );
+
+        // Display results
+        resultsDiv.innerHTML = sensitivityAnalysis.generateAnalysisHTML(analysisResults);
+
+    } catch (error) {
+        console.error('Sensitivity analysis error:', error);
+        resultsDiv.innerHTML = `
+            <div class="card" style="text-align: center; padding: 40px; color: var(--danger);">
+                <h3>Analysis Error</h3>
+                <p>${error.message}</p>
+                <button class="btn btn-outline" onclick="renderSensitivityOverview()" style="margin-top: 16px;">
+                    Try Again
+                </button>
+            </div>
+        `;
     }
 }
 
