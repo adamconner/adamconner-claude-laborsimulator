@@ -168,6 +168,93 @@
     color: var(--text-primary);
 }
 
+/* Dark mode sidebar - use explicit dark background */
+[data-theme="dark"] .sidebar {
+    background: #1e293b;
+    color: #f1f5f9;
+}
+
+[data-theme="dark"] .sidebar-header {
+    border-bottom-color: #334155;
+}
+
+[data-theme="dark"] .sidebar-section h3 {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .sidebar .form-group label {
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .sidebar input,
+[data-theme="dark"] .sidebar select {
+    background: #334155;
+    border-color: #475569;
+    color: #f1f5f9;
+}
+
+/* Dark mode intervention cards */
+[data-theme="dark"] .intervention-card {
+    background: #334155;
+}
+
+[data-theme="dark"] .intervention-card .name {
+    color: #f1f5f9;
+}
+
+[data-theme="dark"] .intervention-card .toggle {
+    background: #475569;
+}
+
+[data-theme="dark"] .intervention-card .params {
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .intervention-card .btn-sm {
+    border-color: #475569;
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .intervention-card .btn-sm:hover {
+    background: #475569;
+}
+
+/* Dark mode preset buttons */
+[data-theme="dark"] .preset-btn {
+    background: #334155;
+    border-color: #475569;
+}
+
+[data-theme="dark"] .preset-btn:hover {
+    background: #475569;
+    border-color: #64748b;
+}
+
+[data-theme="dark"] .preset-btn .title {
+    color: #f1f5f9;
+}
+
+[data-theme="dark"] .preset-btn .desc {
+    color: #94a3b8;
+}
+
+/* Dark mode intervention modal */
+[data-theme="dark"] #interventionModal > div {
+    background: #1e293b;
+    color: #f1f5f9;
+}
+
+[data-theme="dark"] #interventionModal label {
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] #interventionModal select,
+[data-theme="dark"] #interventionModal input {
+    background: #334155;
+    border-color: #475569;
+    color: #f1f5f9;
+}
+
 /* Dark mode toggle button */
 .theme-toggle {
     background: transparent;
@@ -654,6 +741,47 @@ input[type="range"]::-webkit-slider-thumb {
 
 .intervention-card .toggle.active::after {
     transform: translateX(16px);
+}
+
+.intervention-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.intervention-card .category {
+    font-size: 0.75rem;
+    color: var(--gray-400);
+    text-transform: capitalize;
+}
+
+.intervention-card .remove-btn {
+    padding: 4px 8px;
+    background: var(--gray-600);
+    border: none;
+    font-size: 0.75rem;
+}
+
+[data-theme="dark"] .intervention-card .category {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .intervention-card .remove-btn {
+    background: #475569;
+    color: #f1f5f9;
+}
+
+[data-theme="dark"] .intervention-card .remove-btn:hover {
+    background: #64748b;
+}
+
+.no-interventions-message {
+    font-size: 0.875rem;
+    color: var(--gray-400);
+}
+
+[data-theme="dark"] .no-interventions-message {
+    color: #94a3b8;
 }
 
 /* Scenario Presets */

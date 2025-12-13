@@ -750,7 +750,7 @@ function updateInterventionsList() {
     const interventions = interventionSystem.interventions;
 
     if (interventions.length === 0) {
-        container.innerHTML = '<p style="font-size: 0.875rem; color: var(--gray-400);">No interventions added</p>';
+        container.innerHTML = '<p class="no-interventions-message">No interventions added</p>';
         return;
     }
 
@@ -763,10 +763,9 @@ function updateInterventionsList() {
                     <div class="toggle ${intervention.active ? 'active' : ''}"
                          onclick="toggleIntervention('${intervention.id}')"></div>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 0.75rem; color: var(--gray-400);">${intervention.category.replace('_', ' ')}</span>
-                    <button class="btn btn-sm" style="padding: 4px 8px; background: var(--gray-600);"
-                            onclick="removeIntervention('${intervention.id}')">Remove</button>
+                <div class="intervention-card-footer">
+                    <span class="category">${intervention.category.replace('_', ' ')}</span>
+                    <button class="btn btn-sm remove-btn" onclick="removeIntervention('${intervention.id}')">Remove</button>
                 </div>
             </div>
         `;
