@@ -148,6 +148,9 @@
                     <button class="btn btn-success" onclick="saveSimulation()">Save Simulation</button>
                     <button class="btn btn-primary" onclick="shareSimulation()" id="shareBtn" style="display: none;">Share Publicly</button>
                     <button class="btn btn-outline" onclick="exportResults()">Export Results</button>
+                    <button class="btn btn-outline" onclick="showHistoryModal()" id="historyBtn" title="View simulation history">
+                        <span>📜</span> History
+                    </button>
                     <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle" title="Toggle dark mode">
                         <span id="themeIcon">🌙</span>
                     </button>
@@ -896,6 +899,26 @@
         </div>
     </div>
 
+    <!-- Simulation History Modal -->
+    <div id="historyModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: var(--bg-card, white); border-radius: 8px; padding: 24px; max-width: 700px; width: 95%; max-height: 85vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 style="color: var(--text-primary, var(--gray-800));">Simulation History</h3>
+                <button onclick="hideHistoryModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary, var(--gray-500));">&times;</button>
+            </div>
+            <p style="font-size: 0.875rem; color: var(--text-muted, var(--gray-500)); margin-bottom: 16px;">
+                Your recent simulation runs are saved locally. Click on any to reload it.
+            </p>
+            <div id="historyList">
+                <!-- History items will be inserted here -->
+            </div>
+            <div style="display: flex; gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color, var(--gray-200));">
+                <button class="btn btn-secondary" onclick="hideHistoryModal()">Close</button>
+                <button class="btn btn-danger" onclick="clearAllHistory()" style="margin-left: auto;">Clear All History</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="src/data/economic-data.js"></script>
     <script src="src/models/indicators.js"></script>
@@ -907,6 +930,7 @@
     <script src="src/components/visualizations.js"></script>
     <script src="src/services/ai-summary.js"></script>
     <script src="src/services/simulation-sharing.js"></script>
+    <script src="src/services/simulation-history.js"></script>
     <script src="src/features/scenario-comparison.js"></script>
     <script src="src/features/occupation-drilldown.js"></script>
     <script src="src/features/pdf-export.js"></script>

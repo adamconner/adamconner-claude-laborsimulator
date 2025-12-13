@@ -384,6 +384,11 @@ async function runSimulation() {
         // Display results
         displaySimulationResults(results);
 
+        // Save to history
+        if (typeof simulationHistory !== 'undefined') {
+            simulationHistory.save(results);
+        }
+
         // Show share button
         showShareButton();
     } catch (error) {
@@ -3083,6 +3088,157 @@ document.addEventListener('keydown', (e) => {
         closeMobileMenu();
     }
 });
+
+// ==========================================
+// Simulation History Functions
+// ==========================================
+
+/**
+ * Show history modal
+ */
+function showHistoryModal() {
+    const modal = document.getElementById('historyModal');
+    modal.style.display = 'flex';
+    renderHistoryList();
+}
+
+/**
+ * Hide history modal
+ */
+function hideHistoryModal() {
+    document.getElementById('historyModal').style.display = 'none';
+}
+
+/**
+ * Render history list in modal
+ */
+function renderHistoryList() {
+    const container = document.getElementById('historyList');
+    const history = simulationHistory.getAll();
+
+    if (history.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: var(--text-muted, var(--gray-500));">
+                <p style="font-size: 2rem; margin-bottom: 8px;">📭</p>
+                <p>No simulation history yet.</p>
+                <p style="font-size: 0.875rem;">Run a simulation to start building your history.</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = history.map(item => `
+        <div class="history-item" style="background: var(--gray-50, #f9fafb); border-radius: 8px; padding: 16px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; border: 1px solid transparent;"
+             onmouseover="this.style.borderColor='var(--primary)'"
+             onmouseout="this.style.borderColor='transparent'"
+             onclick="loadFromHistory(${item.id})">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                <div>
+                    <h4 style="font-size: 1rem; font-weight: 600; color: var(--text-primary, var(--gray-800)); margin-bottom: 4px;">
+                        ${item.name}
+                    </h4>
+                    <span style="font-size: 0.75rem; color: var(--text-muted, var(--gray-500));">
+                        ${simulationHistory.formatTimestamp(item.timestamp)}
+                    </span>
+                </div>
+                <button onclick="event.stopPropagation(); deleteFromHistory(${item.id})"
+                        style="background: none; border: none; color: var(--danger); cursor: pointer; padding: 4px;"
+                        title="Delete this simulation">
+                    🗑️
+                </button>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; font-size: 0.875rem;">
+                <div>
+                    <div style="color: var(--text-muted, var(--gray-500)); font-size: 0.7rem; text-transform: uppercase;">Timeframe</div>
+                    <div style="font-weight: 500; color: var(--text-secondary, var(--gray-700));">${item.summary.timeframe}</div>
+                </div>
+                <div>
+                    <div style="color: var(--text-muted, var(--gray-500)); font-size: 0.7rem; text-transform: uppercase;">Final Unemp.</div>
+                    <div style="font-weight: 500; color: var(--danger);">${item.summary.finalUnemployment?.toFixed(1) || 'N/A'}%</div>
+                </div>
+                <div>
+                    <div style="color: var(--text-muted, var(--gray-500)); font-size: 0.7rem; text-transform: uppercase;">Jobs Lost</div>
+                    <div style="font-weight: 500; color: var(--danger);">${simulationHistory.formatNumber(item.summary.jobsDisplaced)}</div>
+                </div>
+                <div>
+                    <div style="color: var(--text-muted, var(--gray-500)); font-size: 0.7rem; text-transform: uppercase;">Jobs Created</div>
+                    <div style="font-weight: 500; color: var(--secondary);">${simulationHistory.formatNumber(item.summary.jobsCreated)}</div>
+                </div>
+            </div>
+            <div style="margin-top: 8px; font-size: 0.75rem; color: var(--text-muted, var(--gray-500));">
+                ${item.summary.adoptionCurve.replace('_', '-')} curve • ${item.summary.aiAdoption}% AI adoption • ${item.summary.interventions} intervention${item.summary.interventions !== 1 ? 's' : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+/**
+ * Load simulation from history
+ */
+function loadFromHistory(id) {
+    const item = simulationHistory.get(id);
+    if (!item) {
+        alert('Simulation not found in history');
+        return;
+    }
+
+    // Load into current results
+    currentResults = {
+        scenario: item.scenario,
+        results: item.results,
+        summary: item.summaryData
+    };
+
+    // Update UI controls if possible
+    if (item.scenario) {
+        const endYear = document.getElementById('endYear');
+        const targetUR = document.getElementById('targetUR');
+        const aiAdoptionRate = document.getElementById('aiAdoptionRate');
+        const automationPace = document.getElementById('automationPace');
+        const adoptionCurve = document.getElementById('adoptionCurve');
+
+        if (endYear) endYear.value = item.scenario.timeframe?.end_year || 2030;
+        if (targetUR) targetUR.value = item.scenario.targets?.unemployment_rate || 10;
+        if (aiAdoptionRate) aiAdoptionRate.value = item.scenario.targets?.ai_adoption_rate || 50;
+        if (automationPace) automationPace.value = item.scenario.targets?.automation_pace || 'moderate';
+        if (adoptionCurve) adoptionCurve.value = item.scenario.ai_parameters?.adoption_curve || 's_curve';
+    }
+
+    // Display results
+    displaySimulationResults(currentResults);
+
+    // Show share button
+    showShareButton();
+
+    // Switch to simulation tab
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById('simulation-section').classList.add('active');
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-tab')[3].classList.add('active');
+
+    // Hide modal
+    hideHistoryModal();
+}
+
+/**
+ * Delete simulation from history
+ */
+function deleteFromHistory(id) {
+    if (confirm('Delete this simulation from history?')) {
+        simulationHistory.delete(id);
+        renderHistoryList();
+    }
+}
+
+/**
+ * Clear all history
+ */
+function clearAllHistory() {
+    if (confirm('Clear all simulation history? This cannot be undone.')) {
+        simulationHistory.clearAll();
+        renderHistoryList();
+    }
+}
 
 // ==========================================
 // Theme Toggle Functions
