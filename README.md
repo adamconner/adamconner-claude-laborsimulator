@@ -2,6 +2,22 @@
 
 An interactive tool to simulate and analyze the potential impact of AI on labor markets using real economic data from government sources.
 
+<p align="center">
+  <a href="https://adamconner.github.io/adamconner-claude-laborsimulator/ai-labor-simulator/">
+    <img src="https://img.shields.io/badge/Launch%20Simulator-Click%20Here-blue?style=for-the-badge&logo=rocket" alt="Launch Simulator">
+  </a>
+  &nbsp;&nbsp;
+  <a href="mailto:your-email@example.com">
+    <img src="https://img.shields.io/badge/Contact%20Me-Email-green?style=for-the-badge&logo=gmail" alt="Contact Me">
+  </a>
+</p>
+
+---
+
+**[Launch the AI Labor Market Simulator](https://adamconner.github.io/adamconner-claude-laborsimulator/ai-labor-simulator/)**
+
+---
+
 ## Features
 
 ### 1. Real Economic Data Integration
