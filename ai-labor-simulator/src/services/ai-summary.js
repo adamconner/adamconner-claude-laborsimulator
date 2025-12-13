@@ -60,20 +60,19 @@ LABOR MARKET RESULTS:
 - Starting Unemployment: ${summary.labor_market_changes.unemployment_rate.initial}%
 - Final Unemployment: ${summary.labor_market_changes.unemployment_rate.final}%
 - Unemployment Change: ${summary.labor_market_changes.unemployment_rate.change}%
-- Starting Employment: ${(summary.labor_market_changes.employment.initial / 1e6).toFixed(1)} million
-- Final Employment: ${(summary.labor_market_changes.employment.final / 1e6).toFixed(1)} million
-- Net Employment Change: ${(summary.labor_market_changes.employment.change / 1e6).toFixed(2)} million
+- Starting Employment: ${(summary.labor_market_changes.total_employment.initial / 1e6).toFixed(1)} million
+- Final Employment: ${(summary.labor_market_changes.total_employment.final / 1e6).toFixed(1)} million
+- Net Employment Change: ${(summary.labor_market_changes.total_employment.change / 1e6).toFixed(2)} million
 
 AI IMPACT:
 - Final AI Adoption: ${summary.ai_impact.ai_adoption.final}%
-- Jobs Displaced by AI: ${(summary.ai_impact.jobs_displaced / 1e6).toFixed(2)} million
-- New Jobs Created by AI: ${(summary.ai_impact.jobs_created / 1e6).toFixed(2)} million
+- Jobs Displaced by AI: ${(summary.ai_impact.cumulative_displacement / 1e6).toFixed(2)} million
+- New Jobs Created by AI: ${(summary.ai_impact.cumulative_new_jobs / 1e6).toFixed(2)} million
 - Net AI Job Impact: ${(summary.ai_impact.net_impact / 1e6).toFixed(2)} million
 
 ECONOMIC INDICATORS:
-- Final Productivity Growth: ${summary.economic_indicators.productivity_growth.final}%
-- Final Wage Growth: ${summary.economic_indicators.wage_growth.final}%
-- Final Labor Share of Income: ${summary.economic_indicators.labor_share.final}%
+- Final Productivity Growth: ${summary.productivity.growth_rate.final}%
+- Final Wage Change: ${summary.wages.average_hourly.change_percent}%
 
 POLICY INTERVENTIONS ACTIVE: ${scenario.interventions.length > 0 ? scenario.interventions.map(i => i.name).join(', ') : 'None'}
 
@@ -171,8 +170,8 @@ Keep the tone professional but accessible. Use specific numbers from the data.`;
         const prompt = `Based on this labor market simulation data, provide exactly 4 brief, impactful bullet points (max 15 words each):
 
 - Unemployment: ${summary.labor_market_changes.unemployment_rate.initial}% → ${summary.labor_market_changes.unemployment_rate.final}%
-- Jobs Displaced: ${(summary.ai_impact.jobs_displaced / 1e6).toFixed(1)}M
-- Jobs Created: ${(summary.ai_impact.jobs_created / 1e6).toFixed(1)}M
+- Jobs Displaced: ${(summary.ai_impact.cumulative_displacement / 1e6).toFixed(1)}M
+- Jobs Created: ${(summary.ai_impact.cumulative_new_jobs / 1e6).toFixed(1)}M
 - Net Impact: ${(summary.ai_impact.net_impact / 1e6).toFixed(1)}M
 
 Format as 4 bullet points starting with an emoji. Focus on the most important insights.`;

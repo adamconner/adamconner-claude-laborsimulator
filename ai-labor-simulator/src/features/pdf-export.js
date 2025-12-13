@@ -137,8 +137,8 @@ class PDFExporter {
         <div class="stats-grid">
             <div class="stat-box">
                 <div class="label">Final Unemployment Rate</div>
-                <div class="value ${summary.labor_market_changes.unemployment_rate.final > 6 ? 'negative' : ''}">
-                    ${summary.labor_market_changes.unemployment_rate.final.toFixed(1)}%
+                <div class="value ${parseFloat(summary.labor_market_changes.unemployment_rate.final) > 6 ? 'negative' : ''}">
+                    ${summary.labor_market_changes.unemployment_rate.final}%
                 </div>
             </div>
             <div class="stat-box">
@@ -150,13 +150,13 @@ class PDFExporter {
             <div class="stat-box">
                 <div class="label">Jobs Displaced</div>
                 <div class="value negative">
-                    ${(summary.ai_impact.jobs_displaced / 1e6).toFixed(2)}M
+                    ${(summary.ai_impact.cumulative_displacement / 1e6).toFixed(2)}M
                 </div>
             </div>
             <div class="stat-box">
                 <div class="label">Jobs Created</div>
                 <div class="value positive">
-                    ${(summary.ai_impact.jobs_created / 1e6).toFixed(2)}M
+                    ${(summary.ai_impact.cumulative_new_jobs / 1e6).toFixed(2)}M
                 </div>
             </div>
         </div>
@@ -215,21 +215,21 @@ class PDFExporter {
             <tbody>
                 <tr class="highlight">
                     <td><strong>Unemployment Rate</strong></td>
-                    <td>${summary.labor_market_changes.unemployment_rate.initial.toFixed(1)}%</td>
-                    <td>${summary.labor_market_changes.unemployment_rate.final.toFixed(1)}%</td>
-                    <td>${summary.labor_market_changes.unemployment_rate.change > 0 ? '+' : ''}${summary.labor_market_changes.unemployment_rate.change.toFixed(1)}%</td>
+                    <td>${summary.labor_market_changes.unemployment_rate.initial}%</td>
+                    <td>${summary.labor_market_changes.unemployment_rate.final}%</td>
+                    <td>${parseFloat(summary.labor_market_changes.unemployment_rate.change) > 0 ? '+' : ''}${summary.labor_market_changes.unemployment_rate.change}%</td>
                 </tr>
                 <tr>
                     <td><strong>Total Employment</strong></td>
-                    <td>${(summary.labor_market_changes.employment.initial / 1e6).toFixed(2)}M</td>
-                    <td>${(summary.labor_market_changes.employment.final / 1e6).toFixed(2)}M</td>
-                    <td>${summary.labor_market_changes.employment.change > 0 ? '+' : ''}${(summary.labor_market_changes.employment.change / 1e6).toFixed(2)}M</td>
+                    <td>${(summary.labor_market_changes.total_employment.initial / 1e6).toFixed(2)}M</td>
+                    <td>${(summary.labor_market_changes.total_employment.final / 1e6).toFixed(2)}M</td>
+                    <td>${summary.labor_market_changes.total_employment.change > 0 ? '+' : ''}${(summary.labor_market_changes.total_employment.change / 1e6).toFixed(2)}M</td>
                 </tr>
                 <tr>
-                    <td><strong>Labor Force</strong></td>
-                    <td>${(summary.labor_market_changes.labor_force.initial / 1e6).toFixed(2)}M</td>
-                    <td>${(summary.labor_market_changes.labor_force.final / 1e6).toFixed(2)}M</td>
-                    <td>${summary.labor_market_changes.labor_force.change > 0 ? '+' : ''}${(summary.labor_market_changes.labor_force.change / 1e6).toFixed(2)}M</td>
+                    <td><strong>Job Openings</strong></td>
+                    <td>${(summary.labor_market_changes.job_openings.initial / 1e6).toFixed(2)}M</td>
+                    <td>${(summary.labor_market_changes.job_openings.final / 1e6).toFixed(2)}M</td>
+                    <td>${summary.labor_market_changes.job_openings.change > 0 ? '+' : ''}${(summary.labor_market_changes.job_openings.change / 1e6).toFixed(2)}M</td>
                 </tr>
             </tbody>
         </table>
@@ -250,21 +250,15 @@ class PDFExporter {
             <tbody>
                 <tr>
                     <td><strong>Productivity Growth</strong></td>
-                    <td>${summary.economic_indicators.productivity_growth.initial.toFixed(1)}%</td>
-                    <td>${summary.economic_indicators.productivity_growth.final.toFixed(1)}%</td>
-                    <td>${summary.economic_indicators.productivity_growth.change > 0 ? '+' : ''}${summary.economic_indicators.productivity_growth.change.toFixed(1)}%</td>
+                    <td>${summary.productivity.growth_rate.initial}%</td>
+                    <td>${summary.productivity.growth_rate.final}%</td>
+                    <td>${(parseFloat(summary.productivity.growth_rate.final) - parseFloat(summary.productivity.growth_rate.initial)) > 0 ? '+' : ''}${(parseFloat(summary.productivity.growth_rate.final) - parseFloat(summary.productivity.growth_rate.initial)).toFixed(1)}%</td>
                 </tr>
                 <tr>
-                    <td><strong>Wage Growth</strong></td>
-                    <td>${summary.economic_indicators.wage_growth.initial.toFixed(1)}%</td>
-                    <td>${summary.economic_indicators.wage_growth.final.toFixed(1)}%</td>
-                    <td>${summary.economic_indicators.wage_growth.change > 0 ? '+' : ''}${summary.economic_indicators.wage_growth.change.toFixed(1)}%</td>
-                </tr>
-                <tr>
-                    <td><strong>Labor Share of Income</strong></td>
-                    <td>${summary.economic_indicators.labor_share.initial.toFixed(1)}%</td>
-                    <td>${summary.economic_indicators.labor_share.final.toFixed(1)}%</td>
-                    <td>${summary.economic_indicators.labor_share.change > 0 ? '+' : ''}${summary.economic_indicators.labor_share.change.toFixed(1)}%</td>
+                    <td><strong>Average Hourly Wage</strong></td>
+                    <td>$${summary.wages.average_hourly.initial}</td>
+                    <td>$${summary.wages.average_hourly.final}</td>
+                    <td>${parseFloat(summary.wages.average_hourly.change_percent) > 0 ? '+' : ''}${summary.wages.average_hourly.change_percent}%</td>
                 </tr>
             </tbody>
         </table>
@@ -276,19 +270,19 @@ class PDFExporter {
         <div class="stats-grid">
             <div class="stat-box">
                 <div class="label">AI Adoption (Initial)</div>
-                <div class="value">${summary.ai_impact.ai_adoption.initial.toFixed(1)}%</div>
+                <div class="value">${summary.ai_impact.ai_adoption.initial}%</div>
             </div>
             <div class="stat-box">
                 <div class="label">AI Adoption (Final)</div>
-                <div class="value">${summary.ai_impact.ai_adoption.final.toFixed(1)}%</div>
+                <div class="value">${summary.ai_impact.ai_adoption.final}%</div>
             </div>
             <div class="stat-box">
                 <div class="label">Total Jobs Displaced</div>
-                <div class="value negative">${(summary.ai_impact.jobs_displaced / 1e6).toFixed(2)}M</div>
+                <div class="value negative">${(summary.ai_impact.cumulative_displacement / 1e6).toFixed(2)}M</div>
             </div>
             <div class="stat-box">
                 <div class="label">Total Jobs Created</div>
-                <div class="value positive">${(summary.ai_impact.jobs_created / 1e6).toFixed(2)}M</div>
+                <div class="value positive">${(summary.ai_impact.cumulative_new_jobs / 1e6).toFixed(2)}M</div>
             </div>
         </div>
     </div>
@@ -420,11 +414,11 @@ Scenario: ${scenario.name}
 Timeframe: ${scenario.timeframe.start_year}-${scenario.timeframe.end_year}
 
 Key Results:
-- Final Unemployment: ${summary.labor_market_changes.unemployment_rate.final.toFixed(1)}% (${summary.labor_market_changes.unemployment_rate.change > 0 ? '+' : ''}${summary.labor_market_changes.unemployment_rate.change.toFixed(1)}%)
-- Jobs Displaced: ${(summary.ai_impact.jobs_displaced / 1e6).toFixed(2)}M
-- Jobs Created: ${(summary.ai_impact.jobs_created / 1e6).toFixed(2)}M
+- Final Unemployment: ${summary.labor_market_changes.unemployment_rate.final}% (${parseFloat(summary.labor_market_changes.unemployment_rate.change) > 0 ? '+' : ''}${summary.labor_market_changes.unemployment_rate.change}%)
+- Jobs Displaced: ${(summary.ai_impact.cumulative_displacement / 1e6).toFixed(2)}M
+- Jobs Created: ${(summary.ai_impact.cumulative_new_jobs / 1e6).toFixed(2)}M
 - Net Impact: ${summary.ai_impact.net_impact > 0 ? '+' : ''}${(summary.ai_impact.net_impact / 1e6).toFixed(2)}M jobs
-- Final AI Adoption: ${summary.ai_impact.ai_adoption.final.toFixed(1)}%
+- Final AI Adoption: ${summary.ai_impact.ai_adoption.final}%
 
 Configuration:
 - Target Unemployment: ${scenario.targets.unemployment_rate}%
