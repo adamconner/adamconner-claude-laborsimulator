@@ -64,6 +64,9 @@ async function initApp() {
         await initializeRealMetrics();
         initializeSettings();
 
+        // Check for shared simulation in URL
+        await checkForSharedSimulation();
+
         console.log('AI Labor Market Simulator initialized');
     } catch (error) {
         console.error('Initialization error:', error);
@@ -380,6 +383,9 @@ async function runSimulation() {
 
         // Display results
         displaySimulationResults(results);
+
+        // Show share button
+        showShareButton();
     } catch (error) {
         console.error('Simulation error:', error);
         resultsDiv.innerHTML = `
@@ -2579,6 +2585,139 @@ function resetToBaselineData() {
     }
 
     updateFetchButtonState();
+}
+
+// ============================================
+// SIMULATION SHARING FUNCTIONS
+// ============================================
+
+/**
+ * Share the current simulation publicly
+ */
+async function shareSimulation() {
+    if (!currentResults) {
+        alert('Please run a simulation first before sharing.');
+        return;
+    }
+
+    const name = prompt('Enter a name for your shared simulation:', currentResults.scenario.name || 'My Simulation');
+    if (!name) return;
+
+    const description = prompt('Add a description (optional):', '');
+
+    const shareBtn = document.getElementById('shareBtn');
+    const originalText = shareBtn.textContent;
+    shareBtn.textContent = 'Sharing...';
+    shareBtn.disabled = true;
+
+    try {
+        const result = await simulationSharing.savePublic({
+            name,
+            description,
+            scenario: currentResults.scenario,
+            results: currentResults.results,
+            summary: currentResults.summary
+        });
+
+        // Copy URL to clipboard
+        await simulationSharing.copyShareUrl(result.id);
+
+        alert(`Simulation shared successfully!\n\nShare URL (copied to clipboard):\n${result.url}\n\nThis link will expire in ${result.expiresIn}.`);
+
+    } catch (error) {
+        console.error('Share error:', error);
+        alert(`Failed to share simulation: ${error.message}`);
+    } finally {
+        shareBtn.textContent = originalText;
+        shareBtn.disabled = false;
+    }
+}
+
+/**
+ * Check for and load a shared simulation from URL
+ */
+async function checkForSharedSimulation() {
+    if (typeof simulationSharing === 'undefined') return;
+
+    const sharedId = simulationSharing.getSharedIdFromUrl();
+    if (!sharedId) return;
+
+    console.log('Loading shared simulation:', sharedId);
+
+    try {
+        const simulation = await simulationSharing.load(sharedId);
+
+        // Display notification
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            z-index: 10000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        `;
+        notification.innerHTML = `
+            <strong>Viewing shared simulation:</strong> ${simulation.name}
+            <br><small>Shared ${new Date(simulation.createdAt).toLocaleDateString()} • ${simulation.views} views</small>
+        `;
+        document.body.appendChild(notification);
+        setTimeout(() => notification.remove(), 5000);
+
+        // Set the scenario configuration
+        if (simulation.scenario) {
+            document.getElementById('scenarioName').value = simulation.name || simulation.scenario.name;
+            document.getElementById('targetYear').value = simulation.scenario.timeframe?.end_year || '2029';
+            document.getElementById('targetUR').value = simulation.scenario.targets?.unemployment_rate || 10;
+            document.getElementById('urValue').textContent = simulation.scenario.targets?.unemployment_rate || 10;
+            document.getElementById('aiAdoption').value = simulation.scenario.targets?.ai_adoption_rate || 70;
+            document.getElementById('aiValue').textContent = simulation.scenario.targets?.ai_adoption_rate || 70;
+            document.getElementById('automationPace').value = simulation.scenario.targets?.automation_pace || 'moderate';
+            document.getElementById('adoptionCurve').value = simulation.scenario.ai_parameters?.adoption_curve || 's_curve';
+        }
+
+        // Load the results
+        currentResults = {
+            scenario: simulation.scenario,
+            results: simulation.results,
+            summary: simulation.summary
+        };
+
+        // Display the results
+        displaySimulationResults(currentResults);
+
+        // Show share button
+        document.getElementById('shareBtn').style.display = 'inline-block';
+
+        // Switch to simulation tab
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.getElementById('simulation-section').classList.add('active');
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.nav-tab')[3].classList.add('active');
+
+        // Clear URL parameter to prevent reload issues
+        window.history.replaceState({}, document.title, window.location.pathname);
+
+    } catch (error) {
+        console.error('Failed to load shared simulation:', error);
+        alert(`Failed to load shared simulation: ${error.message}`);
+        // Clear the URL parameter
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+}
+
+/**
+ * Show share button after simulation runs
+ */
+function showShareButton() {
+    const shareBtn = document.getElementById('shareBtn');
+    if (shareBtn && typeof simulationSharing !== 'undefined' && simulationSharing.isAvailable()) {
+        shareBtn.style.display = 'inline-block';
+    }
 }
 
 // Initialize on page load

@@ -141,6 +141,7 @@
                 <h1>AI Labor Market Impact Analysis</h1>
                 <div class="header-actions">
                     <button class="btn btn-success" onclick="saveSimulation()">Save Simulation</button>
+                    <button class="btn btn-primary" onclick="shareSimulation()" id="shareBtn" style="display: none;">Share Publicly</button>
                     <button class="btn btn-outline" onclick="exportResults()">Export Results</button>
                     <button class="btn btn-secondary" onclick="resetToDefaults()">Reset to Defaults</button>
                 </div>
@@ -897,6 +898,7 @@
     <script src="src/utils/calculations.js"></script>
     <script src="src/components/visualizations.js"></script>
     <script src="src/services/ai-summary.js"></script>
+    <script src="src/services/simulation-sharing.js"></script>
     <script src="src/features/scenario-comparison.js"></script>
     <script src="src/features/occupation-drilldown.js"></script>
     <script src="src/features/pdf-export.js"></script>
