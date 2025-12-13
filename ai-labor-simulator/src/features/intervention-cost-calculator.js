@@ -36,9 +36,9 @@ class InterventionCostCalculator {
             return results;
         }
 
-        // Get displacement data from simulation
+        // Get displacement data from simulation - correct path is ai_impact
         const summary = simulationResults?.summary || {};
-        const jobsDisplaced = summary.labor_market_changes?.cumulative_displacement || 0;
+        const jobsDisplaced = summary.ai_impact?.cumulative_displacement || 0;
         const yearsSimulated = this.getYearsSimulated(simulationResults);
 
         interventions.forEach(intervention => {
