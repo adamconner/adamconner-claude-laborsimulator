@@ -307,9 +307,9 @@ class TimelineUI {
 
         // Extract values from the simulation data structure
         const unemploymentRate = yearData.labor_market?.unemployment_rate || yearData.unemployment_rate || 0;
-        const employment = yearData.labor_market?.employment || yearData.employment || 0;
+        const employment = yearData.labor_market?.total_employment || yearData.labor_market?.employment || yearData.employment || 0;
         const aiAdoption = yearData.ai_adoption?.rate || yearData.ai_adoption || 0;
-        const gdp = yearData.derived?.gdp || yearData.gdp || 0;
+        const productivity = yearData.productivity?.average || yearData.productivity || 0;
 
         const metrics = [
             {
@@ -334,10 +334,10 @@ class TimelineUI {
                 color: 'var(--secondary)'
             },
             {
-                key: 'gdp',
-                label: 'GDP',
-                value: gdp,
-                format: (v) => '$' + this.formatNumber(v),
+                key: 'productivity',
+                label: 'Productivity',
+                value: productivity,
+                format: (v) => v.toFixed(1) + '%',
                 color: 'var(--success)'
             }
         ];
@@ -380,14 +380,14 @@ class TimelineUI {
         if (data) {
             // Extract values from the simulation data structure
             const unemploymentRate = data.labor_market?.unemployment_rate || data.unemployment_rate || 0;
-            const employment = data.labor_market?.employment || data.employment || 0;
+            const employment = data.labor_market?.total_employment || data.labor_market?.employment || data.employment || 0;
             const aiAdoption = (data.ai_adoption?.rate || data.ai_adoption || 0) * 100;
-            const gdp = data.derived?.gdp || data.gdp || 0;
+            const productivity = data.productivity?.average || data.productivity || 0;
 
             this.animateMetricUpdate('unemployment_rate', unemploymentRate, v => v.toFixed(1) + '%');
             this.animateMetricUpdate('employment', employment, v => this.formatNumber(v));
             this.animateMetricUpdate('ai_adoption', aiAdoption, v => v.toFixed(0) + '%');
-            this.animateMetricUpdate('gdp', gdp, v => '$' + this.formatNumber(v));
+            this.animateMetricUpdate('productivity', productivity, v => v.toFixed(1) + '%');
         }
     }
 

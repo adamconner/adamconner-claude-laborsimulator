@@ -116,9 +116,14 @@
                 <button class="btn btn-primary btn-block btn-lg" onclick="runSimulation()">
                     Run Simulation
                 </button>
-                <button class="btn btn-outline btn-block" style="margin-top: 8px;" onclick="resetToDefaults()">
-                    Reset to Defaults
-                </button>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <button class="btn btn-outline btn-block" onclick="resetToDefaults()">
+                        Reset
+                    </button>
+                    <button class="btn btn-outline btn-block" onclick="copyScenarioURL()" title="Copy shareable URL">
+                        Share URL
+                    </button>
+                </div>
             </div>
 
             <!-- Saved Simulations -->
@@ -946,6 +951,7 @@
     <script src="src/features/monte-carlo.js"></script>
     <script src="src/features/intervention-cost-calculator.js"></script>
     <script src="src/features/timeline-player.js"></script>
+    <script src="src/features/url-sharing.js"></script>
     <script src="src/app.js"></script>
 </body>
 </html>
