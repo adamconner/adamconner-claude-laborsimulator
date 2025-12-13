@@ -140,6 +140,7 @@
             <!-- Navigation Tabs -->
             <nav class="nav-tabs">
                 <button class="nav-tab active" onclick="showSection('snapshot')">Current Snapshot</button>
+                <button class="nav-tab" onclick="showSection('realmetrics')">Real Metrics</button>
                 <button class="nav-tab" onclick="showSection('indicators')">AI Indicators</button>
                 <button class="nav-tab" onclick="showSection('simulation')">Simulation Results</button>
                 <button class="nav-tab" onclick="showSection('comparison')">Compare Scenarios</button>
@@ -226,6 +227,53 @@
                     </div>
                     <div class="chart-container large">
                         <canvas id="sectorEmploymentChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Real Metrics Section -->
+            <section id="realmetrics-section" class="section">
+                <!-- Real Economic Indicators -->
+                <div class="card" style="margin-bottom: 24px; border-left: 4px solid var(--secondary);">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                        <div>
+                            <h3>Real Economic Metrics</h3>
+                            <p style="font-size: 0.75rem; color: var(--gray-500); margin-top: 4px;">
+                                Actual government data from BLS, FRED, Census, and other official sources
+                            </p>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <span class="tag tag-low">Verified Sources</span>
+                            <button class="btn btn-sm btn-outline" onclick="resetAllRealMetrics()">Reset All</button>
+                        </div>
+                    </div>
+
+                    <div id="realMetricsList" style="margin-top: 16px;">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Data Sources Reference -->
+                <div class="card">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3>Data Sources & Methodology</h3>
+                        <button class="btn btn-sm btn-outline" onclick="toggleRealMetricsSourcesDetails()">Show Details</button>
+                    </div>
+                    <div id="realMetricsSourcesDetails" style="display: none; margin-top: 16px;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Source</th>
+                                    <th>Type</th>
+                                    <th>Data Provided</th>
+                                    <th>Update Frequency</th>
+                                    <th>Link</th>
+                                </tr>
+                            </thead>
+                            <tbody id="realMetricsSourcesTable">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </section>
@@ -660,6 +708,7 @@
     <!-- Scripts -->
     <script src="src/data/economic-data.js"></script>
     <script src="src/models/indicators.js"></script>
+    <script src="src/models/real-metrics.js"></script>
     <script src="src/models/hypothetical-indicators.js"></script>
     <script src="src/simulation/engine.js"></script>
     <script src="src/simulation/interventions.js"></script>

@@ -54,6 +54,7 @@ async function initApp() {
         renderHypotheticalIndicators();
         renderOccupationList();
         renderSensitivityOverview();
+        await initializeRealMetrics();
 
         console.log('AI Labor Market Simulator initialized');
     } catch (error) {
@@ -1754,6 +1755,287 @@ async function runParameterSensitivity(parameterId) {
             </div>
         `;
     }
+}
+
+// ==========================================
+// Real Metrics Functions
+// ==========================================
+
+/**
+ * Initialize real metrics system
+ */
+async function initializeRealMetrics() {
+    if (typeof realMetricsSystem !== 'undefined' && dataService) {
+        await realMetricsSystem.initialize(dataService);
+        renderRealMetrics();
+        renderRealMetricsSources();
+    }
+}
+
+/**
+ * Render real metrics list
+ */
+function renderRealMetrics() {
+    const container = document.getElementById('realMetricsList');
+    if (!container || typeof realMetricsSystem === 'undefined') return;
+
+    const metricsByCategory = realMetricsSystem.getMetricsByCategory();
+    if (!metricsByCategory) {
+        container.innerHTML = '<p style="color: var(--gray-500);">Loading metrics...</p>';
+        return;
+    }
+
+    let html = '';
+
+    Object.entries(metricsByCategory).forEach(([categoryId, category]) => {
+        html += `
+            <div style="margin-bottom: 24px;">
+                <h4 style="font-size: 0.875rem; color: var(--gray-600); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px;">
+                    <span>${category.icon}</span> ${category.category}
+                </h4>
+                <div style="display: grid; gap: 12px;">
+        `;
+
+        Object.values(category.metrics).forEach(metric => {
+            const isAdjusted = metric.manuallyAdjusted;
+            const trendIcon = metric.trend === 'increasing' ? '↑' : metric.trend === 'decreasing' ? '↓' : '→';
+            const trendClass = metric.trend === 'increasing' ? 'positive' : metric.trend === 'decreasing' ? 'negative' : '';
+
+            html += `
+                <div class="real-metric-card" style="
+                    background: var(--gray-50);
+                    border: 1px solid ${isAdjusted ? 'var(--warning)' : 'var(--gray-200)'};
+                    border-radius: 8px;
+                    padding: 16px;
+                    ${isAdjusted ? 'border-left: 3px solid var(--warning);' : ''}
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div>
+                                <div style="font-weight: 600; color: var(--gray-800);">
+                                    ${metric.name}
+                                    ${isAdjusted ? '<span class="tag tag-high" style="margin-left: 8px; font-size: 0.65rem;">Adjusted</span>' : ''}
+                                </div>
+                                <div style="font-size: 0.75rem; color: var(--gray-500);">
+                                    ${metric.shortName} • ${metric.source} • ${metric.date || 'Current'}
+                                </div>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 1.5rem; font-weight: 700; color: var(--gray-800);">
+                                ${formatRealMetricValue(metric.value, metric.unit)}
+                            </div>
+                            <div class="change ${trendClass}" style="font-size: 0.75rem;">
+                                ${trendIcon} ${metric.trend}
+                            </div>
+                        </div>
+                    </div>
+
+                    <p style="font-size: 0.8rem; color: var(--gray-600); margin-bottom: 12px;">
+                        ${metric.description}
+                    </p>
+
+                    <div style="margin-bottom: 8px;">
+                        <label style="font-size: 0.75rem; color: var(--gray-500); display: flex; justify-content: space-between;">
+                            <span>Adjust Value</span>
+                            <span>${formatRealMetricValue(metric.range.min, metric.unit)} - ${formatRealMetricValue(metric.range.max, metric.unit)}</span>
+                        </label>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <input type="range"
+                                   id="realmetric_slider_${metric.id}"
+                                   min="${metric.range.min}"
+                                   max="${metric.range.max}"
+                                   step="${(metric.range.max - metric.range.min) / 100}"
+                                   value="${metric.value}"
+                                   onchange="updateRealMetricValue('${metric.id}', this.value)"
+                                   style="flex: 1;">
+                            <input type="number"
+                                   id="realmetric_input_${metric.id}"
+                                   value="${formatRealMetricInput(metric.value, metric.unit)}"
+                                   min="${metric.range.min}"
+                                   max="${metric.range.max}"
+                                   step="${getMetricStep(metric.unit)}"
+                                   onchange="updateRealMetricValue('${metric.id}', this.value)"
+                                   style="width: 100px; padding: 4px 8px; border: 1px solid var(--gray-300); border-radius: 4px; color: var(--gray-800);">
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="font-size: 0.7rem; color: var(--gray-400);">
+                            ${metric.seriesId ? `Series: ${metric.seriesId}` : ''}
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            ${isAdjusted ? `
+                                <button class="btn btn-sm btn-outline" onclick="resetRealMetric('${metric.id}')" style="font-size: 0.7rem; padding: 2px 8px;">
+                                    Reset
+                                </button>
+                            ` : ''}
+                            <button class="btn btn-sm btn-outline" onclick="showRealMetricDetails('${metric.id}')" style="font-size: 0.7rem; padding: 2px 8px;">
+                                Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += `
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+/**
+ * Format real metric value for display
+ */
+function formatRealMetricValue(value, unit) {
+    switch (unit) {
+        case 'percent':
+            return `${value.toFixed(1)}%`;
+        case 'millions':
+            if (value >= 1000000) {
+                return `${(value / 1000000).toFixed(1)}M`;
+            }
+            return `${(value / 1000000).toFixed(2)}M`;
+        case 'currency':
+            return `$${value.toFixed(2)}`;
+        case 'index':
+            return value.toFixed(1);
+        default:
+            return value.toFixed(1);
+    }
+}
+
+/**
+ * Format real metric value for input field
+ */
+function formatRealMetricInput(value, unit) {
+    if (unit === 'millions' && value >= 1000000) {
+        return value.toFixed(0);
+    }
+    return value.toFixed(2);
+}
+
+/**
+ * Get step value for metric input
+ */
+function getMetricStep(unit) {
+    switch (unit) {
+        case 'millions':
+            return 100000;
+        case 'percent':
+            return 0.1;
+        case 'currency':
+            return 0.01;
+        default:
+            return 0.1;
+    }
+}
+
+/**
+ * Update real metric value
+ */
+function updateRealMetricValue(id, value) {
+    if (typeof realMetricsSystem === 'undefined') return;
+
+    const numValue = parseFloat(value);
+    realMetricsSystem.setMetricValue(id, numValue);
+
+    // Update both slider and input
+    const slider = document.getElementById(`realmetric_slider_${id}`);
+    const input = document.getElementById(`realmetric_input_${id}`);
+    const metric = realMetricsSystem.getMetric(id);
+
+    if (slider) slider.value = numValue;
+    if (input && metric) input.value = formatRealMetricInput(numValue, metric.unit);
+
+    // Re-render to show adjusted state
+    renderRealMetrics();
+}
+
+/**
+ * Reset a single real metric
+ */
+function resetRealMetric(id) {
+    if (typeof realMetricsSystem === 'undefined') return;
+    realMetricsSystem.resetMetric(id);
+    renderRealMetrics();
+}
+
+/**
+ * Reset all real metrics
+ */
+function resetAllRealMetrics() {
+    if (!confirm('Reset all real metrics to their baseline values?')) return;
+    if (typeof realMetricsSystem === 'undefined') return;
+    realMetricsSystem.resetAllMetrics();
+    renderRealMetrics();
+}
+
+/**
+ * Show real metric details
+ */
+function showRealMetricDetails(id) {
+    if (typeof realMetricsSystem === 'undefined') return;
+
+    const metric = realMetricsSystem.getMetric(id);
+    if (!metric) return;
+
+    alert(`${metric.name} (${metric.shortName})
+
+Description:
+${metric.description}
+
+Methodology:
+${metric.methodology}
+
+Source: ${metric.source}
+${metric.sourceUrl ? `URL: ${metric.sourceUrl}` : ''}
+${metric.seriesId ? `Series ID: ${metric.seriesId}` : ''}
+
+Current Value: ${formatRealMetricValue(metric.value, metric.unit)}
+Base Value: ${formatRealMetricValue(metric.baseValue, metric.unit)}
+Data Date: ${metric.date || 'Current'}
+
+Trend: ${metric.trend}`);
+}
+
+/**
+ * Toggle real metrics sources details
+ */
+function toggleRealMetricsSourcesDetails() {
+    const details = document.getElementById('realMetricsSourcesDetails');
+    if (details) {
+        details.style.display = details.style.display === 'none' ? 'block' : 'none';
+    }
+}
+
+/**
+ * Render real metrics data sources
+ */
+function renderRealMetricsSources() {
+    const container = document.getElementById('realMetricsSourcesTable');
+    if (!container || typeof realMetricsSystem === 'undefined') return;
+
+    const sources = realMetricsSystem.getDataSources();
+
+    let html = '';
+    sources.forEach(source => {
+        html += `
+            <tr>
+                <td><strong>${source.name}</strong></td>
+                <td>${source.type}</td>
+                <td>${source.metrics.join(', ')}</td>
+                <td>${source.updateFrequency}</td>
+                <td><a href="${source.url}" target="_blank" style="color: var(--primary);">View</a></td>
+            </tr>
+        `;
+    });
+
+    container.innerHTML = html;
 }
 
 // Initialize on page load
