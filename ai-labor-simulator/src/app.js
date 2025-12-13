@@ -560,6 +560,19 @@ function displaySimulationResults(results) {
                 </table>
             </div>
 
+            <!-- Timeline Player Section -->
+            <div class="card" id="timelineCard" style="border-left: 4px solid var(--secondary);">
+                <div class="card-header">
+                    <h3 style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 1.25rem;">&#9199;</span> Timeline Player
+                    </h3>
+                    <span style="font-size: 0.875rem; color: var(--gray-500);">Animate through simulation years</span>
+                </div>
+                <div id="timeline-player-container">
+                    <!-- Timeline player will be rendered here -->
+                </div>
+            </div>
+
             <!-- Monte Carlo Analysis Section -->
             <div class="card" id="monteCarloCard" style="border-left: 4px solid var(--info);">
                 <div class="card-header">
@@ -614,6 +627,13 @@ function displaySimulationResults(results) {
             results.results[results.results.length - 1].sectors
         );
     }, 100);
+
+    // Initialize timeline player
+    if (typeof initializeTimeline !== 'undefined') {
+        setTimeout(() => {
+            initializeTimeline(results);
+        }, 150);
+    }
 
     // Generate AI summary if available (proxy or user API key)
     if (typeof aiSummaryService !== 'undefined' && aiSummaryService.isAvailable()) {
