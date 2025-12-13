@@ -2062,6 +2062,66 @@ function initializeSettings() {
 
     // Update fetch button state
     updateFetchButtonState();
+
+    // Update auto data status
+    updateAutoDataStatus();
+}
+
+/**
+ * Update the auto-updated data status display
+ */
+function updateAutoDataStatus() {
+    const statusDiv = document.getElementById('autoDataStatus');
+    if (!statusDiv || !dataService) return;
+
+    const liveStatus = dataService.getLiveDataStatus();
+
+    if (liveStatus.available && liveStatus.sources.bls === 'success') {
+        const lastUpdated = new Date(liveStatus.lastUpdated);
+        const formattedDate = lastUpdated.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        statusDiv.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                <span style="color: var(--secondary); font-size: 1.25rem;">&#10003;</span>
+                <strong style="color: var(--secondary);">Live Data Active</strong>
+            </div>
+            <p style="color: var(--gray-600); font-size: 0.875rem; margin-bottom: 8px;">
+                Data automatically updated: <strong>${formattedDate}</strong>
+            </p>
+            <div style="display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.8rem; color: var(--gray-600);">
+                <span>BLS: <strong style="color: var(--secondary);">${liveStatus.sources.bls}</strong></span>
+                <span>FRED: <strong style="color: ${liveStatus.sources.fred === 'success' ? 'var(--secondary)' : 'var(--gray-400)'};">${liveStatus.sources.fred}</strong></span>
+            </div>
+            ${liveStatus.summary ? `
+                <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--gray-200); font-size: 0.8rem;">
+                    <strong>Latest Values:</strong>
+                    <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-top: 4px; color: var(--gray-600);">
+                        ${liveStatus.summary.unemployment_rate ? `<span>Unemployment: <strong>${liveStatus.summary.unemployment_rate}%</strong></span>` : ''}
+                        ${liveStatus.summary.total_employment ? `<span>Employment: <strong>${(liveStatus.summary.total_employment / 1e6).toFixed(1)}M</strong></span>` : ''}
+                    </div>
+                </div>
+            ` : ''}
+        `;
+    } else {
+        statusDiv.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                <span style="color: var(--warning); font-size: 1.25rem;">&#9888;</span>
+                <strong style="color: var(--gray-600);">Using Baseline Data</strong>
+            </div>
+            <p style="color: var(--gray-600); font-size: 0.875rem;">
+                Currently using cached baseline data from late 2024.
+            </p>
+            <p style="color: var(--gray-500); font-size: 0.75rem; margin-top: 8px;">
+                Auto-updated data will be available once the repository owner configures the GitHub Actions workflow with API keys.
+            </p>
+        `;
+    }
 }
 
 /**

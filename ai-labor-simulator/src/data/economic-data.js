@@ -8,6 +8,7 @@ class EconomicDataService {
         this.cache = new Map();
         this.cacheExpiry = 3600000; // 1 hour
         this.baselineData = null;
+        this.liveData = null;
 
         // API endpoints
         this.endpoints = {
@@ -55,6 +56,10 @@ class EconomicDataService {
         try {
             const response = await fetch('./data/baseline-data.json');
             this.baselineData = await response.json();
+
+            // Also try to load live data
+            await this.loadLiveData();
+
             return this.baselineData;
         } catch (error) {
             console.error('Failed to load baseline data:', error);
@@ -63,27 +68,95 @@ class EconomicDataService {
     }
 
     /**
+     * Load live data from GitHub Actions-updated JSON file
+     */
+    async loadLiveData() {
+        if (this.liveData) return this.liveData;
+
+        try {
+            const response = await fetch('./data/live-data.json');
+            if (response.ok) {
+                this.liveData = await response.json();
+                console.log('Live data loaded, last updated:', this.liveData.lastUpdated);
+                return this.liveData;
+            }
+        } catch (error) {
+            console.log('No live data available, using baseline data');
+        }
+        return null;
+    }
+
+    /**
+     * Get live data status
+     */
+    getLiveDataStatus() {
+        if (!this.liveData) {
+            return {
+                available: false,
+                lastUpdated: null,
+                sources: { bls: 'unavailable', fred: 'unavailable' }
+            };
+        }
+
+        return {
+            available: true,
+            lastUpdated: this.liveData.lastUpdated,
+            sources: this.liveData.sources || {},
+            summary: this.liveData.summary || {}
+        };
+    }
+
+    /**
      * Get current economic snapshot
+     * Uses live data from GitHub Actions when available, falls back to baseline
      */
     async getCurrentSnapshot() {
         const baseline = await this.loadBaselineData();
+        const live = this.liveData;
+
+        // Use live data if available and valid, otherwise use baseline
+        const useLive = live && live.summary && live.sources?.bls === 'success';
+
+        // Get values, preferring live data
+        const unemployment_rate = useLive && live.summary.unemployment_rate
+            ? live.summary.unemployment_rate
+            : baseline.labor_market.unemployment_rate.value;
+
+        const total_employment = useLive && live.summary.total_employment
+            ? live.summary.total_employment
+            : baseline.labor_market.total_employment.value;
+
+        const labor_force_participation = useLive && live.summary.labor_force_participation
+            ? live.summary.labor_force_participation
+            : baseline.labor_market.labor_force_participation.value;
+
+        const job_openings = useLive && live.summary.job_openings
+            ? live.summary.job_openings
+            : baseline.labor_market.job_openings.value;
+
+        const average_hourly = useLive && live.summary.average_hourly_earnings
+            ? live.summary.average_hourly_earnings
+            : baseline.wages.average_hourly_earnings.value;
 
         return {
             timestamp: new Date().toISOString(),
+            dataSource: useLive ? 'live' : 'baseline',
+            dataDate: useLive ? live.summary.data_date : 'Oct 2024',
+            lastUpdated: useLive ? live.lastUpdated : null,
             labor_market: {
-                total_employment: baseline.labor_market.total_employment.value,
-                unemployment_rate: baseline.labor_market.unemployment_rate.value,
-                labor_force_participation: baseline.labor_market.labor_force_participation.value,
-                job_openings: baseline.labor_market.job_openings.value,
+                total_employment: total_employment,
+                unemployment_rate: unemployment_rate,
+                labor_force_participation: labor_force_participation,
+                job_openings: job_openings,
                 unemployed_count: Math.round(
-                    baseline.labor_market.total_employment.value *
-                    (baseline.labor_market.unemployment_rate.value / 100) /
-                    (1 - baseline.labor_market.unemployment_rate.value / 100)
+                    total_employment *
+                    (unemployment_rate / 100) /
+                    (1 - unemployment_rate / 100)
                 )
             },
             wages: {
                 median_weekly: baseline.wages.median_weekly_earnings.value,
-                average_hourly: baseline.wages.average_hourly_earnings.value,
+                average_hourly: average_hourly,
                 real_wage_growth: baseline.wages.real_wage_growth.value
             },
             productivity: {

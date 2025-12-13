@@ -129,13 +129,26 @@ The simulator uses a modified Solow growth model enhanced with:
 2. **Rapid Automation**: 12% unemployment in 3 years, accelerated AI deployment
 3. **Managed Transition**: 6% unemployment with UBI and retraining programs
 
-## API Keys (Optional)
+## Live Data
 
-For live data fetching, you can add API keys:
-- BLS: https://www.bls.gov/developers/
-- FRED: https://fred.stlouisfed.org/docs/api/api_key.html
+The simulator automatically receives daily updates from BLS and FRED via GitHub Actions. No API keys required for users.
 
-Without keys, the simulator uses cached baseline data.
+### For Repository Owners
+
+To enable automatic data updates, add these secrets to your repository:
+
+1. Go to **Settings** → **Secrets and variables** → **Actions**
+2. Add these repository secrets:
+   - `BLS_API_KEY` - Get free at https://www.bls.gov/developers/
+   - `FRED_API_KEY` - Get free at https://fred.stlouisfed.org/docs/api/api_key.html
+
+3. The GitHub Action runs daily at 6 AM UTC and updates `ai-labor-simulator/data/live-data.json`
+
+4. You can also trigger it manually: **Actions** → **Update Economic Data** → **Run workflow**
+
+### For Individual Users
+
+Users can optionally add their own API keys in the Settings tab to fetch data on demand.
 
 ## Contributing
 

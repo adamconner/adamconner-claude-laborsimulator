@@ -607,21 +607,43 @@
                     </div>
                 </div>
 
-                <!-- Live Data Controls -->
+                <!-- Auto-Updated Data Status -->
+                <div class="card" style="margin-bottom: 24px; border-left: 4px solid var(--secondary);">
+                    <div class="card-header">
+                        <h3>Economic Data Status</h3>
+                        <p style="font-size: 0.875rem; color: var(--gray-500); margin-top: 4px;">
+                            Data is automatically updated daily from BLS and FRED
+                        </p>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <div id="autoDataStatus" style="background: var(--gray-50); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                            <!-- Populated by JavaScript -->
+                            <p style="color: var(--gray-600); font-size: 0.875rem;">
+                                <strong>Loading data status...</strong>
+                            </p>
+                        </div>
+                        <p style="font-size: 0.75rem; color: var(--gray-500); margin-bottom: 16px;">
+                            Economic data from BLS and FRED is automatically fetched daily via GitHub Actions
+                            and made available to all users. No API key required.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Manual Live Data Controls -->
                 <div class="card" style="margin-bottom: 24px;">
                     <div class="card-header">
-                        <h3>Live Data Fetching</h3>
+                        <h3>Manual Data Refresh</h3>
                         <p style="font-size: 0.875rem; color: var(--gray-500); margin-top: 4px;">
-                            Fetch latest data from government APIs
+                            Optionally fetch live data directly using your own API keys
                         </p>
                     </div>
                     <div style="margin-top: 20px;">
                         <div id="liveDataStatus" style="background: var(--gray-50); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
                             <p style="color: var(--gray-600); font-size: 0.875rem;">
-                                <strong>Current Data Status:</strong> Using cached baseline data from late 2024
+                                <strong>Manual Fetch:</strong> Use your own API keys to fetch the latest data on demand
                             </p>
                             <p style="color: var(--gray-500); font-size: 0.75rem; margin-top: 8px;">
-                                Configure BLS and/or FRED API keys above to enable live data fetching.
+                                Configure BLS and/or FRED API keys above to enable manual data fetching.
                             </p>
                         </div>
                         <div style="display: flex; gap: 12px; flex-wrap: wrap;">
