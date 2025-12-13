@@ -554,6 +554,27 @@ function displaySimulationResults(results) {
                     </tbody>
                 </table>
             </div>
+
+            <!-- Monte Carlo Analysis Section -->
+            <div class="card" id="monteCarloCard" style="border-left: 4px solid var(--info);">
+                <div class="card-header">
+                    <h3 style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 1.25rem;">&#127922;</span> Monte Carlo Analysis
+                    </h3>
+                    <button class="btn btn-primary btn-sm" onclick="runMonteCarloAnalysis()" id="runMonteCarloBtn">
+                        Run 1000 Iterations
+                    </button>
+                </div>
+                <div id="monteCarloContent">
+                    <p style="color: var(--gray-500); margin-bottom: 12px;">
+                        Monte Carlo simulation runs your scenario 1000+ times with randomized parameters
+                        to show probability distributions instead of single point estimates.
+                    </p>
+                    <p style="font-size: 0.875rem; color: var(--gray-400);">
+                        Click "Run 1000 Iterations" to see the range of possible outcomes and their likelihoods.
+                    </p>
+                </div>
+            </div>
         </div>
     `;
 
@@ -2718,6 +2739,308 @@ function showShareButton() {
     if (shareBtn && typeof simulationSharing !== 'undefined' && simulationSharing.isAvailable()) {
         shareBtn.style.display = 'inline-block';
     }
+}
+
+// ==========================================
+// Monte Carlo Simulation Functions
+// ==========================================
+
+let monteCarloInstance = null;
+
+/**
+ * Run Monte Carlo analysis on current simulation
+ */
+async function runMonteCarloAnalysis() {
+    if (!currentResults || !simulationEngine) {
+        alert('Please run a simulation first');
+        return;
+    }
+
+    const btn = document.getElementById('runMonteCarloBtn');
+    const content = document.getElementById('monteCarloContent');
+
+    // Disable button and show progress
+    btn.disabled = true;
+    btn.innerHTML = 'Running... 0%';
+
+    content.innerHTML = `
+        <div style="margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span>Running 1000 iterations...</span>
+                <span id="mcProgress">0%</span>
+            </div>
+            <div class="progress-bar" style="height: 12px;">
+                <div class="fill" id="mcProgressBar" style="width: 0%;"></div>
+            </div>
+        </div>
+        <p style="color: var(--gray-500); font-size: 0.875rem;">
+            This may take 30-60 seconds. Each iteration randomizes parameters within realistic ranges.
+        </p>
+    `;
+
+    try {
+        // Initialize Monte Carlo
+        monteCarloInstance = new MonteCarloSimulation(simulationEngine);
+        monteCarloInstance.configure({ iterations: 1000 });
+
+        // Get current scenario config
+        const config = {
+            name: currentResults.scenario.name,
+            end_year: currentResults.scenario.timeframe.end_year,
+            target_unemployment: currentResults.scenario.targets.unemployment_rate,
+            ai_adoption_rate: currentResults.scenario.targets.ai_adoption_rate,
+            automation_pace: currentResults.scenario.targets.automation_pace,
+            adoption_curve: currentResults.scenario.ai_parameters.adoption_curve,
+            new_job_multiplier: currentResults.scenario.ai_parameters.new_job_multiplier,
+            gdp_growth: currentResults.scenario.economic_parameters.gdp_growth,
+            labor_elasticity: currentResults.scenario.economic_parameters.labor_elasticity
+        };
+
+        // Run with progress callback
+        const results = await monteCarloInstance.run(config, (progress) => {
+            const progressEl = document.getElementById('mcProgress');
+            const progressBar = document.getElementById('mcProgressBar');
+            if (progressEl) progressEl.textContent = `${Math.round(progress)}%`;
+            if (progressBar) progressBar.style.width = `${progress}%`;
+            btn.innerHTML = `Running... ${Math.round(progress)}%`;
+        });
+
+        // Display results
+        displayMonteCarloResults(results);
+        btn.innerHTML = 'Run Again';
+        btn.disabled = false;
+
+    } catch (error) {
+        console.error('Monte Carlo error:', error);
+        content.innerHTML = `
+            <div style="color: var(--danger);">
+                <p><strong>Error running Monte Carlo analysis:</strong></p>
+                <p>${error.message}</p>
+            </div>
+        `;
+        btn.innerHTML = 'Run 1000 Iterations';
+        btn.disabled = false;
+    }
+}
+
+/**
+ * Display Monte Carlo results
+ */
+function displayMonteCarloResults(results) {
+    const content = document.getElementById('monteCarloContent');
+    const dist = results.distributions;
+
+    // Format numbers helper
+    const fmt = (n, decimals = 1) => {
+        if (Math.abs(n) >= 1000000) return (n / 1000000).toFixed(decimals) + 'M';
+        if (Math.abs(n) >= 1000) return (n / 1000).toFixed(decimals) + 'K';
+        return n.toFixed(decimals);
+    };
+
+    const report = monteCarloInstance.generateReport();
+
+    content.innerHTML = `
+        <div style="margin-bottom: 24px;">
+            <h4 style="margin-bottom: 12px; color: var(--gray-700);">Probability Distribution Summary</h4>
+            <p style="color: var(--gray-500); font-size: 0.875rem; margin-bottom: 16px;">
+                Based on ${results.iterations} simulations with randomized parameters
+            </p>
+
+            <!-- Key Metrics Grid -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+                <!-- Unemployment -->
+                <div style="background: var(--gray-50); padding: 16px; border-radius: 8px;">
+                    <div style="font-size: 0.75rem; color: var(--gray-500); text-transform: uppercase; margin-bottom: 4px;">
+                        Final Unemployment Rate
+                    </div>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--gray-900);">
+                        ${dist.final_unemployment.median.toFixed(1)}%
+                    </div>
+                    <div style="font-size: 0.875rem; color: var(--gray-600);">
+                        90% CI: ${dist.final_unemployment.p5.toFixed(1)}% - ${dist.final_unemployment.p95.toFixed(1)}%
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--warning); margin-top: 4px;">
+                        ${(report.unemployment.probability_above_10 * 100).toFixed(0)}% chance above 10%
+                    </div>
+                </div>
+
+                <!-- Net Job Change -->
+                <div style="background: var(--gray-50); padding: 16px; border-radius: 8px;">
+                    <div style="font-size: 0.75rem; color: var(--gray-500); text-transform: uppercase; margin-bottom: 4px;">
+                        Net Job Change
+                    </div>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: ${dist.net_job_change.median >= 0 ? 'var(--secondary)' : 'var(--danger)'};">
+                        ${dist.net_job_change.median >= 0 ? '+' : ''}${fmt(dist.net_job_change.median)}
+                    </div>
+                    <div style="font-size: 0.875rem; color: var(--gray-600);">
+                        Range: ${fmt(dist.net_job_change.p10)} to ${fmt(dist.net_job_change.p90)}
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--secondary); margin-top: 4px;">
+                        ${(report.netJobChange.probability_positive * 100).toFixed(0)}% chance positive
+                    </div>
+                </div>
+
+                <!-- Jobs Displaced -->
+                <div style="background: var(--gray-50); padding: 16px; border-radius: 8px;">
+                    <div style="font-size: 0.75rem; color: var(--gray-500); text-transform: uppercase; margin-bottom: 4px;">
+                        Jobs Displaced
+                    </div>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--danger);">
+                        ${fmt(dist.cumulative_displacement.median)}
+                    </div>
+                    <div style="font-size: 0.875rem; color: var(--gray-600);">
+                        90% CI: ${fmt(dist.cumulative_displacement.p5)} - ${fmt(dist.cumulative_displacement.p95)}
+                    </div>
+                </div>
+
+                <!-- New Jobs Created -->
+                <div style="background: var(--gray-50); padding: 16px; border-radius: 8px;">
+                    <div style="font-size: 0.75rem; color: var(--gray-500); text-transform: uppercase; margin-bottom: 4px;">
+                        New Jobs Created
+                    </div>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--secondary);">
+                        ${fmt(dist.cumulative_new_jobs.median)}
+                    </div>
+                    <div style="font-size: 0.875rem; color: var(--gray-600);">
+                        90% CI: ${fmt(dist.cumulative_new_jobs.p5)} - ${fmt(dist.cumulative_new_jobs.p95)}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Distribution Charts -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px;">
+                <div>
+                    <h5 style="margin-bottom: 8px; font-size: 0.875rem; color: var(--gray-700);">
+                        Unemployment Distribution
+                    </h5>
+                    <div class="chart-container small">
+                        <canvas id="mcUnemploymentHist"></canvas>
+                    </div>
+                </div>
+                <div>
+                    <h5 style="margin-bottom: 8px; font-size: 0.875rem; color: var(--gray-700);">
+                        Net Job Change Distribution
+                    </h5>
+                    <div class="chart-container small">
+                        <canvas id="mcJobChangeHist"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Confidence Intervals Table -->
+            <div style="margin-top: 24px;">
+                <h5 style="margin-bottom: 12px; font-size: 0.875rem; color: var(--gray-700);">
+                    Confidence Intervals
+                </h5>
+                <table class="data-table" style="font-size: 0.875rem;">
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>5th %ile</th>
+                            <th>25th %ile</th>
+                            <th>Median</th>
+                            <th>75th %ile</th>
+                            <th>95th %ile</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Unemployment Rate</td>
+                            <td>${dist.final_unemployment.p5.toFixed(1)}%</td>
+                            <td>${dist.final_unemployment.p25.toFixed(1)}%</td>
+                            <td><strong>${dist.final_unemployment.median.toFixed(1)}%</strong></td>
+                            <td>${dist.final_unemployment.p75.toFixed(1)}%</td>
+                            <td>${dist.final_unemployment.p95.toFixed(1)}%</td>
+                        </tr>
+                        <tr>
+                            <td>Jobs Displaced</td>
+                            <td>${fmt(dist.cumulative_displacement.p5)}</td>
+                            <td>${fmt(dist.cumulative_displacement.p25)}</td>
+                            <td><strong>${fmt(dist.cumulative_displacement.median)}</strong></td>
+                            <td>${fmt(dist.cumulative_displacement.p75)}</td>
+                            <td>${fmt(dist.cumulative_displacement.p95)}</td>
+                        </tr>
+                        <tr>
+                            <td>New Jobs Created</td>
+                            <td>${fmt(dist.cumulative_new_jobs.p5)}</td>
+                            <td>${fmt(dist.cumulative_new_jobs.p25)}</td>
+                            <td><strong>${fmt(dist.cumulative_new_jobs.median)}</strong></td>
+                            <td>${fmt(dist.cumulative_new_jobs.p75)}</td>
+                            <td>${fmt(dist.cumulative_new_jobs.p95)}</td>
+                        </tr>
+                        <tr>
+                            <td>Net Job Change</td>
+                            <td>${fmt(dist.net_job_change.p5)}</td>
+                            <td>${fmt(dist.net_job_change.p25)}</td>
+                            <td><strong>${fmt(dist.net_job_change.median)}</strong></td>
+                            <td>${fmt(dist.net_job_change.p75)}</td>
+                            <td>${fmt(dist.net_job_change.p95)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+
+    // Create histogram charts
+    setTimeout(() => {
+        createMonteCarloHistogram('mcUnemploymentHist', dist.final_unemployment, 'Unemployment Rate (%)', 'var(--danger)');
+        createMonteCarloHistogram('mcJobChangeHist', dist.net_job_change, 'Net Job Change', 'var(--info)', true);
+    }, 100);
+}
+
+/**
+ * Create histogram chart for Monte Carlo results
+ */
+function createMonteCarloHistogram(canvasId, distribution, label, color, formatAsJobs = false) {
+    const ctx = document.getElementById(canvasId);
+    if (!ctx) return;
+
+    const histogram = distribution.histogram;
+    const labels = histogram.map(h => {
+        if (formatAsJobs) {
+            const val = h.binMid;
+            if (Math.abs(val) >= 1000000) return (val / 1000000).toFixed(1) + 'M';
+            if (Math.abs(val) >= 1000) return (val / 1000).toFixed(0) + 'K';
+            return val.toFixed(0);
+        }
+        return h.binMid.toFixed(1);
+    });
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Frequency',
+                data: histogram.map(h => h.frequency * 100),
+                backgroundColor: color,
+                borderColor: color,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: (ctx) => `${ctx.parsed.y.toFixed(1)}% of simulations`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: { display: true, text: label }
+                },
+                y: {
+                    title: { display: true, text: 'Probability (%)' },
+                    beginAtZero: true
+                }
+            }
+        }
+    });
 }
 
 // ==========================================
