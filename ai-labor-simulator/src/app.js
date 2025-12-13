@@ -2512,6 +2512,46 @@ function displayFetchResults(results) {
 }
 
 /**
+ * Reset everything to defaults - complete reset of all simulator state
+ */
+function resetEverything() {
+    if (!confirm('Reset everything to defaults? This will:\n\n• Reset all simulation parameters\n• Reset all economic metrics to baseline\n• Reset all AI indicators\n• Clear all interventions\n• Clear comparison scenarios\n\nSaved simulations will be preserved.')) {
+        return;
+    }
+
+    // Reset simulation parameters
+    resetToDefaults();
+
+    // Reset real metrics
+    if (typeof realMetricsSystem !== 'undefined') {
+        realMetricsSystem.resetAllMetrics();
+        renderRealMetrics();
+    }
+
+    // Reset hypothetical indicators
+    if (typeof hypotheticalIndicators !== 'undefined') {
+        hypotheticalIndicators.resetAllIndicators();
+        renderHypotheticalIndicators();
+    }
+
+    // Clear interventions
+    activeInterventions = [];
+    updateInterventionsList();
+
+    // Clear comparison scenarios
+    if (typeof scenarioComparison !== 'undefined') {
+        scenarioComparison.clearAll();
+        renderComparisonView();
+    }
+
+    // Reset the current snapshot display
+    updateSnapshot();
+
+    // Show confirmation
+    alert('Everything has been reset to defaults.');
+}
+
+/**
  * Reset to baseline data
  */
 function resetToBaselineData() {
