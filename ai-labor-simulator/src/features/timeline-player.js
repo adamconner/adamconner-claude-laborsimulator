@@ -286,6 +286,34 @@ class TimelineUI {
     }
 
     /**
+     * Format decimal year as Month Year (e.g., 2025.92 -> "Nov 2025")
+     */
+    formatYearAsDate(decimalYear) {
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const year = Math.floor(decimalYear);
+        const monthDecimal = (decimalYear - year) * 12;
+        const monthIndex = Math.min(11, Math.floor(monthDecimal));
+        return `${months[monthIndex]} ${year}`;
+    }
+
+    /**
+     * Format decimal year as short label for tick marks
+     */
+    formatYearShort(decimalYear) {
+        const year = Math.floor(decimalYear);
+        const monthDecimal = (decimalYear - year) * 12;
+        const monthIndex = Math.min(11, Math.floor(monthDecimal));
+        // Only show month if not January
+        if (monthIndex === 0) {
+            return `${year}`;
+        }
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        return `${months[monthIndex]} '${String(year).slice(-2)}`;
+    }
+
+    /**
      * Extract all metric values from timeline data
      */
     extractMetricSeries() {
@@ -317,25 +345,28 @@ class TimelineUI {
         }
 
         const metricSeries = this.extractMetricSeries();
+        const firstYearFormatted = this.formatYearAsDate(years[0]);
+        const lastYearFormatted = this.formatYearAsDate(years[years.length - 1]);
+
+        // Calculate which ticks should show labels (spread evenly)
+        const labelInterval = Math.max(1, Math.ceil(years.length / 6));
 
         this.container.innerHTML = `
             <div class="timeline-player">
-                <!-- Header with Year and Controls -->
-                <div class="timeline-header">
-                    <div class="timeline-year-display">
-                        <span class="timeline-year-label">Year</span>
-                        <span class="timeline-year-value" id="timeline-current-year">${years[0]}</span>
-                    </div>
-
+                <!-- Playback Controls at Top -->
+                <div class="timeline-controls-bar">
                     <div class="timeline-controls">
                         <button class="timeline-btn" onclick="timelinePlayer.goToStart()" title="Go to start">⏮</button>
-                        <button class="timeline-btn" onclick="timelinePlayer.stepBackward()" title="Previous year">◀</button>
+                        <button class="timeline-btn" onclick="timelinePlayer.stepBackward()" title="Previous">◀</button>
                         <button class="timeline-btn timeline-btn-play" id="timeline-play-btn" onclick="timelinePlayer.toggle()" title="Play/Pause">
                             <span id="timeline-play-icon">▶</span>
                         </button>
-                        <button class="timeline-btn" onclick="timelinePlayer.stepForward()" title="Next year">▶</button>
+                        <button class="timeline-btn" onclick="timelinePlayer.stepForward()" title="Next">▶</button>
                         <button class="timeline-btn" onclick="timelinePlayer.goToEnd()" title="Go to end">⏭</button>
+                    </div>
 
+                    <div class="timeline-speed-control">
+                        <label>Speed:</label>
                         <select class="timeline-speed-select" id="timeline-speed" onchange="timelineUI.handleSpeedChange(this.value)" title="Playback speed">
                             <option value="2000">0.5x</option>
                             <option value="1000" selected>1x</option>
@@ -345,6 +376,11 @@ class TimelineUI {
                     </div>
                 </div>
 
+                <!-- Charts Grid -->
+                <div class="timeline-charts-grid">
+                    ${this.metricConfigs.map(config => this.renderChartCard(config, metricSeries[config.key])).join('')}
+                </div>
+
                 <!-- Visual Timeline Scrubber -->
                 <div class="timeline-scrubber">
                     <div class="timeline-track">
@@ -352,20 +388,22 @@ class TimelineUI {
                             <div class="timeline-tick ${i === 0 ? 'active' : ''}"
                                  data-index="${i}"
                                  onclick="timelineUI.handleTickClick(${i})"
-                                 title="${year}">
+                                 title="${this.formatYearAsDate(year)}">
                                 <div class="timeline-tick-dot"></div>
-                                ${i === 0 || i === years.length - 1 || i % Math.ceil(years.length / 5) === 0 ?
-                                  `<span class="timeline-tick-label">${year}</span>` : ''}
                             </div>
                         `).join('')}
                         <div class="timeline-track-line"></div>
                         <div class="timeline-track-progress" id="timeline-track-progress"></div>
                     </div>
+                    <div class="timeline-labels">
+                        <span>${firstYearFormatted}</span>
+                        <span>${lastYearFormatted}</span>
+                    </div>
                 </div>
 
-                <!-- Charts Grid -->
-                <div class="timeline-charts-grid">
-                    ${this.metricConfigs.map(config => this.renderChartCard(config, metricSeries[config.key])).join('')}
+                <!-- Current Date Display at Bottom -->
+                <div class="timeline-date-display">
+                    <span class="timeline-date-value" id="timeline-current-year">${firstYearFormatted}</span>
                 </div>
             </div>
         `;
@@ -513,10 +551,10 @@ class TimelineUI {
      * Handle year change
      */
     handleYearChange(index, data) {
-        // Update year display
+        // Update year display with formatted date
         const yearDisplay = document.getElementById('timeline-current-year');
         if (yearDisplay) {
-            yearDisplay.textContent = this.player.years[index];
+            yearDisplay.textContent = this.formatYearAsDate(this.player.years[index]);
             yearDisplay.classList.add('timeline-year-animate');
             setTimeout(() => yearDisplay.classList.remove('timeline-year-animate'), 300);
         }
