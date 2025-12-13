@@ -580,6 +580,25 @@ function displaySimulationResults(results) {
                     </p>
                 </div>
             </div>
+
+            <!-- Intervention Cost Calculator Section -->
+            ${results.scenario.interventions && results.scenario.interventions.length > 0 ? `
+            <div class="card" id="costCalculatorCard" style="border-left: 4px solid var(--warning);">
+                <div class="card-header">
+                    <h3 style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 1.25rem;">&#128176;</span> Intervention Cost Analysis
+                    </h3>
+                </div>
+                <div id="costCalculatorContent">
+                    ${typeof interventionCostCalculator !== 'undefined'
+                        ? interventionCostCalculator.generateSummaryHTML(
+                            interventionCostCalculator.calculateAllCosts(results.scenario.interventions, results)
+                          )
+                        : '<p style="color: var(--gray-500);">Cost calculator not available.</p>'
+                    }
+                </div>
+            </div>
+            ` : ''}
         </div>
     `;
 
