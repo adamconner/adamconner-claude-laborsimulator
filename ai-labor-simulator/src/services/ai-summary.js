@@ -6,8 +6,8 @@
 class AISummaryService {
     constructor() {
         this.apiKey = localStorage.getItem('gemini_api_key') || '';
-        // Use v1 endpoint with gemini-1.5-flash (v1beta is deprecated for this model)
-        this.apiEndpoint = 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent';
+        // Use gemini-2.0-flash which is the current recommended model
+        this.apiEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
     }
 
     /**
