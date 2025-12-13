@@ -310,11 +310,24 @@ class TimelineUI {
     renderMetrics(yearData) {
         if (!yearData) return '';
 
+        // Helper to safely get numeric value
+        const getNumber = (val) => {
+            if (typeof val === 'number') return val;
+            if (typeof val === 'object' && val !== null) return 0;
+            return parseFloat(val) || 0;
+        };
+
         // Extract values from the simulation data structure
-        const unemploymentRate = yearData.labor_market?.unemployment_rate || yearData.unemployment_rate || 0;
-        const employment = yearData.labor_market?.total_employment || yearData.labor_market?.employment || yearData.employment || 0;
-        const aiAdoption = yearData.ai_adoption?.rate || yearData.ai_adoption || 0;
-        const productivity = yearData.productivity?.average || yearData.productivity || 0;
+        const unemploymentRate = getNumber(yearData.labor_market?.unemployment_rate ?? yearData.unemployment_rate ?? 0);
+        const employment = getNumber(yearData.labor_market?.total_employment ?? yearData.labor_market?.employment ?? yearData.employment ?? 0);
+
+        // ai_adoption is an object with .rate property
+        const aiAdoptionRaw = yearData.ai_adoption;
+        const aiAdoption = typeof aiAdoptionRaw === 'object' ? getNumber(aiAdoptionRaw?.rate) : getNumber(aiAdoptionRaw);
+
+        // productivity is an object with .growth_rate property
+        const productivityRaw = yearData.productivity;
+        const productivity = typeof productivityRaw === 'object' ? getNumber(productivityRaw?.growth_rate) : getNumber(productivityRaw);
 
         const metrics = [
             {
@@ -383,11 +396,24 @@ class TimelineUI {
 
         // Update metrics with animation
         if (data) {
+            // Helper to safely get numeric value
+            const getNumber = (val) => {
+                if (typeof val === 'number') return val;
+                if (typeof val === 'object' && val !== null) return 0;
+                return parseFloat(val) || 0;
+            };
+
             // Extract values from the simulation data structure
-            const unemploymentRate = data.labor_market?.unemployment_rate || data.unemployment_rate || 0;
-            const employment = data.labor_market?.total_employment || data.labor_market?.employment || data.employment || 0;
-            const aiAdoption = (data.ai_adoption?.rate || data.ai_adoption || 0) * 100;
-            const productivity = data.productivity?.average || data.productivity || 0;
+            const unemploymentRate = getNumber(data.labor_market?.unemployment_rate ?? data.unemployment_rate ?? 0);
+            const employment = getNumber(data.labor_market?.total_employment ?? data.labor_market?.employment ?? data.employment ?? 0);
+
+            // ai_adoption is an object with .rate property
+            const aiAdoptionRaw = data.ai_adoption;
+            const aiAdoption = (typeof aiAdoptionRaw === 'object' ? getNumber(aiAdoptionRaw?.rate) : getNumber(aiAdoptionRaw)) * 100;
+
+            // productivity is an object with .growth_rate property
+            const productivityRaw = data.productivity;
+            const productivity = typeof productivityRaw === 'object' ? getNumber(productivityRaw?.growth_rate) : getNumber(productivityRaw);
 
             this.animateMetricUpdate('unemployment_rate', unemploymentRate, v => v.toFixed(1) + '%');
             this.animateMetricUpdate('employment', employment, v => this.formatNumber(v));
