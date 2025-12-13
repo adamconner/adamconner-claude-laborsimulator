@@ -1,13 +1,25 @@
 /**
  * AI Summary Service - Gemini API Integration
  * Generates natural language summaries of simulation results
+ *
+ * Supports two modes:
+ * 1. Public proxy (free for all users, rate-limited)
+ * 2. User's own API key (unlimited for that user)
  */
 
 class AISummaryService {
     constructor() {
         this.apiKey = localStorage.getItem('gemini_api_key') || '';
-        // Use gemini-2.0-flash which is the current recommended model
-        this.apiEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+
+        // Cloudflare Worker proxy URL - UPDATE THIS after deploying your worker
+        // Set to null to disable public access and require user API keys
+        this.proxyEndpoint = null; // e.g., 'https://gemini-proxy.yourusername.workers.dev'
+
+        // Direct Gemini API endpoint (used when user provides their own key)
+        this.directEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+
+        // Track quota from proxy responses
+        this.lastQuotaInfo = null;
     }
 
     /**
@@ -30,6 +42,36 @@ class AISummaryService {
      */
     hasApiKey() {
         return this.apiKey && this.apiKey.length > 0;
+    }
+
+    /**
+     * Check if public proxy is available
+     */
+    hasProxy() {
+        return this.proxyEndpoint && this.proxyEndpoint.length > 0;
+    }
+
+    /**
+     * Check if AI analysis is available (either proxy or user key)
+     */
+    isAvailable() {
+        return this.hasProxy() || this.hasApiKey();
+    }
+
+    /**
+     * Get the mode being used
+     */
+    getMode() {
+        if (this.hasApiKey()) return 'personal';
+        if (this.hasProxy()) return 'public';
+        return 'none';
+    }
+
+    /**
+     * Get quota info from last proxy request
+     */
+    getQuotaInfo() {
+        return this.lastQuotaInfo;
     }
 
     /**
@@ -87,56 +129,83 @@ Keep the tone professional but accessible. Use specific numbers from the data.`;
     }
 
     /**
+     * Make API request (handles both proxy and direct modes)
+     */
+    async makeRequest(body) {
+        // If user has their own API key, use direct endpoint
+        if (this.hasApiKey()) {
+            const response = await fetch(`${this.directEndpoint}?key=${this.apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            return response;
+        }
+
+        // Otherwise, use proxy if available
+        if (this.hasProxy()) {
+            const response = await fetch(this.proxyEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            return response;
+        }
+
+        throw new Error('AI analysis not available. Please configure an API key in Settings.');
+    }
+
+    /**
      * Call Gemini API to generate summary
      */
     async generateSummary(results) {
-        if (!this.hasApiKey()) {
-            throw new Error('Gemini API key not configured. Please add your API key in settings.');
+        if (!this.isAvailable()) {
+            throw new Error('AI analysis not available. Please configure an API key in Settings.');
         }
 
         const prompt = this.buildPrompt(results);
 
         try {
-            const response = await fetch(`${this.apiEndpoint}?key=${this.apiKey}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
+            const response = await this.makeRequest({
+                contents: [{
+                    parts: [{
+                        text: prompt
+                    }]
+                }],
+                generationConfig: {
+                    temperature: 0.7,
+                    topK: 40,
+                    topP: 0.95,
+                    maxOutputTokens: 1024,
                 },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [{
-                            text: prompt
-                        }]
-                    }],
-                    generationConfig: {
-                        temperature: 0.7,
-                        topK: 40,
-                        topP: 0.95,
-                        maxOutputTokens: 1024,
+                safetySettings: [
+                    {
+                        category: "HARM_CATEGORY_HARASSMENT",
+                        threshold: "BLOCK_NONE"
                     },
-                    safetySettings: [
-                        {
-                            category: "HARM_CATEGORY_HARASSMENT",
-                            threshold: "BLOCK_NONE"
-                        },
-                        {
-                            category: "HARM_CATEGORY_HATE_SPEECH",
-                            threshold: "BLOCK_NONE"
-                        },
-                        {
-                            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                            threshold: "BLOCK_NONE"
-                        },
-                        {
-                            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-                            threshold: "BLOCK_NONE"
-                        }
-                    ]
-                })
+                    {
+                        category: "HARM_CATEGORY_HATE_SPEECH",
+                        threshold: "BLOCK_NONE"
+                    },
+                    {
+                        category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                        threshold: "BLOCK_NONE"
+                    },
+                    {
+                        category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+                        threshold: "BLOCK_NONE"
+                    }
+                ]
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
+
+                // Handle rate limit from proxy
+                if (response.status === 429) {
+                    throw new Error('Daily AI analysis limit reached. Please try again tomorrow or add your own API key in Settings.');
+                }
+
                 if (response.status === 400 && errorData.error?.message?.includes('API key')) {
                     throw new Error('Invalid API key. Please check your Gemini API key and try again.');
                 }
@@ -144,6 +213,11 @@ Keep the tone professional but accessible. Use specific numbers from the data.`;
             }
 
             const data = await response.json();
+
+            // Store quota info if using proxy
+            if (data._quota) {
+                this.lastQuotaInfo = data._quota;
+            }
 
             if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
                 return data.candidates[0].content.parts[0].text;
@@ -162,7 +236,7 @@ Keep the tone professional but accessible. Use specific numbers from the data.`;
      * Generate a quick bullet-point summary (shorter, for sidebar)
      */
     async generateQuickInsights(results) {
-        if (!this.hasApiKey()) {
+        if (!this.isAvailable()) {
             return null;
         }
 
@@ -178,25 +252,25 @@ Keep the tone professional but accessible. Use specific numbers from the data.`;
 Format as 4 bullet points starting with an emoji. Focus on the most important insights.`;
 
         try {
-            const response = await fetch(`${this.apiEndpoint}?key=${this.apiKey}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [{ text: prompt }]
-                    }],
-                    generationConfig: {
-                        temperature: 0.5,
-                        maxOutputTokens: 256,
-                    }
-                })
+            const response = await this.makeRequest({
+                contents: [{
+                    parts: [{ text: prompt }]
+                }],
+                generationConfig: {
+                    temperature: 0.5,
+                    maxOutputTokens: 256,
+                }
             });
 
             if (!response.ok) return null;
 
             const data = await response.json();
+
+            // Store quota info if using proxy
+            if (data._quota) {
+                this.lastQuotaInfo = data._quota;
+            }
+
             return data.candidates?.[0]?.content?.parts?.[0]?.text || null;
         } catch {
             return null;

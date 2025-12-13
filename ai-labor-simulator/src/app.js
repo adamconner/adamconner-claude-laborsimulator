@@ -398,8 +398,8 @@ function displaySimulationResults(results) {
     const resultsDiv = document.getElementById('simulation-results');
     const summary = results.summary;
 
-    // Check if AI summary is available
-    const hasApiKey = typeof aiSummaryService !== 'undefined' && aiSummaryService.hasApiKey();
+    // Check if AI summary is available (proxy or user API key)
+    const aiAvailable = typeof aiSummaryService !== 'undefined' && aiSummaryService.isAvailable();
 
     // Comparison button state
     const comparisonAvailable = typeof scenarioComparison !== 'undefined';
@@ -420,7 +420,7 @@ function displaySimulationResults(results) {
                 </h3>
                 <div style="display: flex; gap: 8px;">
                     ${comparisonButton}
-                    ${hasApiKey ? `
+                    ${aiAvailable ? `
                         <button class="btn btn-sm btn-outline" onclick="regenerateAISummary()" id="regenerateBtn">
                             Regenerate
                         </button>
@@ -428,7 +428,7 @@ function displaySimulationResults(results) {
                 </div>
             </div>
             <div id="aiSummaryContent" style="line-height: 1.7;">
-                ${hasApiKey ? `
+                ${aiAvailable ? `
                     <div style="display: flex; align-items: center; gap: 12px; color: var(--gray-500);">
                         <div class="spinner" style="width: 20px; height: 20px; border-width: 2px;"></div>
                         <span>Generating AI analysis...</span>
@@ -564,8 +564,8 @@ function displaySimulationResults(results) {
         );
     }, 100);
 
-    // Generate AI summary if API key is configured
-    if (typeof aiSummaryService !== 'undefined' && aiSummaryService.hasApiKey()) {
+    // Generate AI summary if available (proxy or user API key)
+    if (typeof aiSummaryService !== 'undefined' && aiSummaryService.isAvailable()) {
         generateAISummary(results);
     }
 }
