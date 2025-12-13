@@ -130,6 +130,22 @@ class SimulationEngine {
     }
 
     /**
+     * Get AI adoption value from ai_indicators (handles different data structures)
+     */
+    getAIAdoptionValue(aiIndicators) {
+        // Handle both flattened structure (ai_indicators.companies_using_ai)
+        // and nested structure (ai_indicators.real.companies_using_ai)
+        if (aiIndicators.companies_using_ai) {
+            return aiIndicators.companies_using_ai.value;
+        }
+        if (aiIndicators.real && aiIndicators.real.companies_using_ai) {
+            return aiIndicators.real.companies_using_ai.value;
+        }
+        // Default fallback
+        return 35;
+    }
+
+    /**
      * Initialize simulation state from baseline
      */
     initializeState() {
@@ -155,7 +171,7 @@ class SimulationEngine {
             },
             sectors: JSON.parse(JSON.stringify(baseline.sectors)),
             ai: {
-                adoption_rate: baseline.ai_indicators.companies_using_ai.value,
+                adoption_rate: this.getAIAdoptionValue(baseline.ai_indicators),
                 displaced_workers: 0,
                 new_jobs_created: 0
             }
@@ -166,7 +182,7 @@ class SimulationEngine {
      * Calculate AI adoption rate based on curve type
      */
     calculateAIAdoption(progress, scenario) {
-        const initial = this.baselineSnapshot.ai_indicators.companies_using_ai.value;
+        const initial = this.getAIAdoptionValue(this.baselineSnapshot.ai_indicators);
         const target = scenario.targets.ai_adoption_rate;
         const curve = scenario.ai_parameters.adoption_curve;
 
