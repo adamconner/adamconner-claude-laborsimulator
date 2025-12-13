@@ -3084,5 +3084,80 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
+// ==========================================
+// Theme Toggle Functions
+// ==========================================
+
+/**
+ * Toggle between light and dark theme
+ */
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+
+    updateThemeIcon(newTheme);
+    updateChartTheme(newTheme);
+}
+
+/**
+ * Update theme icon
+ */
+function updateThemeIcon(theme) {
+    const icon = document.getElementById('themeIcon');
+    if (icon) {
+        icon.textContent = theme === 'dark' ? '☀️' : '🌙';
+    }
+}
+
+/**
+ * Update chart colors for theme
+ */
+function updateChartTheme(theme) {
+    const isDark = theme === 'dark';
+    const textColor = isDark ? '#f1f5f9' : '#374151';
+    const gridColor = isDark ? '#334155' : '#e5e7eb';
+
+    Chart.defaults.color = textColor;
+    Chart.defaults.borderColor = gridColor;
+
+    // Update existing charts if any
+    Chart.helpers.each(Chart.instances, (chart) => {
+        if (chart.options.scales) {
+            Object.keys(chart.options.scales).forEach(scaleKey => {
+                if (chart.options.scales[scaleKey].grid) {
+                    chart.options.scales[scaleKey].grid.color = gridColor;
+                }
+                if (chart.options.scales[scaleKey].ticks) {
+                    chart.options.scales[scaleKey].ticks.color = textColor;
+                }
+            });
+        }
+        if (chart.options.plugins && chart.options.plugins.legend) {
+            chart.options.plugins.legend.labels = chart.options.plugins.legend.labels || {};
+            chart.options.plugins.legend.labels.color = textColor;
+        }
+        chart.update();
+    });
+}
+
+/**
+ * Initialize theme from localStorage or system preference
+ */
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+
+    document.documentElement.setAttribute('data-theme', theme);
+    updateThemeIcon(theme);
+    updateChartTheme(theme);
+}
+
+// Initialize theme early (before DOMContentLoaded to prevent flash)
+initTheme();
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', initApp);
