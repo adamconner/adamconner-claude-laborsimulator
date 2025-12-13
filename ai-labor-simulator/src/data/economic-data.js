@@ -164,7 +164,7 @@ class EconomicDataService {
                 output_per_hour: baseline.productivity.output_per_hour.value
             },
             sectors: baseline.sectors,
-            ai_indicators: baseline.ai_indicators,
+            ai_indicators: baseline.ai_indicators.real || baseline.ai_indicators,
             demographics: baseline.demographics
         };
     }
