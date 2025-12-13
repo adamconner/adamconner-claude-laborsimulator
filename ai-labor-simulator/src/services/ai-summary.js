@@ -11,9 +11,8 @@ class AISummaryService {
     constructor() {
         this.apiKey = localStorage.getItem('gemini_api_key') || '';
 
-        // Cloudflare Worker proxy URL - UPDATE THIS after deploying your worker
-        // Set to null to disable public access and require user API keys
-        this.proxyEndpoint = null; // e.g., 'https://gemini-proxy.yourusername.workers.dev'
+        // Cloudflare Worker proxy URL for public AI analysis access
+        this.proxyEndpoint = 'https://gemini-proxy.adamconner7.workers.dev';
 
         // Direct Gemini API endpoint (used when user provides their own key)
         this.directEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
