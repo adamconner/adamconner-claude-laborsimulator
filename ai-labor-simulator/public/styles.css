@@ -46,6 +46,10 @@
     --gray-100: #0f172a;
     --gray-200: #334155;
     --gray-300: #475569;
+    --gray-400: #64748b;
+    --gray-500: #94a3b8;
+    --gray-600: #475569;
+    --gray-700: #334155;
     --gray-800: #f1f5f9;
     --gray-900: #f8fafc;
 
@@ -195,15 +199,24 @@
 
 /* Dark mode intervention cards */
 [data-theme="dark"] .intervention-card {
-    background: #334155;
+    background: #334155 !important;
+    border: 1px solid #475569;
+}
+
+[data-theme="dark"] .intervention-card .header {
+    background: transparent;
 }
 
 [data-theme="dark"] .intervention-card .name {
-    color: #f1f5f9;
+    color: #f1f5f9 !important;
 }
 
 [data-theme="dark"] .intervention-card .toggle {
-    background: #475569;
+    background: #475569 !important;
+}
+
+[data-theme="dark"] .intervention-card .toggle.active {
+    background: var(--primary) !important;
 }
 
 [data-theme="dark"] .intervention-card .params {
