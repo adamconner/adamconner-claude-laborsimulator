@@ -1840,3 +1840,143 @@ body {
         font-size: 1rem;
     }
 }
+
+/* =====================================================
+   Modal Overlay Styles (for AI modals)
+   ===================================================== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.modal-content {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--border-color);
+    width: 100%;
+    animation: modalSlideIn 0.2s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal-content h3 {
+    color: var(--text-primary);
+    margin: 0 0 16px 0;
+    font-size: 1.25rem;
+}
+
+.modal-content p {
+    color: var(--text-secondary);
+}
+
+.modal-content .form-group {
+    margin-bottom: 16px;
+}
+
+.modal-content .form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.modal-content .form-group input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.modal-content .form-group input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+/* Dark mode modal adjustments */
+[data-theme="dark"] .modal-overlay {
+    background: rgba(0, 0, 0, 0.75);
+}
+
+[data-theme="dark"] .modal-content {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .modal-content .stat-box {
+    background: #0f172a !important;
+}
+
+[data-theme="dark"] .modal-content #trainingMessage {
+    background: #0f172a;
+    color: var(--text-secondary);
+}
+
+/* AI Results Modal specific styles */
+#aiResultsModal .modal-content {
+    max-height: 85vh;
+}
+
+#aiResultsContent {
+    color: var(--text-primary);
+}
+
+#aiResultsContent h4 {
+    color: var(--text-primary);
+    margin: 20px 0 12px 0;
+    font-size: 1.1rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px;
+}
+
+#aiResultsContent ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+#aiResultsContent li {
+    margin-bottom: 8px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+/* Mobile responsive for modals */
+@media (max-width: 768px) {
+    .modal-overlay {
+        padding: 12px;
+    }
+
+    .modal-content {
+        padding: 16px;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    #aiResultsModal .modal-content {
+        max-width: 100% !important;
+    }
+}
