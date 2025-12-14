@@ -429,6 +429,106 @@ async function runSimulation() {
 }
 
 /**
+ * Generate HTML for intervention impact display
+ */
+function generateInterventionImpactHTML(interventionSummary, interventions) {
+    if (!interventionSummary || interventions.length === 0) {
+        return '<p style="color: var(--gray-500);">No intervention data available.</p>';
+    }
+
+    const formatNumber = (n) => {
+        if (Math.abs(n) >= 1e12) return (n / 1e12).toFixed(1) + 'T';
+        if (Math.abs(n) >= 1e9) return (n / 1e9).toFixed(1) + 'B';
+        if (Math.abs(n) >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+        if (Math.abs(n) >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+        return n.toFixed(0);
+    };
+
+    const totalJobs = interventionSummary.total_job_effect || 0;
+    const totalEconomic = interventionSummary.total_economic_impact || 0;
+    const totalFiscal = interventionSummary.total_fiscal_cost || 0;
+    const avgWageEffect = interventionSummary.monthly_averages?.wage_effect || 0;
+
+    // Generate details breakdown
+    const detailsHTML = (interventionSummary.details || []).map(d => `
+        <tr>
+            <td><strong>${d.intervention}</strong></td>
+            <td style="text-align: right; color: ${d.job_effect >= 0 ? 'var(--secondary)' : 'var(--danger)'};">
+                ${d.job_effect >= 0 ? '+' : ''}${formatNumber(d.job_effect * 12)}/yr
+            </td>
+            <td style="text-align: right; color: ${d.wage_effect >= 0 ? 'var(--secondary)' : 'var(--danger)'};">
+                ${d.wage_effect >= 0 ? '+' : ''}${(d.wage_effect * 100).toFixed(2)}%
+            </td>
+            <td style="text-align: right; color: ${d.economic_impact >= 0 ? 'var(--secondary)' : 'var(--danger)'};">
+                $${formatNumber((d.economic_impact || 0) * 12)}
+            </td>
+            <td style="text-align: right; color: ${d.fiscal_cost <= 0 ? 'var(--secondary)' : 'var(--warning)'};">
+                ${d.fiscal_cost < 0 ? '+' : '-'}$${formatNumber(Math.abs(d.fiscal_cost * 12))}
+            </td>
+        </tr>
+    `).join('');
+
+    return `
+        <div style="margin-bottom: 24px;">
+            <!-- Summary Cards -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; margin-bottom: 24px;">
+                <div style="background: var(--gray-50); padding: 16px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 0.75rem; color: var(--gray-500); text-transform: uppercase;">Jobs Impact</div>
+                    <div style="font-size: 1.25rem; font-weight: 700; color: ${totalJobs >= 0 ? 'var(--secondary)' : 'var(--danger)'};">
+                        ${totalJobs >= 0 ? '+' : ''}${formatNumber(totalJobs)}
+                    </div>
+                    <div style="font-size: 0.7rem; color: var(--gray-400);">cumulative</div>
+                </div>
+                <div style="background: var(--gray-50); padding: 16px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 0.75rem; color: var(--gray-500); text-transform: uppercase;">Wage Effect</div>
+                    <div style="font-size: 1.25rem; font-weight: 700; color: ${avgWageEffect >= 0 ? 'var(--secondary)' : 'var(--danger)'};">
+                        ${avgWageEffect >= 0 ? '+' : ''}${(avgWageEffect * 100).toFixed(2)}%
+                    </div>
+                    <div style="font-size: 0.7rem; color: var(--gray-400);">monthly avg</div>
+                </div>
+                <div style="background: var(--gray-50); padding: 16px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 0.75rem; color: var(--gray-500); text-transform: uppercase;">Economic Impact</div>
+                    <div style="font-size: 1.25rem; font-weight: 700; color: var(--primary);">
+                        $${formatNumber(totalEconomic)}
+                    </div>
+                    <div style="font-size: 0.7rem; color: var(--gray-400);">cumulative GDP</div>
+                </div>
+                <div style="background: var(--gray-50); padding: 16px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 0.75rem; color: var(--gray-500); text-transform: uppercase;">Fiscal Impact</div>
+                    <div style="font-size: 1.25rem; font-weight: 700; color: ${totalFiscal <= 0 ? 'var(--secondary)' : 'var(--warning)'};">
+                        ${totalFiscal < 0 ? '+' : '-'}$${formatNumber(Math.abs(totalFiscal))}
+                    </div>
+                    <div style="font-size: 0.7rem; color: var(--gray-400);">${totalFiscal < 0 ? 'revenue' : 'cost'}</div>
+                </div>
+            </div>
+
+            <!-- Intervention Breakdown -->
+            ${interventionSummary.details && interventionSummary.details.length > 0 ? `
+            <h4 style="font-size: 0.875rem; color: var(--gray-500); margin-bottom: 12px; text-transform: uppercase;">
+                Intervention Breakdown
+            </h4>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; font-size: 0.875rem; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid var(--gray-200);">
+                            <th style="text-align: left; padding: 8px 12px;">Intervention</th>
+                            <th style="text-align: right; padding: 8px 12px;">Jobs/Year</th>
+                            <th style="text-align: right; padding: 8px 12px;">Wage Effect</th>
+                            <th style="text-align: right; padding: 8px 12px;">Economic/Year</th>
+                            <th style="text-align: right; padding: 8px 12px;">Fiscal/Year</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${detailsHTML}
+                    </tbody>
+                </table>
+            </div>
+            ` : ''}
+        </div>
+    `;
+}
+
+/**
  * Display simulation results
  */
 function displaySimulationResults(results) {
@@ -638,6 +738,21 @@ function displaySimulationResults(results) {
                     </p>
                 </div>
             </div>
+
+            <!-- Intervention Impact Section -->
+            ${results.scenario.interventions && results.scenario.interventions.length > 0 && results.summary.interventions ? `
+            <div class="card" id="interventionImpactCard" style="border-left: 4px solid var(--secondary);">
+                <div class="card-header">
+                    <h3 style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 1.25rem;">&#128200;</span> Intervention Impact
+                    </h3>
+                    <span style="font-size: 0.875rem; color: var(--gray-500);">Effects on simulation outcomes</span>
+                </div>
+                <div id="interventionImpactContent">
+                    ${generateInterventionImpactHTML(results.summary.interventions, results.scenario.interventions)}
+                </div>
+            </div>
+            ` : ''}
 
             <!-- Intervention Cost Calculator Section -->
             ${results.scenario.interventions && results.scenario.interventions.length > 0 ? `

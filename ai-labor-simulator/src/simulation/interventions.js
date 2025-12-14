@@ -392,6 +392,7 @@ class InterventionSystem {
             wage_effect: 0,
             lfpr_effect: 0,
             fiscal_cost: 0,
+            economic_impact: 0,
             details: []
         };
 
@@ -405,12 +406,19 @@ class InterventionSystem {
             effects.wage_effect += effect.wage_effect;
             effects.lfpr_effect += effect.lfpr_effect;
             effects.fiscal_cost += effect.fiscal_cost;
+            effects.economic_impact += effect.economic_impact || 0;
             effects.details.push({
                 intervention: intervention.name,
                 type: intervention.type,
                 ...effect
             });
         }
+
+        // Rename for consistency with engine expectations
+        effects.total_job_effect = effects.job_effect;
+        effects.total_wage_effect = effects.wage_effect;
+        effects.total_fiscal_cost = effects.fiscal_cost;
+        effects.total_economic_impact = effects.economic_impact;
 
         return effects;
     }
@@ -424,7 +432,8 @@ class InterventionSystem {
             job_effect: 0,
             wage_effect: 0,
             lfpr_effect: 0,
-            fiscal_cost: 0
+            fiscal_cost: 0,
+            economic_impact: 0
         };
 
         switch (intervention.type) {
@@ -475,11 +484,17 @@ class InterventionSystem {
         const jobMultiplier = 0.00001; // Jobs per $100k spending
         const jobEffect = annualCost * consumptionMultiplier * jobMultiplier;
 
+        // Economic impact: UBI spending creates economic activity through consumption
+        // Fiscal multiplier for direct transfers is typically 0.8-1.5x
+        const fiscalMultiplier = 1.2;
+        const economicImpact = annualCost * consumptionMultiplier * fiscalMultiplier;
+
         return {
             job_effect: Math.round(jobEffect / 12), // Monthly
             wage_effect: 0.1 * (params.monthly_amount / 1000), // Slight wage floor increase
             lfpr_effect: lfprEffect / 12,
-            fiscal_cost: annualCost / 12
+            fiscal_cost: annualCost / 12,
+            economic_impact: economicImpact / 12
         };
     }
 
@@ -496,11 +511,17 @@ class InterventionSystem {
         const jobEffect = successfulRetrains * 0.8; // 80% of successful retrains find jobs
         const cost = participants * params.funding_per_worker / monthlyLag;
 
+        // Economic impact: Higher wages from retraining + increased productivity
+        // Retrained workers earn ~15% more on average
+        const avgWage = state.wages.average_hourly * 2080;
+        const economicImpact = successfulRetrains * avgWage * 1.15;
+
         return {
             job_effect: Math.round(jobEffect),
             wage_effect: 0.05, // Better skills = slightly better wages
             lfpr_effect: 0.02, // Keeps people in labor force
-            fiscal_cost: cost
+            fiscal_cost: cost,
+            economic_impact: economicImpact / 12
         };
     }
 
@@ -517,11 +538,15 @@ class InterventionSystem {
         // Jobs saved from displacement
         const jobsSaved = eligibleEmployment * 0.05 * (params.subsidy_rate / 100);
 
+        // Economic impact: Jobs saved = continued economic output
+        const economicImpact = jobsSaved * avgWage * 0.8; // 80% of wage value as economic output
+
         return {
             job_effect: Math.round(jobsSaved / 12),
             wage_effect: -0.02, // Slight wage suppression
             lfpr_effect: 0,
-            fiscal_cost: annualCost / 12
+            fiscal_cost: annualCost / 12,
+            economic_impact: economicImpact / 12
         };
     }
 
@@ -541,11 +566,16 @@ class InterventionSystem {
             wageCost = newJobs * state.wages.average_hourly * 2080 * 0.25; // 25% subsidy
         }
 
+        // Economic impact: New jobs create consumer spending
+        const avgWage = state.wages.average_hourly * 2080;
+        const economicImpact = newJobs * avgWage * 0.7; // 70% marginal propensity to consume
+
         return {
             job_effect: Math.round(newJobs / 12),
             wage_effect: params.wage_adjustment === 'full_wage' ? 0.1 : -0.05,
             lfpr_effect: 0.05,
-            fiscal_cost: wageCost / 12
+            fiscal_cost: wageCost / 12,
+            economic_impact: economicImpact / 12
         };
     }
 
@@ -561,11 +591,19 @@ class InterventionSystem {
         // Slight slowdown in automation
         const displacementReduction = laborImpact.total_displaced * 0.1 * (params.tax_rate / 100);
 
+        // Economic impact: Revenue can fund other programs; jobs saved maintain spending
+        // But slight drag on business investment
+        const avgWage = state.wages.average_hourly * 2080;
+        const jobsSavedValue = displacementReduction * avgWage * 0.5;
+        const investmentDrag = taxRevenue * 0.3; // 30% drag on investment
+        const economicImpact = taxRevenue + jobsSavedValue - investmentDrag;
+
         return {
             job_effect: Math.round(displacementReduction / 12),
             wage_effect: 0,
             lfpr_effect: 0,
-            fiscal_cost: -taxRevenue / 12 // Negative = revenue
+            fiscal_cost: -taxRevenue / 12, // Negative = revenue
+            economic_impact: economicImpact / 12
         };
     }
 
@@ -581,11 +619,18 @@ class InterventionSystem {
         // Long-term skill improvement
         const futureJobEffect = participants * 0.001; // Delayed effect
 
+        // Economic impact: Education spending + long-term productivity gains
+        // Education has high long-term ROI (estimated 8-12% per year of education)
+        const avgWage = state.wages.average_hourly * 2080;
+        const productivityGain = futureJobEffect * avgWage * 1.2; // 20% productivity premium
+        const economicImpact = annualCost * 0.8 + productivityGain; // Direct + indirect
+
         return {
             job_effect: Math.round(futureJobEffect / 12),
             wage_effect: 0.02, // Gradual wage improvement
             lfpr_effect: -0.01, // Some leave workforce for education
-            fiscal_cost: annualCost / 12
+            fiscal_cost: annualCost / 12,
+            economic_impact: economicImpact / 12
         };
     }
 
@@ -602,11 +647,18 @@ class InterventionSystem {
         const annualWage = params.hourly_wage * 2080;
         const annualCost = participants * annualWage * 1.3; // Include program overhead
 
+        // Economic impact: Jobs = output + consumer spending
+        // Public jobs create value (infrastructure, services) + spending multiplier
+        const outputValue = participants * annualWage * 0.8; // 80% productivity of market jobs
+        const spendingMultiplier = 1.5; // Government spending multiplier
+        const economicImpact = outputValue * spendingMultiplier;
+
         return {
             job_effect: Math.round(participants / 12),
             wage_effect: 0.15 * (params.hourly_wage / 20), // Wage floor effect
             lfpr_effect: 0.1, // Brings people back to workforce
-            fiscal_cost: annualCost / 12
+            fiscal_cost: annualCost / 12,
+            economic_impact: economicImpact / 12
         };
     }
 
@@ -622,11 +674,18 @@ class InterventionSystem {
         // Modest employment effect through entrepreneurship
         const jobEffect = gigWorkforce * 0.02;
 
+        // Economic impact: Better labor market matching + entrepreneurship
+        const avgWage = state.wages.average_hourly * 2080;
+        const mobilityGain = gigWorkforce * 0.03 * avgWage * 0.1; // 3% better matching
+        const entrepreneurshipGain = jobEffect * avgWage * 1.2; // New businesses
+        const economicImpact = mobilityGain + entrepreneurshipGain;
+
         return {
             job_effect: Math.round(jobEffect / 12),
             wage_effect: 0,
             lfpr_effect: 0.03, // More people willing to work
-            fiscal_cost: params.funding_model === 'general_revenue' ? benefitCost / 12 : 0
+            fiscal_cost: params.funding_model === 'general_revenue' ? benefitCost / 12 : 0,
+            economic_impact: economicImpact / 12
         };
     }
 
@@ -642,11 +701,18 @@ class InterventionSystem {
         // Better job matching due to reduced pressure
         const jobMatchImprovement = 0.1;
 
+        // Economic impact: Maintains consumer spending during transition + better job matches
+        // Income support has high fiscal multiplier (~1.5x)
+        const consumptionMaintained = annualCost * 0.8; // 80% spent on consumption
+        const betterMatchValue = displaced * jobMatchImprovement * avgWage * 0.1; // 10% wage premium from better matches
+        const economicImpact = consumptionMaintained * 1.5 + betterMatchValue;
+
         return {
             job_effect: Math.round(displaced * jobMatchImprovement / 12),
             wage_effect: 0.05, // Better matches = better wages
             lfpr_effect: 0.02, // Keeps people searching
-            fiscal_cost: annualCost / 12
+            fiscal_cost: annualCost / 12,
+            economic_impact: economicImpact / 12
         };
     }
 

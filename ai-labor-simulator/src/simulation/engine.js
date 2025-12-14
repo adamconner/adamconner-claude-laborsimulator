@@ -410,6 +410,9 @@ class SimulationEngine {
         const initial = results[0];
         const final = results[results.length - 1];
 
+        // Calculate cumulative intervention effects
+        const interventionSummary = this.calculateInterventionSummary(results);
+
         return {
             timeframe: {
                 start_year: initial.year,
@@ -456,8 +459,55 @@ class SimulationEngine {
                     final: final.productivity.growth_rate.toFixed(1)
                 }
             },
+            interventions: interventionSummary,
             sector_summary: this.generateSectorSummary(initial.sectors, final.sectors)
         };
+    }
+
+    /**
+     * Calculate cumulative intervention effects across simulation
+     */
+    calculateInterventionSummary(results) {
+        const summary = {
+            total_job_effect: 0,
+            total_wage_effect: 0,
+            total_fiscal_cost: 0,
+            total_economic_impact: 0,
+            monthly_averages: {
+                job_effect: 0,
+                wage_effect: 0,
+                fiscal_cost: 0,
+                economic_impact: 0
+            },
+            details: []
+        };
+
+        // Sum up all intervention effects
+        for (const result of results) {
+            if (result.interventions) {
+                summary.total_job_effect += result.interventions.total_job_effect || 0;
+                summary.total_wage_effect += result.interventions.total_wage_effect || 0;
+                summary.total_fiscal_cost += result.interventions.total_fiscal_cost || 0;
+                summary.total_economic_impact += result.interventions.total_economic_impact || 0;
+            }
+        }
+
+        // Calculate monthly averages
+        const months = results.length;
+        if (months > 0) {
+            summary.monthly_averages.job_effect = summary.total_job_effect / months;
+            summary.monthly_averages.wage_effect = summary.total_wage_effect / months;
+            summary.monthly_averages.fiscal_cost = summary.total_fiscal_cost / months;
+            summary.monthly_averages.economic_impact = summary.total_economic_impact / months;
+        }
+
+        // Get last intervention details for breakdown
+        const lastResult = results[results.length - 1];
+        if (lastResult?.interventions?.details) {
+            summary.details = lastResult.interventions.details;
+        }
+
+        return summary;
     }
 
     /**
