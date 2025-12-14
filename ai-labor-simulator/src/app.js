@@ -3676,10 +3676,14 @@ async function executeAdvancedAISimulation() {
         });
         console.log('Stored simulation ID:', simId);
 
-        // Display results
+        // Store analysis for later viewing BEFORE displaying results
+        // This ensures the "View AI Report" button will appear
+        currentAIAnalysis = { analysis, enhancedParams, timestamp: new Date().toISOString() };
+
+        // Display results (now the "View AI Report" button will show)
         displaySimulationResults(results);
 
-        // Show AI analysis modal
+        // Show AI analysis modal immediately
         displayAIAnalysis(analysis, enhancedParams);
 
         // Update model status
