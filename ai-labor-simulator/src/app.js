@@ -9,6 +9,7 @@ let simulationEngine;
 let interventionSystem;
 let vizManager;
 let currentResults = null;
+let currentAIAnalysis = null;  // Store current AI analysis for re-viewing
 
 // Default configuration values
 const DEFAULT_CONFIG = {
@@ -448,6 +449,9 @@ function displaySimulationResults(results) {
         </button>
     ` : '';
 
+    // Check if we have an AI-enhanced analysis available
+    const hasEnhancedAnalysis = currentAIAnalysis !== null;
+
     const aiSummarySection = `
         <div class="card" id="aiSummaryCard" style="margin-bottom: 24px; border-left: 4px solid var(--primary);">
             <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
@@ -459,6 +463,21 @@ function displaySimulationResults(results) {
                 </div>
             </div>
             <div id="aiSummaryContent" style="line-height: 1.7;">
+                ${hasEnhancedAnalysis ? `
+                    <div style="display: flex; align-items: center; gap: 16px; padding: 16px; background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1)); border-radius: 8px; margin-bottom: 16px;">
+                        <div style="flex: 1;">
+                            <p style="margin: 0 0 4px 0; font-weight: 600; color: var(--text-primary);">
+                                ✨ AI-Enhanced Analysis Available
+                            </p>
+                            <p style="margin: 0; font-size: 0.875rem; color: var(--text-secondary);">
+                                View the comprehensive AI analysis with policy recommendations and insights.
+                            </p>
+                        </div>
+                        <button class="btn" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; white-space: nowrap;" onclick="showAIAnalysis()">
+                            View AI Report
+                        </button>
+                    </div>
+                ` : ''}
                 ${aiAvailable ? `
                     <p style="color: var(--gray-500); margin-bottom: 16px;">
                         Get AI-powered analysis of your simulation results, including key insights,
@@ -3603,6 +3622,9 @@ function createEnhancedScenario(simpleInputs, enhancedParams) {
  * Display AI Analysis in modal
  */
 function displayAIAnalysis(analysis, enhancedParams) {
+    // Store for later viewing
+    currentAIAnalysis = { analysis, enhancedParams, timestamp: new Date().toISOString() };
+
     const modal = document.getElementById('aiResultsModal');
     const content = document.getElementById('aiResultsContent');
 
@@ -3720,6 +3742,24 @@ function displayAIAnalysis(analysis, enhancedParams) {
  */
 function hideAIResultsModal() {
     document.getElementById('aiResultsModal').style.display = 'none';
+}
+
+/**
+ * Show stored AI Analysis (re-view after closing)
+ */
+function showAIAnalysis() {
+    if (!currentAIAnalysis) {
+        showNotification('No AI analysis available. Run an Advanced AI Simulation first.', 'warning');
+        return;
+    }
+    displayAIAnalysis(currentAIAnalysis.analysis, currentAIAnalysis.enhancedParams);
+}
+
+/**
+ * Check if AI analysis is available
+ */
+function hasAIAnalysis() {
+    return currentAIAnalysis !== null;
 }
 
 /**
