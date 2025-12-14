@@ -1992,4 +1992,33 @@ body {
     #aiResultsModal .modal-content {
         max-width: 100% !important;
     }
+
+    /* Skills gap grid responsive */
+    #skillsGapContent > div:first-child {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+    }
+
+    /* Demographics cards responsive */
+    #demographicsContent > div > div {
+        flex-wrap: wrap;
+    }
+}
+
+/* Dark mode for new analysis sections */
+[data-theme="dark"] #demographicsCard .indicator-item,
+[data-theme="dark"] #skillsGapCard .indicator-item {
+    background: var(--gray-700);
+}
+
+[data-theme="dark"] #skillsGapContent div[style*="rgba(239, 68, 68"] {
+    background: rgba(239, 68, 68, 0.15) !important;
+}
+
+[data-theme="dark"] #skillsGapContent div[style*="rgba(16, 185, 129"] {
+    background: rgba(16, 185, 129, 0.15) !important;
+}
+
+[data-theme="dark"] #demographicsContent div[style*="rgba(239, 68, 68"] {
+    background: rgba(239, 68, 68, 0.15) !important;
 }

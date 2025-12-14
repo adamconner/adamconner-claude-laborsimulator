@@ -529,6 +529,235 @@ function generateInterventionImpactHTML(interventionSummary, interventions) {
 }
 
 /**
+ * Generate HTML for demographics analysis display
+ */
+function generateDemographicsHTML(demographics) {
+    if (!demographics) {
+        return '<p style="color: var(--gray-500);">No demographics data available.</p>';
+    }
+
+    const formatNumber = (n) => {
+        if (Math.abs(n) >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+        if (Math.abs(n) >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+        return n.toFixed(0);
+    };
+
+    // Build age group cards
+    const ageGroupsHTML = demographics.by_age ? Object.entries(demographics.by_age).map(([group, data]) => `
+        <div style="background: var(--gray-50); padding: 12px; border-radius: 8px; min-width: 140px;">
+            <div style="font-size: 0.75rem; color: var(--gray-500); text-transform: uppercase;">Age ${group}</div>
+            <div style="font-size: 1.1rem; font-weight: 600; color: ${data.net_impact < 0 ? 'var(--danger)' : 'var(--secondary)'};">
+                ${data.net_impact < 0 ? '' : '+'}${formatNumber(data.net_impact)} jobs
+            </div>
+            <div style="font-size: 0.7rem; color: var(--gray-400);">Risk: ${(data.vulnerability * 100).toFixed(0)}%</div>
+        </div>
+    `).join('') : '';
+
+    // Build education cards
+    const educationHTML = demographics.by_education ? Object.entries(demographics.by_education).map(([level, data]) => `
+        <div style="background: var(--gray-50); padding: 12px; border-radius: 8px; min-width: 140px;">
+            <div style="font-size: 0.75rem; color: var(--gray-500); text-transform: uppercase;">${level}</div>
+            <div style="font-size: 1.1rem; font-weight: 600; color: ${data.net_impact < 0 ? 'var(--danger)' : 'var(--secondary)'};">
+                ${data.net_impact < 0 ? '' : '+'}${formatNumber(data.net_impact)} jobs
+            </div>
+            <div style="font-size: 0.7rem; color: var(--gray-400);">Risk: ${(data.vulnerability * 100).toFixed(0)}%</div>
+        </div>
+    `).join('') : '';
+
+    // Build most vulnerable list
+    const vulnerableHTML = demographics.most_vulnerable ? demographics.most_vulnerable.slice(0, 5).map((v, i) => `
+        <div style="display: flex; justify-content: space-between; padding: 8px; ${i < demographics.most_vulnerable.length - 1 ? 'border-bottom: 1px solid var(--gray-100);' : ''}">
+            <span style="font-weight: 500;">${v.group}</span>
+            <span style="color: var(--danger);">${(v.vulnerability * 100).toFixed(0)}% at risk</span>
+        </div>
+    `).join('') : '';
+
+    // Build recommendations
+    const recommendationsHTML = demographics.recommendations ? demographics.recommendations.slice(0, 4).map(rec => `
+        <li style="margin-bottom: 8px; color: var(--text-secondary);">${rec}</li>
+    `).join('') : '';
+
+    return `
+        <div style="margin-bottom: 20px;">
+            <h4 style="font-size: 0.875rem; color: var(--gray-500); margin-bottom: 12px; text-transform: uppercase;">
+                Impact by Age Group
+            </h4>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; overflow-x: auto; padding-bottom: 8px;">
+                ${ageGroupsHTML}
+            </div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <h4 style="font-size: 0.875rem; color: var(--gray-500); margin-bottom: 12px; text-transform: uppercase;">
+                Impact by Education Level
+            </h4>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; overflow-x: auto; padding-bottom: 8px;">
+                ${educationHTML}
+            </div>
+        </div>
+
+        ${demographics.most_vulnerable && demographics.most_vulnerable.length > 0 ? `
+        <div style="margin-bottom: 20px;">
+            <h4 style="font-size: 0.875rem; color: var(--gray-500); margin-bottom: 12px; text-transform: uppercase;">
+                Most Vulnerable Groups
+            </h4>
+            <div style="background: rgba(239, 68, 68, 0.05); border-radius: 8px; overflow: hidden;">
+                ${vulnerableHTML}
+            </div>
+        </div>
+        ` : ''}
+
+        ${demographics.recommendations && demographics.recommendations.length > 0 ? `
+        <div>
+            <h4 style="font-size: 0.875rem; color: var(--gray-500); margin-bottom: 12px; text-transform: uppercase;">
+                Policy Recommendations
+            </h4>
+            <ul style="margin: 0; padding-left: 20px; font-size: 0.875rem;">
+                ${recommendationsHTML}
+            </ul>
+        </div>
+        ` : ''}
+    `;
+}
+
+/**
+ * Generate HTML for skills gap analysis display
+ */
+function generateSkillsGapHTML(skillsGap) {
+    if (!skillsGap) {
+        return '<p style="color: var(--gray-500);">No skills gap data available.</p>';
+    }
+
+    const formatSalary = (n) => '$' + (n / 1000).toFixed(0) + 'K';
+
+    // Declining skills
+    const decliningHTML = skillsGap.declining_skills ? skillsGap.declining_skills.slice(0, 6).map(skill => `
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(239, 68, 68, 0.05); border-radius: 6px; margin-bottom: 8px;">
+            <div>
+                <span style="font-weight: 500;">${skill.name}</span>
+                <span style="font-size: 0.75rem; color: var(--gray-400); margin-left: 8px;">${skill.sector || ''}</span>
+            </div>
+            <span style="color: var(--danger); font-weight: 600;">-${skill.decline_rate}%</span>
+        </div>
+    `).join('') : '';
+
+    // Growing skills
+    const growingHTML = skillsGap.growing_skills ? skillsGap.growing_skills.slice(0, 6).map(skill => `
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(16, 185, 129, 0.05); border-radius: 6px; margin-bottom: 8px;">
+            <div>
+                <span style="font-weight: 500;">${skill.name}</span>
+                <span style="font-size: 0.75rem; color: var(--gray-400); margin-left: 8px;">${formatSalary(skill.avg_salary || 0)}</span>
+            </div>
+            <span style="color: var(--secondary); font-weight: 600;">+${skill.growth_rate}%</span>
+        </div>
+    `).join('') : '';
+
+    // Training recommendations
+    const trainingHTML = skillsGap.training_recommendations ? skillsGap.training_recommendations.slice(0, 4).map(rec => `
+        <div style="border: 1px solid var(--gray-200); border-radius: 8px; padding: 12px; margin-bottom: 10px;">
+            <div style="font-weight: 600; margin-bottom: 4px;">${rec.skill || rec.program || 'Training Program'}</div>
+            <div style="display: flex; gap: 16px; font-size: 0.8rem; color: var(--gray-500);">
+                ${rec.duration ? `<span>&#128197; ${rec.duration} months</span>` : ''}
+                ${rec.cost ? `<span>&#128176; ${rec.cost}</span>` : ''}
+                ${rec.provider ? `<span>&#127979; ${rec.provider}</span>` : ''}
+            </div>
+            ${rec.career_paths ? `
+            <div style="margin-top: 8px; font-size: 0.75rem; color: var(--gray-400);">
+                Leads to: ${rec.career_paths.join(', ')}
+            </div>
+            ` : ''}
+        </div>
+    `).join('') : '';
+
+    // Transition paths
+    const transitionsHTML = skillsGap.transition_paths ? Object.entries(skillsGap.transition_paths).slice(0, 4).map(([from, paths]) => `
+        <div style="margin-bottom: 10px;">
+            <span style="color: var(--danger);">${from}</span>
+            <span style="margin: 0 8px;">&#8594;</span>
+            <span style="color: var(--secondary);">${Array.isArray(paths) ? paths.slice(0, 2).join(', ') : paths}</span>
+        </div>
+    `).join('') : '';
+
+    return `
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 20px;">
+            <div>
+                <h4 style="font-size: 0.875rem; color: var(--danger); margin-bottom: 12px; text-transform: uppercase;">
+                    &#128308; Declining Skills
+                </h4>
+                ${decliningHTML || '<p style="color: var(--gray-400); font-size: 0.875rem;">No declining skills data</p>'}
+            </div>
+            <div>
+                <h4 style="font-size: 0.875rem; color: var(--secondary); margin-bottom: 12px; text-transform: uppercase;">
+                    &#128994; In-Demand Skills
+                </h4>
+                ${growingHTML || '<p style="color: var(--gray-400); font-size: 0.875rem;">No growing skills data</p>'}
+            </div>
+        </div>
+
+        ${transitionsHTML ? `
+        <div style="margin-bottom: 20px;">
+            <h4 style="font-size: 0.875rem; color: var(--gray-500); margin-bottom: 12px; text-transform: uppercase;">
+                Recommended Skill Transitions
+            </h4>
+            <div style="background: var(--gray-50); border-radius: 8px; padding: 12px; font-size: 0.875rem;">
+                ${transitionsHTML}
+            </div>
+        </div>
+        ` : ''}
+
+        ${trainingHTML ? `
+        <div>
+            <h4 style="font-size: 0.875rem; color: var(--gray-500); margin-bottom: 12px; text-transform: uppercase;">
+                Training Programs
+            </h4>
+            ${trainingHTML}
+        </div>
+        ` : ''}
+    `;
+}
+
+/**
+ * Download PDF report of simulation results
+ */
+async function downloadPDFReport() {
+    if (!currentResults) {
+        showNotification('No simulation results to export. Run a simulation first.', 'warning');
+        return;
+    }
+
+    const btn = document.getElementById('downloadPDFBtn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner" style="width: 16px; height: 16px; margin-right: 8px;"></span> Generating PDF...';
+    btn.disabled = true;
+
+    try {
+        // Add demographics and skills gap data to results for PDF
+        const enrichedResults = { ...currentResults };
+
+        if (typeof demographicsAnalyzer !== 'undefined') {
+            enrichedResults.summary.demographics = demographicsAnalyzer.analyzeImpacts(currentResults);
+        }
+
+        if (typeof skillsGapAnalyzer !== 'undefined') {
+            enrichedResults.summary.skills_gap = skillsGapAnalyzer.analyzeSkillsGap(currentResults);
+        }
+
+        if (typeof pdfReportGenerator !== 'undefined') {
+            const filename = await pdfReportGenerator.generateReport(enrichedResults);
+            showNotification(`PDF report downloaded: ${filename}`, 'success');
+        } else {
+            throw new Error('PDF generator not available');
+        }
+    } catch (error) {
+        console.error('PDF generation error:', error);
+        showNotification('Failed to generate PDF report: ' + error.message, 'error');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+/**
  * Display simulation results
  */
 function displaySimulationResults(results) {
@@ -772,6 +1001,58 @@ function displaySimulationResults(results) {
                 </div>
             </div>
             ` : ''}
+
+            <!-- Demographics Analysis Section -->
+            <div class="card" id="demographicsCard" style="border-left: 4px solid #ec4899;">
+                <div class="card-header">
+                    <h3 style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 1.25rem;">&#128101;</span> Demographic Impact Analysis
+                    </h3>
+                    <span style="font-size: 0.875rem; color: var(--gray-500);">Impact by age, education, and gender</span>
+                </div>
+                <div id="demographicsContent">
+                    ${typeof demographicsAnalyzer !== 'undefined'
+                        ? generateDemographicsHTML(demographicsAnalyzer.analyzeImpacts(results))
+                        : '<p style="color: var(--gray-500);">Demographics analyzer not available.</p>'
+                    }
+                </div>
+            </div>
+
+            <!-- Skills Gap Analysis Section -->
+            <div class="card" id="skillsGapCard" style="border-left: 4px solid #14b8a6;">
+                <div class="card-header">
+                    <h3 style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 1.25rem;">&#128218;</span> Skills Gap Analysis
+                    </h3>
+                    <span style="font-size: 0.875rem; color: var(--gray-500);">Declining and growing skills with training paths</span>
+                </div>
+                <div id="skillsGapContent">
+                    ${typeof skillsGapAnalyzer !== 'undefined'
+                        ? generateSkillsGapHTML(skillsGapAnalyzer.analyzeSkillsGap(results))
+                        : '<p style="color: var(--gray-500);">Skills gap analyzer not available.</p>'
+                    }
+                </div>
+            </div>
+
+            <!-- Export Actions Section -->
+            <div class="card" id="exportActionsCard" style="border-left: 4px solid var(--gray-400);">
+                <div class="card-header">
+                    <h3 style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 1.25rem;">&#128190;</span> Export & Download
+                    </h3>
+                </div>
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <button class="btn btn-primary" onclick="downloadPDFReport()" id="downloadPDFBtn">
+                        <span style="margin-right: 6px;">&#128196;</span> Download PDF Report
+                    </button>
+                    <button class="btn btn-outline" onclick="exportResults()">
+                        <span style="margin-right: 6px;">&#128202;</span> Export JSON Data
+                    </button>
+                    <button class="btn btn-outline" onclick="copyScenarioURL()">
+                        <span style="margin-right: 6px;">&#128279;</span> Copy Share URL
+                    </button>
+                </div>
+            </div>
         </div>
     `;
 
