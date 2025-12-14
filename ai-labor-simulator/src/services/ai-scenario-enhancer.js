@@ -87,73 +87,109 @@ Based on current economic research and AI development trends, generate enhanced 
 5. Historical patterns from past technological transitions
 6. Current AI capabilities and likely progression
 
-Respond with ONLY a valid JSON object (no markdown, no explanation) in this exact format:
+IMPORTANT: Respond with ONLY valid JSON. All values must be actual numbers, not ranges. Choose specific values appropriate for this scenario.
+
+VALUE GUIDELINES (pick a specific number within these ranges):
+- adoption_multiplier: between 1.0 and 2.0
+- displacement_rate: between 0.0 and 0.5
+- new_role_creation: between 0.0 and 1.0
+- wage_premium: between -0.1 and 0.3
+- retraining_effectiveness: between 0.1 and 0.6
+- retraining_duration_months: between 3 and 24
+- geographic_mobility: between 0.05 and 0.3
+- gig_economy_absorption: between 0.1 and 0.4
+- early_retirement_rate: between 0.05 and 0.2
+- labor_force_participation_change: between -0.05 and 0.05
+- skills_mismatch_factor: between 0.1 and 0.5
+- skill_premium_growth: between 0.0 and 5.0
+- median_wage_pressure: between -3.0 and 2.0
+- top_decile_growth: between 0.0 and 8.0
+- bottom_decile_pressure: between -5.0 and 0.0
+- wage_polarization_index: between 0.0 and 1.0
+- productivity_multiplier: between 1.0 and 2.0
+- gdp_impact_modifier: between -0.02 and 0.05
+- consumer_spending_impact: between -0.03 and 0.02
+- business_investment_boost: between 0.0 and 0.1
+- inflation_pressure: between -0.01 and 0.03
+- displacement_lag_months: between 3 and 18
+- new_job_creation_lag_months: between 6 and 36
+- peak_disruption_year: between 1 and ${simpleInputs.years}
+- recovery_speed: between 0.5 and 2.0
+- structural_unemployment_risk: between 0.0 and 0.3
+
+Return this exact JSON structure with your chosen values:
 {
     "sector_dynamics": {
-        "technology": { "adoption_multiplier": 1.0-2.0, "displacement_rate": 0.0-0.5, "new_role_creation": 0.0-1.0, "wage_premium": -0.1-0.3 },
-        "finance": { "adoption_multiplier": 1.0-2.0, "displacement_rate": 0.0-0.5, "new_role_creation": 0.0-1.0, "wage_premium": -0.1-0.3 },
-        "healthcare": { "adoption_multiplier": 1.0-2.0, "displacement_rate": 0.0-0.5, "new_role_creation": 0.0-1.0, "wage_premium": -0.1-0.3 },
-        "manufacturing": { "adoption_multiplier": 1.0-2.0, "displacement_rate": 0.0-0.5, "new_role_creation": 0.0-1.0, "wage_premium": -0.1-0.3 },
-        "retail": { "adoption_multiplier": 1.0-2.0, "displacement_rate": 0.0-0.5, "new_role_creation": 0.0-1.0, "wage_premium": -0.1-0.3 },
-        "education": { "adoption_multiplier": 1.0-2.0, "displacement_rate": 0.0-0.5, "new_role_creation": 0.0-1.0, "wage_premium": -0.1-0.3 },
-        "professional_services": { "adoption_multiplier": 1.0-2.0, "displacement_rate": 0.0-0.5, "new_role_creation": 0.0-1.0, "wage_premium": -0.1-0.3 },
-        "transportation": { "adoption_multiplier": 1.0-2.0, "displacement_rate": 0.0-0.5, "new_role_creation": 0.0-1.0, "wage_premium": -0.1-0.3 }
+        "technology": { "adoption_multiplier": 1.5, "displacement_rate": 0.2, "new_role_creation": 0.6, "wage_premium": 0.15 },
+        "finance": { "adoption_multiplier": 1.4, "displacement_rate": 0.25, "new_role_creation": 0.4, "wage_premium": 0.1 },
+        "healthcare": { "adoption_multiplier": 1.2, "displacement_rate": 0.1, "new_role_creation": 0.5, "wage_premium": 0.12 },
+        "manufacturing": { "adoption_multiplier": 1.6, "displacement_rate": 0.35, "new_role_creation": 0.2, "wage_premium": -0.05 },
+        "retail": { "adoption_multiplier": 1.4, "displacement_rate": 0.3, "new_role_creation": 0.15, "wage_premium": -0.08 },
+        "education": { "adoption_multiplier": 1.1, "displacement_rate": 0.05, "new_role_creation": 0.4, "wage_premium": 0.05 },
+        "professional_services": { "adoption_multiplier": 1.5, "displacement_rate": 0.2, "new_role_creation": 0.5, "wage_premium": 0.1 },
+        "transportation": { "adoption_multiplier": 1.7, "displacement_rate": 0.4, "new_role_creation": 0.1, "wage_premium": -0.1 }
     },
     "labor_market_dynamics": {
-        "retraining_effectiveness": 0.1-0.6,
-        "retraining_duration_months": 3-24,
-        "geographic_mobility": 0.05-0.3,
-        "gig_economy_absorption": 0.1-0.4,
-        "early_retirement_rate": 0.05-0.2,
-        "labor_force_participation_change": -0.05-0.05,
-        "skills_mismatch_factor": 0.1-0.5
+        "retraining_effectiveness": 0.35,
+        "retraining_duration_months": 12,
+        "geographic_mobility": 0.15,
+        "gig_economy_absorption": 0.25,
+        "early_retirement_rate": 0.1,
+        "labor_force_participation_change": -0.02,
+        "skills_mismatch_factor": 0.3
     },
     "wage_dynamics": {
-        "skill_premium_growth": 0.0-5.0,
-        "median_wage_pressure": -3.0-2.0,
-        "top_decile_growth": 0.0-8.0,
-        "bottom_decile_pressure": -5.0-0.0,
-        "wage_polarization_index": 0.0-1.0
+        "skill_premium_growth": 2.5,
+        "median_wage_pressure": -0.5,
+        "top_decile_growth": 4.0,
+        "bottom_decile_pressure": -2.0,
+        "wage_polarization_index": 0.5
     },
     "economic_effects": {
-        "productivity_multiplier": 1.0-2.0,
-        "gdp_impact_modifier": -0.02-0.05,
-        "consumer_spending_impact": -0.03-0.02,
-        "business_investment_boost": 0.0-0.1,
-        "inflation_pressure": -0.01-0.03
+        "productivity_multiplier": 1.4,
+        "gdp_impact_modifier": 0.02,
+        "consumer_spending_impact": -0.01,
+        "business_investment_boost": 0.05,
+        "inflation_pressure": 0.01
     },
     "transition_dynamics": {
-        "displacement_lag_months": 3-18,
-        "new_job_creation_lag_months": 6-36,
-        "peak_disruption_year": 1-${simpleInputs.years},
-        "recovery_speed": 0.5-2.0,
-        "structural_unemployment_risk": 0.0-0.3
+        "displacement_lag_months": 9,
+        "new_job_creation_lag_months": 18,
+        "peak_disruption_year": 3,
+        "recovery_speed": 1.2,
+        "structural_unemployment_risk": 0.15
     },
     "confidence_intervals": {
-        "unemployment_low": number,
-        "unemployment_high": number,
-        "displacement_low": number,
-        "displacement_high": number
+        "unemployment_low": 5.5,
+        "unemployment_high": 9.5,
+        "displacement_low": 8.0,
+        "displacement_high": 15.0
     },
     "key_assumptions": [
-        "string describing assumption 1",
-        "string describing assumption 2",
-        "string describing assumption 3"
+        "Your first key assumption about this scenario",
+        "Your second key assumption",
+        "Your third key assumption"
     ],
     "risk_factors": [
-        "string describing risk 1",
-        "string describing risk 2",
-        "string describing risk 3"
+        "First major risk factor",
+        "Second major risk factor",
+        "Third major risk factor"
     ]
 }
 
-Use realistic values based on economic research. Be specific to the scenario parameters provided.`;
+Adjust all values based on the specific inputs provided. Be realistic and consistent with economic research.`;
 
         const response = await this.makeRequest(prompt, { temperature: 0.6, maxTokens: 2500 });
 
         // Parse JSON from response
+        return this.extractJSON(response, 'enhanceInputs');
+    }
+
+    /**
+     * Extract and parse JSON from AI response
+     */
+    extractJSON(response, context = '') {
         try {
-            // Try to extract JSON from the response
             let jsonStr = response.trim();
 
             // Remove markdown code blocks if present
@@ -166,9 +202,21 @@ Use realistic values based on economic research. Be specific to the scenario par
                 jsonStr = jsonStr.slice(0, -3);
             }
 
-            return JSON.parse(jsonStr.trim());
+            // Try to find JSON object in the response
+            const jsonStart = jsonStr.indexOf('{');
+            const jsonEnd = jsonStr.lastIndexOf('}');
+
+            if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+                jsonStr = jsonStr.slice(jsonStart, jsonEnd + 1);
+            }
+
+            // Clean up common issues
+            jsonStr = jsonStr.trim();
+
+            return JSON.parse(jsonStr);
         } catch (e) {
-            console.error('Failed to parse AI response:', response);
+            console.error(`Failed to parse AI response (${context}):`, response);
+            console.error('Parse error:', e.message);
             throw new Error('AI returned invalid JSON. Please try again.');
         }
     }
@@ -242,17 +290,7 @@ Respond with ONLY a valid JSON object (no markdown) in this format:
 
         const response = await this.makeRequest(prompt, { temperature: 0.5, maxTokens: 3000 });
 
-        try {
-            let jsonStr = response.trim();
-            if (jsonStr.startsWith('```json')) jsonStr = jsonStr.slice(7);
-            else if (jsonStr.startsWith('```')) jsonStr = jsonStr.slice(3);
-            if (jsonStr.endsWith('```')) jsonStr = jsonStr.slice(0, -3);
-
-            return JSON.parse(jsonStr.trim());
-        } catch (e) {
-            console.error('Failed to parse AI analysis:', response);
-            throw new Error('AI returned invalid analysis. Please try again.');
-        }
+        return this.extractJSON(response, 'analyzeResults');
     }
 
     /**
