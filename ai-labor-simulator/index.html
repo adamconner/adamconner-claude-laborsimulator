@@ -116,6 +116,9 @@
                 <button class="btn btn-primary btn-block btn-lg" onclick="runSimulation()">
                     Run Simulation
                 </button>
+                <button class="btn btn-block btn-lg ai-sim-btn" onclick="runAdvancedAISimulation()" style="margin-top: 8px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border: none;">
+                    <span style="margin-right: 6px;">✨</span> Advanced AI Simulation
+                </button>
                 <div style="display: flex; gap: 8px; margin-top: 8px;">
                     <button class="btn btn-outline btn-block" onclick="resetToDefaults()">
                         Reset
@@ -124,6 +127,17 @@
                         Share URL
                     </button>
                 </div>
+            </div>
+
+            <!-- AI Model Status -->
+            <div class="sidebar-section" id="ai-model-status-section">
+                <h3>AI Model</h3>
+                <div id="aiModelStatus">
+                    <p style="font-size: 0.75rem; color: var(--gray-400);">No AI simulations yet</p>
+                </div>
+                <button class="btn btn-sm btn-outline btn-block" onclick="showTrainingModal()" style="margin-top: 8px;">
+                    Train Model
+                </button>
             </div>
 
             <!-- Saved Simulations -->
@@ -932,6 +946,77 @@
         </div>
     </div>
 
+    <!-- Password Modal for Advanced AI Simulation -->
+    <div id="passwordModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="max-width: 400px;">
+            <h3 style="margin-bottom: 16px;">Advanced AI Simulation</h3>
+            <p style="color: var(--gray-500); margin-bottom: 16px; font-size: 0.875rem;">
+                Enter the password to access AI-enhanced simulation features.
+            </p>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="aiSimPassword" placeholder="Enter password" style="width: 100%;">
+            </div>
+            <div id="passwordError" style="color: var(--danger); font-size: 0.875rem; margin-bottom: 12px; display: none;">
+                Incorrect password. Please try again.
+            </div>
+            <div style="display: flex; gap: 12px; margin-top: 16px;">
+                <button class="btn btn-primary" onclick="submitAIPassword()">Continue</button>
+                <button class="btn btn-secondary" onclick="hidePasswordModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Training Modal -->
+    <div id="trainingModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="max-width: 600px;">
+            <h3 style="margin-bottom: 16px;">AI Model Training</h3>
+            <div id="trainingStatus">
+                <div class="training-stats" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px;">
+                    <div class="stat-box" style="background: var(--gray-50); padding: 16px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 0.75rem; color: var(--gray-500); text-transform: uppercase;">Stored Simulations</div>
+                        <div id="trainSimCount" style="font-size: 1.5rem; font-weight: bold; color: var(--primary);">0</div>
+                    </div>
+                    <div class="stat-box" style="background: var(--gray-50); padding: 16px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 0.75rem; color: var(--gray-500); text-transform: uppercase;">Model Version</div>
+                        <div id="trainModelVersion" style="font-size: 1.5rem; font-weight: bold; color: var(--secondary);">-</div>
+                    </div>
+                    <div class="stat-box" style="background: var(--gray-50); padding: 16px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 0.75rem; color: var(--gray-500); text-transform: uppercase;">Confidence</div>
+                        <div id="trainConfidence" style="font-size: 1.5rem; font-weight: bold; color: var(--warning);">-</div>
+                    </div>
+                </div>
+                <div id="trainingMessage" style="padding: 12px; background: var(--gray-100); border-radius: 6px; margin-bottom: 16px; font-size: 0.875rem;">
+                    Run at least 3 AI-enhanced simulations to enable model training.
+                </div>
+            </div>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <button id="trainModelBtn" class="btn btn-primary" onclick="trainModel()" disabled>
+                    Train Model
+                </button>
+                <button class="btn btn-outline" onclick="exportTrainingData()">
+                    Export Data
+                </button>
+                <button class="btn btn-secondary" onclick="hideTrainingModal()" style="margin-left: auto;">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Simulation Results Modal -->
+    <div id="aiResultsModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3>AI-Enhanced Analysis</h3>
+                <button class="btn btn-sm btn-secondary" onclick="hideAIResultsModal()">Close</button>
+            </div>
+            <div id="aiResultsContent">
+                <!-- AI analysis will be inserted here -->
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="src/data/economic-data.js"></script>
     <script src="src/models/indicators.js"></script>
@@ -942,6 +1027,8 @@
     <script src="src/utils/calculations.js"></script>
     <script src="src/components/visualizations.js"></script>
     <script src="src/services/ai-summary.js"></script>
+    <script src="src/services/ai-scenario-enhancer.js"></script>
+    <script src="src/services/model-trainer.js"></script>
     <script src="src/services/simulation-sharing.js"></script>
     <script src="src/services/simulation-history.js"></script>
     <script src="src/features/scenario-comparison.js"></script>

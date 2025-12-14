@@ -3425,6 +3425,444 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
+// ============================================
+// ADVANCED AI SIMULATION FUNCTIONS
+// ============================================
+
+// Default password for AI simulation (change this or set via setAIPassword())
+const DEFAULT_AI_PASSWORD = 'ai2025';
+
+/**
+ * Run Advanced AI-Enhanced Simulation
+ */
+function runAdvancedAISimulation() {
+    // Check if password is required
+    if (aiScenarioEnhancer.hasPassword()) {
+        showPasswordModal();
+    } else {
+        // First time - set default password and show modal
+        aiScenarioEnhancer.setPassword(DEFAULT_AI_PASSWORD);
+        showPasswordModal();
+    }
+}
+
+/**
+ * Show password modal
+ */
+function showPasswordModal() {
+    document.getElementById('passwordModal').style.display = 'flex';
+    document.getElementById('aiSimPassword').value = '';
+    document.getElementById('passwordError').style.display = 'none';
+    document.getElementById('aiSimPassword').focus();
+}
+
+/**
+ * Hide password modal
+ */
+function hidePasswordModal() {
+    document.getElementById('passwordModal').style.display = 'none';
+}
+
+/**
+ * Submit password and run AI simulation
+ */
+async function submitAIPassword() {
+    const password = document.getElementById('aiSimPassword').value;
+
+    if (!aiScenarioEnhancer.checkPassword(password)) {
+        document.getElementById('passwordError').style.display = 'block';
+        return;
+    }
+
+    hidePasswordModal();
+    await executeAdvancedAISimulation();
+}
+
+/**
+ * Execute the Advanced AI Simulation pipeline
+ */
+async function executeAdvancedAISimulation() {
+    if (!aiScenarioEnhancer.isAvailable()) {
+        alert('AI service not available. Please check your API configuration.');
+        return;
+    }
+
+    // Show loading state
+    const resultsDiv = document.getElementById('simulation-results');
+    resultsDiv.innerHTML = `
+        <div class="card" style="text-align: center; padding: 60px;">
+            <div class="loading-spinner" style="margin-bottom: 20px;">
+                <div style="width: 50px; height: 50px; border: 4px solid var(--gray-200); border-top-color: var(--primary); border-radius: 50%; margin: 0 auto; animation: spin 1s linear infinite;"></div>
+            </div>
+            <h3 style="margin-bottom: 16px;">Running AI-Enhanced Simulation</h3>
+            <p style="color: var(--gray-500);" id="aiSimStatus">Step 1/3: Enhancing inputs with AI...</p>
+        </div>
+    `;
+
+    // Get simple inputs
+    const simpleInputs = {
+        targetUnemployment: parseFloat(document.getElementById('targetUR').value),
+        aiAdoption: parseInt(document.getElementById('aiAdoption').value),
+        automationPace: document.getElementById('automationPace').value,
+        adoptionCurve: document.getElementById('adoptionCurve').value,
+        startYear: new Date().getFullYear(),
+        endYear: parseInt(document.getElementById('targetYear').value),
+        years: parseInt(document.getElementById('targetYear').value) - new Date().getFullYear(),
+        interventions: interventionSystem.interventions.filter(i => i.active)
+    };
+
+    try {
+        // Step 1: Enhance inputs with AI
+        updateAIStatus('Step 1/3: Enhancing inputs with AI...');
+        const enhancedParams = await aiScenarioEnhancer.enhanceInputs(simpleInputs);
+        console.log('Enhanced params:', enhancedParams);
+
+        // Step 2: Run simulation with enhanced parameters
+        updateAIStatus('Step 2/3: Running enhanced simulation...');
+
+        // Create enhanced scenario
+        const enhancedScenario = createEnhancedScenario(simpleInputs, enhancedParams);
+        simulationEngine.createScenario(enhancedScenario);
+
+        // Run simulation
+        const results = await simulationEngine.runSimulation();
+        currentResults = results;
+
+        // Step 3: Generate AI analysis
+        updateAIStatus('Step 3/3: Generating AI analysis...');
+        const analysis = await aiScenarioEnhancer.analyzeResults(simpleInputs, enhancedParams, results);
+        console.log('AI Analysis:', analysis);
+
+        // Store the enhanced simulation
+        const simId = aiScenarioEnhancer.storeSimulation({
+            inputs: simpleInputs,
+            enhancedParams,
+            results,
+            analysis
+        });
+        console.log('Stored simulation ID:', simId);
+
+        // Display results
+        displaySimulationResults(results);
+
+        // Show AI analysis modal
+        displayAIAnalysis(analysis, enhancedParams);
+
+        // Update model status
+        updateAIModelStatus();
+
+        showNotification('AI-enhanced simulation complete!', 'success');
+
+    } catch (error) {
+        console.error('AI Simulation error:', error);
+        resultsDiv.innerHTML = `
+            <div class="card" style="text-align: center; padding: 60px;">
+                <h3 style="margin-bottom: 16px; color: var(--danger);">AI Simulation Failed</h3>
+                <p style="color: var(--gray-500); margin-bottom: 24px;">${error.message}</p>
+                <button class="btn btn-primary" onclick="runSimulation()">Run Standard Simulation</button>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Update AI simulation status message
+ */
+function updateAIStatus(message) {
+    const statusEl = document.getElementById('aiSimStatus');
+    if (statusEl) {
+        statusEl.textContent = message;
+    }
+}
+
+/**
+ * Create enhanced scenario from AI parameters
+ */
+function createEnhancedScenario(simpleInputs, enhancedParams) {
+    const scenario = {
+        name: document.getElementById('scenarioName').value + ' (AI Enhanced)',
+        end_year: simpleInputs.endYear,
+        target_unemployment: simpleInputs.targetUnemployment,
+        ai_adoption_rate: simpleInputs.aiAdoption,
+        automation_pace: simpleInputs.automationPace,
+        adoption_curve: simpleInputs.adoptionCurve,
+
+        // Enhanced parameters from AI
+        ai_enhanced: true,
+        enhanced_params: enhancedParams,
+
+        // Apply AI-derived multipliers
+        new_job_multiplier: enhancedParams.job_creation_coefficients?.base_multiplier || 0.3,
+        displacement_lag: enhancedParams.transition_dynamics?.displacement_lag_months || 6
+    };
+
+    return scenario;
+}
+
+/**
+ * Display AI Analysis in modal
+ */
+function displayAIAnalysis(analysis, enhancedParams) {
+    const modal = document.getElementById('aiResultsModal');
+    const content = document.getElementById('aiResultsContent');
+
+    content.innerHTML = `
+        <div class="ai-analysis">
+            <!-- Executive Summary -->
+            <div class="analysis-section" style="margin-bottom: 24px;">
+                <h4 style="color: var(--primary); margin-bottom: 12px;">Executive Summary</h4>
+                <p style="font-size: 1rem; line-height: 1.6;">${analysis.executive_summary || 'Analysis in progress...'}</p>
+            </div>
+
+            <!-- Key Findings -->
+            <div class="analysis-section" style="margin-bottom: 24px;">
+                <h4 style="color: var(--primary); margin-bottom: 12px;">Key Findings</h4>
+                <div style="display: grid; gap: 12px;">
+                    ${(analysis.key_findings || []).map(f => `
+                        <div style="display: flex; gap: 12px; padding: 12px; background: var(--gray-50); border-radius: 8px; border-left: 4px solid ${f.impact === 'high' ? 'var(--danger)' : f.impact === 'medium' ? 'var(--warning)' : 'var(--secondary)'};">
+                            <div style="flex: 1;">
+                                <p style="margin: 0; font-weight: 500;">${f.finding}</p>
+                                <div style="display: flex; gap: 12px; margin-top: 8px; font-size: 0.75rem;">
+                                    <span style="color: var(--gray-500);">Confidence: <strong>${f.confidence}</strong></span>
+                                    <span style="color: var(--gray-500);">Impact: <strong>${f.impact}</strong></span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <!-- Workforce Impacts -->
+            <div class="analysis-section" style="margin-bottom: 24px;">
+                <h4 style="color: var(--primary); margin-bottom: 12px;">Workforce Impacts</h4>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                    <div style="padding: 16px; background: var(--gray-50); border-radius: 8px;">
+                        <h5 style="color: var(--danger); font-size: 0.875rem; margin-bottom: 8px;">High Risk Workers</h5>
+                        <p style="margin: 0; font-size: 0.875rem;">${analysis.workforce_impacts?.high_risk_workers || 'N/A'}</p>
+                    </div>
+                    <div style="padding: 16px; background: var(--gray-50); border-radius: 8px;">
+                        <h5 style="color: var(--secondary); font-size: 0.875rem; margin-bottom: 8px;">Emerging Opportunities</h5>
+                        <p style="margin: 0; font-size: 0.875rem;">${analysis.workforce_impacts?.emerging_opportunities || 'N/A'}</p>
+                    </div>
+                </div>
+                ${analysis.workforce_impacts?.skills_in_demand ? `
+                    <div style="margin-top: 16px;">
+                        <h5 style="font-size: 0.875rem; margin-bottom: 8px;">Skills in Demand</h5>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                            ${analysis.workforce_impacts.skills_in_demand.map(s => `<span style="padding: 4px 12px; background: var(--secondary); color: white; border-radius: 16px; font-size: 0.75rem;">${s}</span>`).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
+
+            <!-- Policy Recommendations -->
+            <div class="analysis-section" style="margin-bottom: 24px;">
+                <h4 style="color: var(--primary); margin-bottom: 12px;">Policy Recommendations</h4>
+                <div style="display: grid; gap: 12px;">
+                    ${(analysis.policy_recommendations || []).map(p => `
+                        <div style="display: flex; gap: 12px; padding: 12px; background: var(--gray-50); border-radius: 8px;">
+                            <div style="width: 80px; text-align: center;">
+                                <span style="display: inline-block; padding: 4px 8px; background: ${p.priority === 'immediate' ? 'var(--danger)' : p.priority === 'short-term' ? 'var(--warning)' : 'var(--primary)'}; color: white; border-radius: 4px; font-size: 0.625rem; text-transform: uppercase;">${p.priority}</span>
+                            </div>
+                            <div style="flex: 1;">
+                                <p style="margin: 0;">${p.policy}</p>
+                                <span style="font-size: 0.75rem; color: var(--gray-500);">Effectiveness: ${p.effectiveness}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <!-- Scenario Variations -->
+            <div class="analysis-section" style="margin-bottom: 24px;">
+                <h4 style="color: var(--primary); margin-bottom: 12px;">Scenario Variations</h4>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+                    <div style="padding: 16px; background: #ecfdf5; border-radius: 8px; border-left: 4px solid var(--secondary);">
+                        <h5 style="color: var(--secondary); font-size: 0.75rem; text-transform: uppercase; margin-bottom: 8px;">Optimistic</h5>
+                        <p style="margin: 0; font-size: 0.875rem;">${analysis.scenario_variations?.optimistic_case || 'N/A'}</p>
+                    </div>
+                    <div style="padding: 16px; background: #fef3c7; border-radius: 8px; border-left: 4px solid var(--warning);">
+                        <h5 style="color: var(--warning); font-size: 0.75rem; text-transform: uppercase; margin-bottom: 8px;">Most Likely</h5>
+                        <p style="margin: 0; font-size: 0.875rem;">${analysis.scenario_variations?.most_likely || 'N/A'}</p>
+                    </div>
+                    <div style="padding: 16px; background: #fef2f2; border-radius: 8px; border-left: 4px solid var(--danger);">
+                        <h5 style="color: var(--danger); font-size: 0.75rem; text-transform: uppercase; margin-bottom: 8px;">Pessimistic</h5>
+                        <p style="margin: 0; font-size: 0.875rem;">${analysis.scenario_variations?.pessimistic_case || 'N/A'}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Narrative Analysis -->
+            ${analysis.narrative_analysis ? `
+                <div class="analysis-section" style="margin-bottom: 24px;">
+                    <h4 style="color: var(--primary); margin-bottom: 12px;">Detailed Analysis</h4>
+                    <div style="padding: 20px; background: var(--gray-50); border-radius: 8px; line-height: 1.8;">
+                        ${analysis.narrative_analysis.split('\n').map(p => `<p style="margin-bottom: 12px;">${p}</p>`).join('')}
+                    </div>
+                </div>
+            ` : ''}
+
+            <!-- Model Confidence -->
+            <div class="analysis-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--gray-100); border-radius: 8px;">
+                    <span style="font-weight: 500;">Model Confidence</span>
+                    <span style="padding: 6px 16px; background: ${analysis.model_confidence?.overall === 'high' ? 'var(--secondary)' : analysis.model_confidence?.overall === 'medium' ? 'var(--warning)' : 'var(--danger)'}; color: white; border-radius: 16px; font-weight: bold; text-transform: uppercase;">${analysis.model_confidence?.overall || 'Unknown'}</span>
+                </div>
+            </div>
+        </div>
+    `;
+
+    modal.style.display = 'flex';
+}
+
+/**
+ * Hide AI Results Modal
+ */
+function hideAIResultsModal() {
+    document.getElementById('aiResultsModal').style.display = 'none';
+}
+
+/**
+ * Show Training Modal
+ */
+function showTrainingModal() {
+    const modal = document.getElementById('trainingModal');
+    updateTrainingModalStatus();
+    modal.style.display = 'flex';
+}
+
+/**
+ * Hide Training Modal
+ */
+function hideTrainingModal() {
+    document.getElementById('trainingModal').style.display = 'none';
+}
+
+/**
+ * Update Training Modal Status
+ */
+function updateTrainingModalStatus() {
+    const status = modelTrainer.getStatus();
+
+    document.getElementById('trainSimCount').textContent = status.storedSimulations;
+    document.getElementById('trainModelVersion').textContent = status.modelVersion;
+    document.getElementById('trainConfidence').textContent = status.confidence ? (status.confidence * 100).toFixed(0) + '%' : '-';
+
+    const trainBtn = document.getElementById('trainModelBtn');
+    const messageDiv = document.getElementById('trainingMessage');
+
+    if (status.readyForTraining) {
+        trainBtn.disabled = false;
+        messageDiv.innerHTML = `<span style="color: var(--secondary);">Ready to train!</span> ${status.storedSimulations} AI simulations available.`;
+    } else {
+        trainBtn.disabled = true;
+        messageDiv.innerHTML = `Run at least 3 AI-enhanced simulations to enable model training. Currently: ${status.storedSimulations}`;
+    }
+
+    if (status.hasTrainedModel) {
+        messageDiv.innerHTML += `<br><small style="color: var(--gray-500);">Last trained: ${new Date(status.lastTraining).toLocaleDateString()}</small>`;
+    }
+}
+
+/**
+ * Train Model
+ */
+async function trainModel() {
+    const trainBtn = document.getElementById('trainModelBtn');
+    const messageDiv = document.getElementById('trainingMessage');
+
+    trainBtn.disabled = true;
+    trainBtn.textContent = 'Training...';
+    messageDiv.innerHTML = '<span style="color: var(--primary);">Training model with AI... This may take a minute.</span>';
+
+    try {
+        const result = await modelTrainer.trainModel();
+
+        if (result.success) {
+            messageDiv.innerHTML = `<span style="color: var(--secondary);">Training complete!</span> Model v${result.model.model_version} with ${(result.model.confidence_score * 100).toFixed(0)}% confidence.`;
+            updateTrainingModalStatus();
+            updateAIModelStatus();
+            showNotification('Model trained successfully!', 'success');
+        } else {
+            messageDiv.innerHTML = `<span style="color: var(--danger);">Training failed:</span> ${result.message}`;
+        }
+    } catch (error) {
+        messageDiv.innerHTML = `<span style="color: var(--danger);">Error:</span> ${error.message}`;
+    }
+
+    trainBtn.disabled = false;
+    trainBtn.textContent = 'Train Model';
+}
+
+/**
+ * Export Training Data
+ */
+function exportTrainingData() {
+    const data = modelTrainer.exportAll();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ai-labor-sim-training-data-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showNotification('Training data exported!', 'success');
+}
+
+/**
+ * Update AI Model Status in sidebar
+ */
+function updateAIModelStatus() {
+    const statusDiv = document.getElementById('aiModelStatus');
+    if (!statusDiv) return;
+
+    const status = modelTrainer.getStatus();
+
+    statusDiv.innerHTML = `
+        <div style="font-size: 0.75rem;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span style="color: var(--gray-400);">Simulations:</span>
+                <span style="color: var(--text-primary); font-weight: 500;">${status.storedSimulations}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span style="color: var(--gray-400);">Model:</span>
+                <span style="color: var(--text-primary); font-weight: 500;">${status.modelVersion}</span>
+            </div>
+            ${status.hasTrainedModel ? `
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--gray-400);">Confidence:</span>
+                    <span style="color: ${status.confidence > 0.7 ? 'var(--secondary)' : status.confidence > 0.4 ? 'var(--warning)' : 'var(--danger)'}; font-weight: 500;">${(status.confidence * 100).toFixed(0)}%</span>
+                </div>
+            ` : ''}
+        </div>
+    `;
+}
+
+/**
+ * Set AI simulation password (admin function)
+ */
+function setAIPassword(newPassword) {
+    aiScenarioEnhancer.setPassword(newPassword);
+    console.log('AI simulation password updated');
+}
+
+// Add keyboard listener for password modal
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && document.getElementById('passwordModal').style.display === 'flex') {
+        submitAIPassword();
+    }
+    if (e.key === 'Escape') {
+        hidePasswordModal();
+        hideTrainingModal();
+        hideAIResultsModal();
+    }
+});
+
+// Initialize AI model status on load
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(updateAIModelStatus, 500);
+});
+
 // Initialize theme early (before DOMContentLoaded to prevent flash)
 initTheme();
 
