@@ -3846,18 +3846,148 @@ function showNotification(message, type = 'info') {
 
 // Default password for AI simulation (change this or set via setAIPassword())
 const DEFAULT_AI_PASSWORD = 'ai2025';
+const AI_USAGE_LIMIT = 1000;
+const AI_USAGE_STORAGE_KEY = 'ai_labor_sim_ai_usage_count';
+const AI_LIMIT_ALERT_KEY = 'ai_labor_sim_limit_alert_sent';
+
+/**
+ * Get current AI simulation usage count
+ */
+function getAIUsageCount() {
+    const count = localStorage.getItem(AI_USAGE_STORAGE_KEY);
+    return count ? parseInt(count, 10) : 0;
+}
+
+/**
+ * Increment AI simulation usage count
+ */
+function incrementAIUsageCount() {
+    const currentCount = getAIUsageCount();
+    const newCount = currentCount + 1;
+    localStorage.setItem(AI_USAGE_STORAGE_KEY, newCount.toString());
+    return newCount;
+}
+
+/**
+ * Check if usage limit has been reached
+ */
+function isAIUsageLimitReached() {
+    return getAIUsageCount() >= AI_USAGE_LIMIT;
+}
+
+/**
+ * Send alert when usage limit is reached
+ */
+async function sendUsageLimitAlert() {
+    // Check if alert already sent
+    if (localStorage.getItem(AI_LIMIT_ALERT_KEY)) {
+        return;
+    }
+
+    const usageCount = getAIUsageCount();
+    const alertData = {
+        event: 'AI_USAGE_LIMIT_REACHED',
+        count: usageCount,
+        limit: AI_USAGE_LIMIT,
+        timestamp: new Date().toISOString(),
+        url: window.location.href
+    };
+
+    console.log('AI Usage Limit Alert:', alertData);
+
+    // Try to send email notification via webhook
+    try {
+        // Option 1: If you have a webhook endpoint, send there
+        // await fetch('YOUR_WEBHOOK_URL', {
+        //     method: 'POST',
+        //     headers: { 'Content-Type': 'application/json' },
+        //     body: JSON.stringify(alertData)
+        // });
+
+        // Option 2: Use mailto link as fallback alert
+        const subject = encodeURIComponent('AI Labor Simulator - Usage Limit Reached');
+        const body = encodeURIComponent(
+            `AI Usage Limit Alert\n\n` +
+            `The AI Labor Market Simulator has reached ${usageCount} uses.\n` +
+            `Limit: ${AI_USAGE_LIMIT}\n` +
+            `Timestamp: ${alertData.timestamp}\n\n` +
+            `Password protection is now enabled.\n` +
+            `Default password: ${DEFAULT_AI_PASSWORD}`
+        );
+
+        // Show notification to admin
+        showNotification(
+            `AI usage limit (${AI_USAGE_LIMIT}) reached! Password protection now enabled.`,
+            'warning'
+        );
+
+        // Mark alert as sent
+        localStorage.setItem(AI_LIMIT_ALERT_KEY, 'true');
+
+        // Log for analytics/monitoring
+        console.warn(`[ALERT] AI Simulation usage limit reached: ${usageCount}/${AI_USAGE_LIMIT}`);
+
+    } catch (error) {
+        console.error('Failed to send usage limit alert:', error);
+    }
+}
+
+/**
+ * Get AI usage stats (for admin/debugging)
+ */
+function getAIUsageStats() {
+    return {
+        currentCount: getAIUsageCount(),
+        limit: AI_USAGE_LIMIT,
+        remaining: Math.max(0, AI_USAGE_LIMIT - getAIUsageCount()),
+        limitReached: isAIUsageLimitReached(),
+        alertSent: localStorage.getItem(AI_LIMIT_ALERT_KEY) === 'true'
+    };
+}
+
+/**
+ * Reset AI usage counter (admin function)
+ * Call from console: resetAIUsageCount()
+ */
+function resetAIUsageCount() {
+    localStorage.removeItem(AI_USAGE_STORAGE_KEY);
+    localStorage.removeItem(AI_LIMIT_ALERT_KEY);
+    console.log('AI usage counter reset to 0');
+    return getAIUsageStats();
+}
+
+/**
+ * Set AI usage count manually (admin function)
+ * Call from console: setAIUsageCount(500)
+ */
+function setAIUsageCount(count) {
+    localStorage.setItem(AI_USAGE_STORAGE_KEY, count.toString());
+    console.log(`AI usage counter set to ${count}`);
+    return getAIUsageStats();
+}
+
+// Expose admin functions globally
+window.getAIUsageStats = getAIUsageStats;
+window.resetAIUsageCount = resetAIUsageCount;
+window.setAIUsageCount = setAIUsageCount;
 
 /**
  * Run Advanced AI-Enhanced Simulation
  */
 function runAdvancedAISimulation() {
-    // Check if password is required
-    if (aiScenarioEnhancer.hasPassword()) {
+    // Check if usage limit has been reached
+    if (isAIUsageLimitReached()) {
+        // Send alert if not already sent
+        sendUsageLimitAlert();
+
+        // Password required after limit reached
+        if (!aiScenarioEnhancer.hasPassword()) {
+            aiScenarioEnhancer.setPassword(DEFAULT_AI_PASSWORD);
+        }
         showPasswordModal();
     } else {
-        // First time - set default password and show modal
-        aiScenarioEnhancer.setPassword(DEFAULT_AI_PASSWORD);
-        showPasswordModal();
+        // Under limit - run directly without password
+        executeAdvancedAISimulation();
     }
 }
 
@@ -3969,6 +4099,15 @@ async function executeAdvancedAISimulation() {
 
         // Update model status
         updateAIModelStatus();
+
+        // Increment usage counter
+        const usageCount = incrementAIUsageCount();
+        console.log(`AI Simulation usage: ${usageCount}/${AI_USAGE_LIMIT}`);
+
+        // Check if we just hit the limit
+        if (usageCount === AI_USAGE_LIMIT) {
+            sendUsageLimitAlert();
+        }
 
         showNotification('AI-enhanced simulation complete!', 'success');
 

@@ -479,6 +479,48 @@ qaTests.test('Theme toggle works', 'UI Functions', () => {
 });
 
 // ==========================================
+// AI USAGE TRACKING TESTS
+// ==========================================
+
+qaTests.test('getAIUsageCount function exists', 'AI Usage Tracking', () => {
+    return typeof getAIUsageCount === 'function';
+});
+
+qaTests.test('incrementAIUsageCount function exists', 'AI Usage Tracking', () => {
+    return typeof incrementAIUsageCount === 'function';
+});
+
+qaTests.test('isAIUsageLimitReached function exists', 'AI Usage Tracking', () => {
+    return typeof isAIUsageLimitReached === 'function';
+});
+
+qaTests.test('getAIUsageStats function exists', 'AI Usage Tracking', () => {
+    return typeof getAIUsageStats === 'function';
+});
+
+qaTests.test('AI usage stats returns valid object', 'AI Usage Tracking', () => {
+    if (typeof getAIUsageStats !== 'function') return 'skip';
+    const stats = getAIUsageStats();
+    return stats &&
+           typeof stats.currentCount === 'number' &&
+           typeof stats.limit === 'number' &&
+           typeof stats.remaining === 'number' &&
+           typeof stats.limitReached === 'boolean';
+});
+
+qaTests.test('AI usage limit is set to 1000', 'AI Usage Tracking', () => {
+    return typeof AI_USAGE_LIMIT !== 'undefined' && AI_USAGE_LIMIT === 1000;
+});
+
+qaTests.test('resetAIUsageCount function exists', 'AI Usage Tracking', () => {
+    return typeof resetAIUsageCount === 'function';
+});
+
+qaTests.test('setAIUsageCount function exists', 'AI Usage Tracking', () => {
+    return typeof setAIUsageCount === 'function';
+});
+
+// ==========================================
 // DOM ELEMENT TESTS
 // ==========================================
 
