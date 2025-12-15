@@ -417,6 +417,10 @@ async function runSimulation() {
 
         // Show share button
         showShareButton();
+
+        // Calculate and display baseline unemployment (without interventions)
+        calculateAndDisplayBaseline(config);
+
     } catch (error) {
         console.error('Simulation error:', error);
         resultsDiv.innerHTML = `
@@ -426,6 +430,350 @@ async function runSimulation() {
             </div>
         `;
     }
+}
+
+// ============================================
+// TARGET UNEMPLOYMENT OPTIMIZER
+// ============================================
+
+let baselineUnemploymentRate = null;
+
+/**
+ * Toggle target unemployment optimizer controls
+ */
+function toggleTargetOptimizer() {
+    const enabled = document.getElementById('enableTargetOptimizer').checked;
+    const controls = document.getElementById('targetOptimizerControls');
+    controls.style.display = enabled ? 'block' : 'none';
+
+    if (enabled && baselineUnemploymentRate !== null) {
+        // Set initial target to something achievable (baseline - 2%)
+        const initialTarget = Math.max(2, baselineUnemploymentRate - 2);
+        document.getElementById('targetUnemploymentRate').value = initialTarget;
+        document.getElementById('targetURValue').textContent = initialTarget.toFixed(1);
+    }
+}
+
+/**
+ * Calculate baseline unemployment rate (AI impact without interventions)
+ */
+async function calculateAndDisplayBaseline(config) {
+    try {
+        // Store current interventions
+        const savedInterventions = [...interventionSystem.interventions];
+
+        // Temporarily clear interventions
+        interventionSystem.interventions = [];
+
+        // Create scenario without interventions
+        const baselineScenario = simulationEngine.createScenario({
+            ...config,
+            interventions: []
+        });
+
+        // Run baseline simulation
+        const baselineResults = await simulationEngine.runSimulation();
+        baselineUnemploymentRate = baselineResults.summary.final_unemployment_rate;
+
+        // Restore interventions
+        interventionSystem.interventions = savedInterventions;
+
+        // Update display
+        const display = document.getElementById('baselineUnemploymentDisplay');
+        if (display) {
+            display.innerHTML = `${baselineUnemploymentRate.toFixed(1)}%`;
+            display.style.color = baselineUnemploymentRate > 8 ? 'var(--danger)' :
+                                  baselineUnemploymentRate > 6 ? 'var(--warning)' : 'var(--secondary)';
+
+            // Update helper text
+            display.nextElementSibling.textContent = `By ${config.end_year}`;
+        }
+
+        // Re-run original simulation with interventions to restore state
+        simulationEngine.createScenario(config);
+        simulationEngine.scenario.interventions = savedInterventions.filter(i => i.active);
+
+    } catch (error) {
+        console.error('Error calculating baseline:', error);
+    }
+}
+
+/**
+ * Optimize interventions to reach target unemployment rate
+ */
+async function optimizeInterventions() {
+    if (baselineUnemploymentRate === null) {
+        showNotification('Run a simulation first to calculate baseline unemployment.', 'warning');
+        return;
+    }
+
+    const targetRate = parseFloat(document.getElementById('targetUnemploymentRate').value);
+    const btn = document.getElementById('optimizeBtn');
+    const resultsDiv = document.getElementById('optimizationResults');
+    const contentDiv = document.getElementById('optimizationContent');
+
+    // Validate target
+    if (targetRate >= baselineUnemploymentRate) {
+        showNotification('Target must be lower than baseline unemployment rate.', 'warning');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" style="width: 14px; height: 14px; margin-right: 6px;"></span> Analyzing...';
+
+    try {
+        const reductionNeeded = baselineUnemploymentRate - targetRate;
+        const optimization = await findOptimalInterventionMix(reductionNeeded, targetRate);
+
+        // Display results
+        resultsDiv.style.display = 'block';
+        contentDiv.innerHTML = generateOptimizationResultsHTML(optimization, targetRate);
+
+    } catch (error) {
+        console.error('Optimization error:', error);
+        showNotification('Optimization failed: ' + error.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span style="margin-right: 6px;">&#9881;</span> Find Intervention Mix';
+    }
+}
+
+/**
+ * Find optimal intervention mix to achieve target reduction
+ */
+async function findOptimalInterventionMix(reductionNeeded, targetRate) {
+    // Intervention effectiveness estimates (unemployment reduction per $1B spent annually)
+    const interventionEffectiveness = {
+        job_retraining: {
+            name: 'Job Retraining Programs',
+            ur_reduction_per_billion: 0.15,
+            min_budget: 10,
+            max_budget: 100,
+            default_params: { annual_budget: 50, success_rate: 70 },
+            cost_per_point: 6.67, // $B per 1% UR reduction
+            implementation_time: 'Medium-term (1-2 years)'
+        },
+        ubi: {
+            name: 'Universal Basic Income',
+            ur_reduction_per_billion: 0.08,
+            min_budget: 500,
+            max_budget: 3000,
+            default_params: { monthly_amount: 1000, eligibility_threshold: 50000 },
+            cost_per_point: 12.5,
+            implementation_time: 'Immediate'
+        },
+        public_works: {
+            name: 'Public Works Programs',
+            ur_reduction_per_billion: 0.25,
+            min_budget: 20,
+            max_budget: 200,
+            default_params: { annual_budget: 75, job_creation_rate: 15000 },
+            cost_per_point: 4.0,
+            implementation_time: 'Short-term (6-12 months)'
+        },
+        tax_incentives: {
+            name: 'Tax Incentives for Hiring',
+            ur_reduction_per_billion: 0.12,
+            min_budget: 10,
+            max_budget: 100,
+            default_params: { credit_per_employee: 5000, eligibility: 'all' },
+            cost_per_point: 8.33,
+            implementation_time: 'Short-term (3-6 months)'
+        },
+        education_investment: {
+            name: 'Education Investment',
+            ur_reduction_per_billion: 0.10,
+            min_budget: 20,
+            max_budget: 150,
+            default_params: { annual_budget: 50, focus_area: 'stem' },
+            cost_per_point: 10.0,
+            implementation_time: 'Long-term (3-5 years)'
+        },
+        transition_assistance: {
+            name: 'Transition Assistance',
+            ur_reduction_per_billion: 0.18,
+            min_budget: 5,
+            max_budget: 50,
+            default_params: { stipend_months: 12, monthly_amount: 2000 },
+            cost_per_point: 5.56,
+            implementation_time: 'Immediate'
+        },
+        reduced_work_week: {
+            name: 'Reduced Work Week',
+            ur_reduction_per_billion: 0.20,
+            min_budget: 30,
+            max_budget: 200,
+            default_params: { hours_per_week: 32, wage_adjustment: 0 },
+            cost_per_point: 5.0,
+            implementation_time: 'Medium-term (1-2 years)'
+        },
+        early_retirement: {
+            name: 'Early Retirement Incentives',
+            ur_reduction_per_billion: 0.14,
+            min_budget: 20,
+            max_budget: 100,
+            default_params: { eligible_age: 60, benefit_percentage: 80 },
+            cost_per_point: 7.14,
+            implementation_time: 'Short-term (6-12 months)'
+        },
+        entrepreneurship: {
+            name: 'Entrepreneurship Support',
+            ur_reduction_per_billion: 0.22,
+            min_budget: 5,
+            max_budget: 50,
+            default_params: { grant_amount: 25000, loan_rate: 2 },
+            cost_per_point: 4.55,
+            implementation_time: 'Medium-term (1-2 years)'
+        }
+    };
+
+    // Sort by cost-effectiveness (lowest cost per point first)
+    const sortedInterventions = Object.entries(interventionEffectiveness)
+        .sort((a, b) => a[1].cost_per_point - b[1].cost_per_point);
+
+    // Greedy algorithm: pick most cost-effective interventions until target is reached
+    const recommendedMix = [];
+    let remainingReduction = reductionNeeded;
+    let totalAnnualCost = 0;
+    let totalMultiYearCost = 0;
+    const simulationYears = parseInt(document.getElementById('targetYear').value) - new Date().getFullYear();
+
+    for (const [type, data] of sortedInterventions) {
+        if (remainingReduction <= 0) break;
+
+        // Calculate how much budget needed to achieve remaining reduction
+        const budgetNeeded = (remainingReduction / data.ur_reduction_per_billion);
+        const actualBudget = Math.min(Math.max(budgetNeeded, data.min_budget), data.max_budget);
+        const actualReduction = actualBudget * data.ur_reduction_per_billion;
+
+        if (actualReduction > 0.05) { // Only include if meaningful impact
+            recommendedMix.push({
+                type,
+                name: data.name,
+                budget: actualBudget,
+                ur_reduction: actualReduction,
+                cost_per_point: data.cost_per_point,
+                implementation_time: data.implementation_time,
+                params: { ...data.default_params, annual_budget: actualBudget }
+            });
+
+            remainingReduction -= actualReduction;
+            totalAnnualCost += actualBudget;
+        }
+    }
+
+    totalMultiYearCost = totalAnnualCost * simulationYears;
+
+    // Calculate achievable rate
+    const achievableReduction = reductionNeeded - Math.max(0, remainingReduction);
+    const achievableRate = baselineUnemploymentRate - achievableReduction;
+
+    return {
+        targetRate,
+        baselineRate: baselineUnemploymentRate,
+        achievableRate,
+        reductionNeeded,
+        achievableReduction,
+        gap: Math.max(0, remainingReduction),
+        recommendations: recommendedMix,
+        totalAnnualCost,
+        totalMultiYearCost,
+        simulationYears,
+        feasible: remainingReduction <= 0.1 // Within 0.1% is feasible
+    };
+}
+
+/**
+ * Generate HTML for optimization results
+ */
+function generateOptimizationResultsHTML(optimization, targetRate) {
+    const formatCost = (n) => {
+        if (n >= 1000) return '$' + (n / 1000).toFixed(1) + 'T';
+        return '$' + n.toFixed(0) + 'B';
+    };
+
+    const feasibilityClass = optimization.feasible ? 'var(--secondary)' : 'var(--warning)';
+    const feasibilityText = optimization.feasible ? 'Achievable' : 'Partially Achievable';
+
+    let html = `
+        <div style="background: var(--gray-800); border-radius: 6px; padding: 10px; margin-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 0.75rem; color: var(--gray-400);">Target</span>
+                <span style="font-weight: 600; color: var(--primary);">${targetRate.toFixed(1)}%</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                <span style="font-size: 0.75rem; color: var(--gray-400);">Achievable</span>
+                <span style="font-weight: 600; color: ${feasibilityClass};">${optimization.achievableRate.toFixed(1)}%</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                <span style="font-size: 0.75rem; color: var(--gray-400);">Status</span>
+                <span style="font-size: 0.75rem; color: ${feasibilityClass};">${feasibilityText}</span>
+            </div>
+        </div>
+
+        <div style="font-size: 0.7rem; color: var(--gray-400); margin-bottom: 6px;">RECOMMENDED INTERVENTIONS</div>
+    `;
+
+    for (const rec of optimization.recommendations) {
+        html += `
+            <div style="background: var(--gray-800); border-radius: 6px; padding: 8px; margin-bottom: 6px; font-size: 0.8rem;">
+                <div style="font-weight: 500; color: var(--text-primary); margin-bottom: 2px;">${rec.name}</div>
+                <div style="display: flex; justify-content: space-between; color: var(--gray-400);">
+                    <span>${formatCost(rec.budget)}/yr</span>
+                    <span style="color: var(--secondary);">-${rec.ur_reduction.toFixed(2)}%</span>
+                </div>
+            </div>
+        `;
+    }
+
+    html += `
+        <div style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2)); border-radius: 6px; padding: 10px; margin-top: 10px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span style="font-size: 0.75rem; color: var(--gray-300);">Annual Cost</span>
+                <span style="font-weight: 600; color: var(--primary);">${formatCost(optimization.totalAnnualCost)}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span style="font-size: 0.75rem; color: var(--gray-300);">${optimization.simulationYears}-Year Total</span>
+                <span style="font-weight: 600; color: var(--warning);">${formatCost(optimization.totalMultiYearCost)}</span>
+            </div>
+        </div>
+
+        <button class="btn btn-primary btn-block btn-sm" onclick="applyOptimizedInterventions()" style="margin-top: 10px;">
+            Apply These Interventions
+        </button>
+    `;
+
+    // Store optimization for applying
+    window.lastOptimization = optimization;
+
+    return html;
+}
+
+/**
+ * Apply the optimized interventions
+ */
+function applyOptimizedInterventions() {
+    if (!window.lastOptimization) {
+        showNotification('No optimization results to apply.', 'warning');
+        return;
+    }
+
+    // Clear existing interventions
+    interventionSystem.interventions = [];
+
+    // Add recommended interventions
+    for (const rec of window.lastOptimization.recommendations) {
+        interventionSystem.addIntervention(rec.type, rec.params);
+    }
+
+    // Update UI
+    updateInterventionsList();
+
+    showNotification(`Applied ${window.lastOptimization.recommendations.length} interventions. Run simulation to see results.`, 'success');
+
+    // Uncheck the optimizer toggle
+    document.getElementById('enableTargetOptimizer').checked = false;
+    document.getElementById('targetOptimizerControls').style.display = 'none';
 }
 
 /**
