@@ -444,7 +444,10 @@ let baselineUnemploymentRate = null;
 function toggleTargetOptimizer() {
     const enabled = document.getElementById('enableTargetOptimizer').checked;
     const controls = document.getElementById('targetOptimizerControls');
+    const actions = document.getElementById('optimizerActions');
+
     controls.style.display = enabled ? 'block' : 'none';
+    actions.style.display = enabled ? 'block' : 'none';
 
     if (enabled && baselineUnemploymentRate !== null) {
         // Set initial target to something achievable (baseline - 2%)
@@ -771,9 +774,10 @@ function applyOptimizedInterventions() {
 
     showNotification(`Applied ${window.lastOptimization.recommendations.length} interventions. Run simulation to see results.`, 'success');
 
-    // Uncheck the optimizer toggle
+    // Uncheck the optimizer toggle and hide controls
     document.getElementById('enableTargetOptimizer').checked = false;
     document.getElementById('targetOptimizerControls').style.display = 'none';
+    document.getElementById('optimizerActions').style.display = 'none';
 }
 
 /**
