@@ -1952,6 +1952,54 @@ body {
 /* AI Results Modal specific styles */
 #aiResultsModal .modal-content {
     max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* AI Modal Sticky Header */
+.ai-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+    margin-bottom: 16px;
+    position: sticky;
+    top: 0;
+    background: var(--bg-card);
+    z-index: 10;
+    border-bottom: 1px solid var(--border-color);
+    margin-top: -24px;
+    padding-top: 24px;
+}
+
+.ai-modal-header h3 {
+    margin: 0;
+    color: var(--text-primary);
+}
+
+/* AI Modal Sticky Footer */
+.ai-modal-footer {
+    position: sticky;
+    bottom: 0;
+    background: linear-gradient(to top, var(--bg-card) 70%, transparent);
+    padding: 24px 0 8px 0;
+    margin-top: 24px;
+    text-align: center;
+    z-index: 10;
+}
+
+.ai-modal-footer .btn {
+    min-width: 200px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .ai-modal-header {
+    background: var(--bg-card);
+}
+
+[data-theme="dark"] .ai-modal-footer {
+    background: linear-gradient(to top, var(--bg-card) 70%, transparent);
 }
 
 #aiResultsContent {

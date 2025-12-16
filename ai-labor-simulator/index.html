@@ -1058,13 +1058,18 @@
 
     <!-- AI Simulation Results Modal -->
     <div id="aiResultsModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <div class="modal-content ai-results-modal" style="max-width: 900px; max-height: 90vh; overflow-y: auto; position: relative;">
+            <!-- Sticky Header -->
+            <div class="ai-modal-header">
                 <h3>AI-Enhanced Analysis</h3>
                 <button class="btn btn-sm btn-secondary" onclick="hideAIResultsModal()">Close</button>
             </div>
             <div id="aiResultsContent">
                 <!-- AI analysis will be inserted here -->
+            </div>
+            <!-- Sticky Footer Close Button -->
+            <div class="ai-modal-footer">
+                <button class="btn btn-primary" onclick="hideAIResultsModal()">Close Report</button>
             </div>
         </div>
     </div>
