@@ -789,11 +789,17 @@ function generateInterventionImpactHTML(interventionSummary, interventions) {
     }
 
     const formatNumber = (n) => {
+        if (n === undefined || n === null || isNaN(n)) return '0';
         if (Math.abs(n) >= 1e12) return (n / 1e12).toFixed(1) + 'T';
         if (Math.abs(n) >= 1e9) return (n / 1e9).toFixed(1) + 'B';
         if (Math.abs(n) >= 1e6) return (n / 1e6).toFixed(1) + 'M';
         if (Math.abs(n) >= 1e3) return (n / 1e3).toFixed(1) + 'K';
         return n.toFixed(0);
+    };
+
+    const safePercent = (n) => {
+        if (n === undefined || n === null || isNaN(n)) return '0.00';
+        return (n * 100).toFixed(2);
     };
 
     const totalJobs = interventionSummary.total_job_effect || 0;
@@ -802,23 +808,28 @@ function generateInterventionImpactHTML(interventionSummary, interventions) {
     const avgWageEffect = interventionSummary.monthly_averages?.wage_effect || 0;
 
     // Generate details breakdown
-    const detailsHTML = (interventionSummary.details || []).map(d => `
+    const detailsHTML = (interventionSummary.details || []).map(d => {
+        const jobEffect = d.job_effect || 0;
+        const wageEffect = d.wage_effect || 0;
+        const economicImpact = d.economic_impact || 0;
+        const fiscalCost = d.fiscal_cost || 0;
+        return `
         <tr>
-            <td><strong>${d.intervention}</strong></td>
-            <td style="text-align: right; color: ${d.job_effect >= 0 ? 'var(--secondary)' : 'var(--danger)'};">
-                ${d.job_effect >= 0 ? '+' : ''}${formatNumber(d.job_effect * 12)}/yr
+            <td><strong>${d.intervention || 'Unknown'}</strong></td>
+            <td style="text-align: right; color: ${jobEffect >= 0 ? 'var(--secondary)' : 'var(--danger)'};">
+                ${jobEffect >= 0 ? '+' : ''}${formatNumber(jobEffect * 12)}/yr
             </td>
-            <td style="text-align: right; color: ${d.wage_effect >= 0 ? 'var(--secondary)' : 'var(--danger)'};">
-                ${d.wage_effect >= 0 ? '+' : ''}${(d.wage_effect * 100).toFixed(2)}%
+            <td style="text-align: right; color: ${wageEffect >= 0 ? 'var(--secondary)' : 'var(--danger)'};">
+                ${wageEffect >= 0 ? '+' : ''}${safePercent(wageEffect)}%
             </td>
-            <td style="text-align: right; color: ${d.economic_impact >= 0 ? 'var(--secondary)' : 'var(--danger)'};">
-                $${formatNumber((d.economic_impact || 0) * 12)}
+            <td style="text-align: right; color: ${economicImpact >= 0 ? 'var(--secondary)' : 'var(--danger)'};">
+                $${formatNumber(economicImpact * 12)}
             </td>
-            <td style="text-align: right; color: ${d.fiscal_cost <= 0 ? 'var(--secondary)' : 'var(--warning)'};">
-                ${d.fiscal_cost < 0 ? '+' : '-'}$${formatNumber(Math.abs(d.fiscal_cost * 12))}
+            <td style="text-align: right; color: ${fiscalCost <= 0 ? 'var(--secondary)' : 'var(--warning)'};">
+                ${fiscalCost < 0 ? '+' : '-'}$${formatNumber(Math.abs(fiscalCost * 12))}
             </td>
         </tr>
-    `).join('');
+    `}).join('');
 
     return `
         <div style="margin-bottom: 24px;">
@@ -834,7 +845,7 @@ function generateInterventionImpactHTML(interventionSummary, interventions) {
                 <div style="background: var(--gray-50); padding: 16px; border-radius: 8px; text-align: center;">
                     <div style="font-size: 0.75rem; color: var(--gray-500); text-transform: uppercase;">Wage Effect</div>
                     <div style="font-size: 1.25rem; font-weight: 700; color: ${avgWageEffect >= 0 ? 'var(--secondary)' : 'var(--danger)'};">
-                        ${avgWageEffect >= 0 ? '+' : ''}${(avgWageEffect * 100).toFixed(2)}%
+                        ${avgWageEffect >= 0 ? '+' : ''}${safePercent(avgWageEffect)}%
                     </div>
                     <div style="font-size: 0.7rem; color: var(--gray-400);">monthly avg</div>
                 </div>
@@ -889,19 +900,25 @@ function generateDemographicsHTML(demographics) {
     }
 
     const formatNumber = (n) => {
+        if (n === undefined || n === null || isNaN(n)) return '0';
         if (Math.abs(n) >= 1e6) return (n / 1e6).toFixed(1) + 'M';
         if (Math.abs(n) >= 1e3) return (n / 1e3).toFixed(1) + 'K';
         return n.toFixed(0);
+    };
+
+    const safePercent = (n) => {
+        if (n === undefined || n === null || isNaN(n)) return '0';
+        return (n * 100).toFixed(0);
     };
 
     // Build age group cards
     const ageGroupsHTML = demographics.by_age ? Object.entries(demographics.by_age).map(([group, data]) => `
         <div style="background: var(--gray-50); padding: 12px; border-radius: 8px; min-width: 140px;">
             <div style="font-size: 0.75rem; color: var(--gray-500); text-transform: uppercase;">Age ${group}</div>
-            <div style="font-size: 1.1rem; font-weight: 600; color: ${data.net_impact < 0 ? 'var(--danger)' : 'var(--secondary)'};">
-                ${data.net_impact < 0 ? '' : '+'}${formatNumber(data.net_impact)} jobs
+            <div style="font-size: 1.1rem; font-weight: 600; color: ${(data.net_impact || 0) < 0 ? 'var(--danger)' : 'var(--secondary)'};">
+                ${(data.net_impact || 0) < 0 ? '' : '+'}${formatNumber(data.net_impact || 0)} jobs
             </div>
-            <div style="font-size: 0.7rem; color: var(--gray-400);">Risk: ${(data.vulnerability * 100).toFixed(0)}%</div>
+            <div style="font-size: 0.7rem; color: var(--gray-400);">Risk: ${safePercent(data.vulnerability)}%</div>
         </div>
     `).join('') : '';
 
@@ -909,18 +926,18 @@ function generateDemographicsHTML(demographics) {
     const educationHTML = demographics.by_education ? Object.entries(demographics.by_education).map(([level, data]) => `
         <div style="background: var(--gray-50); padding: 12px; border-radius: 8px; min-width: 140px;">
             <div style="font-size: 0.75rem; color: var(--gray-500); text-transform: uppercase;">${level}</div>
-            <div style="font-size: 1.1rem; font-weight: 600; color: ${data.net_impact < 0 ? 'var(--danger)' : 'var(--secondary)'};">
-                ${data.net_impact < 0 ? '' : '+'}${formatNumber(data.net_impact)} jobs
+            <div style="font-size: 1.1rem; font-weight: 600; color: ${(data.net_impact || 0) < 0 ? 'var(--danger)' : 'var(--secondary)'};">
+                ${(data.net_impact || 0) < 0 ? '' : '+'}${formatNumber(data.net_impact || 0)} jobs
             </div>
-            <div style="font-size: 0.7rem; color: var(--gray-400);">Risk: ${(data.vulnerability * 100).toFixed(0)}%</div>
+            <div style="font-size: 0.7rem; color: var(--gray-400);">Risk: ${safePercent(data.vulnerability)}%</div>
         </div>
     `).join('') : '';
 
     // Build most vulnerable list
     const vulnerableHTML = demographics.most_vulnerable ? demographics.most_vulnerable.slice(0, 5).map((v, i) => `
         <div style="display: flex; justify-content: space-between; padding: 8px; ${i < demographics.most_vulnerable.length - 1 ? 'border-bottom: 1px solid var(--gray-100);' : ''}">
-            <span style="font-weight: 500;">${v.group}</span>
-            <span style="color: var(--danger);">${(v.vulnerability * 100).toFixed(0)}% at risk</span>
+            <span style="font-weight: 500;">${v.group || 'Unknown'}</span>
+            <span style="color: var(--danger);">${safePercent(v.vulnerability)}% at risk</span>
         </div>
     `).join('') : '';
 
@@ -980,16 +997,24 @@ function generateSkillsGapHTML(skillsGap) {
         return '<p style="color: var(--gray-500);">No skills gap data available.</p>';
     }
 
-    const formatSalary = (n) => '$' + (n / 1000).toFixed(0) + 'K';
+    const formatSalary = (n) => {
+        if (n === undefined || n === null || isNaN(n)) return '$0K';
+        return '$' + (n / 1000).toFixed(0) + 'K';
+    };
+
+    const safeRate = (n) => {
+        if (n === undefined || n === null || isNaN(n)) return '0';
+        return n;
+    };
 
     // Declining skills
     const decliningHTML = skillsGap.declining_skills ? skillsGap.declining_skills.slice(0, 6).map(skill => `
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(239, 68, 68, 0.05); border-radius: 6px; margin-bottom: 8px;">
             <div>
-                <span style="font-weight: 500;">${skill.name}</span>
+                <span style="font-weight: 500;">${skill.name || 'Unknown Skill'}</span>
                 <span style="font-size: 0.75rem; color: var(--gray-400); margin-left: 8px;">${skill.sector || ''}</span>
             </div>
-            <span style="color: var(--danger); font-weight: 600;">-${skill.decline_rate}%</span>
+            <span style="color: var(--danger); font-weight: 600;">-${safeRate(skill.decline_rate)}%</span>
         </div>
     `).join('') : '';
 
@@ -997,10 +1022,10 @@ function generateSkillsGapHTML(skillsGap) {
     const growingHTML = skillsGap.growing_skills ? skillsGap.growing_skills.slice(0, 6).map(skill => `
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(16, 185, 129, 0.05); border-radius: 6px; margin-bottom: 8px;">
             <div>
-                <span style="font-weight: 500;">${skill.name}</span>
-                <span style="font-size: 0.75rem; color: var(--gray-400); margin-left: 8px;">${formatSalary(skill.avg_salary || 0)}</span>
+                <span style="font-weight: 500;">${skill.name || 'Unknown Skill'}</span>
+                <span style="font-size: 0.75rem; color: var(--gray-400); margin-left: 8px;">${formatSalary(skill.avg_salary)}</span>
             </div>
-            <span style="color: var(--secondary); font-weight: 600;">+${skill.growth_rate}%</span>
+            <span style="color: var(--secondary); font-weight: 600;">+${safeRate(skill.growth_rate)}%</span>
         </div>
     `).join('') : '';
 
