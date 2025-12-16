@@ -4421,6 +4421,12 @@ async function executeAdvancedAISimulation() {
         </div>
     `;
 
+    // Switch to simulation tab so user can see progress
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById('simulation-section').classList.add('active');
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-tab')[3].classList.add('active');
+
     // Get simple inputs
     const simpleInputs = {
         targetUnemployment: parseFloat(document.getElementById('targetUR').value),
