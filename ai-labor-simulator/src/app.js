@@ -10,6 +10,7 @@ let interventionSystem;
 let vizManager;
 let currentResults = null;
 let currentAIAnalysis = null;  // Store current AI analysis for re-viewing
+let isAISimulationResult = false;  // Track if current results are from AI simulation
 
 // Default configuration values
 const DEFAULT_CONFIG = {
@@ -371,6 +372,9 @@ function getCurrentScenario() {
  * Run simulation
  */
 async function runSimulation() {
+    // Reset AI simulation flag - regular simulations show the Generate AI Analysis button
+    isAISimulationResult = false;
+
     const config = {
         name: document.getElementById('scenarioName').value,
         end_year: parseInt(document.getElementById('targetYear').value),
@@ -1208,7 +1212,24 @@ function displaySimulationResults(results) {
     // Check if we have an AI-enhanced analysis available
     const hasEnhancedAnalysis = currentAIAnalysis !== null;
 
-    const aiSummarySection = `
+    // Generate inline AI analysis HTML if this is an AI simulation with analysis
+    const inlineAIAnalysisHTML = (isAISimulationResult && currentAIAnalysis) ? generateInlineAIAnalysisHTML(currentAIAnalysis.analysis, currentAIAnalysis.enhancedParams) : '';
+
+    const aiSummarySection = isAISimulationResult ? `
+        <div class="card" id="aiSummaryCard" style="margin-bottom: 24px; border-left: 4px solid var(--primary);">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 1.25rem;">&#129302;</span> AI-Enhanced Analysis
+                </h3>
+                <div style="display: flex; gap: 8px;">
+                    ${comparisonButton}
+                </div>
+            </div>
+            <div id="aiSummaryContent" style="line-height: 1.7;">
+                ${inlineAIAnalysisHTML}
+            </div>
+        </div>
+    ` : `
         <div class="card" id="aiSummaryCard" style="margin-bottom: 24px; border-left: 4px solid var(--primary);">
             <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
                 <h3 style="display: flex; align-items: center; gap: 8px;">
@@ -4521,14 +4542,13 @@ async function executeAdvancedAISimulation() {
         console.log('Stored simulation ID:', simId);
 
         // Store analysis for later viewing BEFORE displaying results
-        // This ensures the "View AI Report" button will appear
         currentAIAnalysis = { analysis, enhancedParams, timestamp: new Date().toISOString() };
 
-        // Display results (now the "View AI Report" button will show)
-        displaySimulationResults(results);
+        // Mark this as an AI simulation result so analysis displays inline
+        isAISimulationResult = true;
 
-        // Show AI analysis modal immediately
-        displayAIAnalysis(analysis, enhancedParams);
+        // Display results with inline AI analysis (no popup modal)
+        displaySimulationResults(results);
 
         // Update model status
         updateAIModelStatus();
@@ -4588,6 +4608,117 @@ function createEnhancedScenario(simpleInputs, enhancedParams) {
     };
 
     return scenario;
+}
+
+/**
+ * Generate inline AI Analysis HTML (for displaying directly in results instead of modal)
+ */
+function generateInlineAIAnalysisHTML(analysis, enhancedParams) {
+    return `
+        <div class="ai-analysis-inline">
+            <!-- Executive Summary -->
+            <div class="analysis-section" style="margin-bottom: 24px;">
+                <h4 style="color: var(--primary); margin-bottom: 12px;">Executive Summary</h4>
+                <p style="font-size: 1rem; line-height: 1.6;">${analysis.executive_summary || 'Analysis in progress...'}</p>
+            </div>
+
+            <!-- Key Findings -->
+            <div class="analysis-section" style="margin-bottom: 24px;">
+                <h4 style="color: var(--primary); margin-bottom: 12px;">Key Findings</h4>
+                <div style="display: grid; gap: 12px;">
+                    ${(analysis.key_findings || []).map(f => `
+                        <div style="display: flex; gap: 12px; padding: 12px; background: var(--gray-50); border-radius: 8px; border-left: 4px solid ${f.impact === 'high' ? 'var(--danger)' : f.impact === 'medium' ? 'var(--warning)' : 'var(--secondary)'};">
+                            <div style="flex: 1;">
+                                <p style="margin: 0; font-weight: 500;">${f.finding}</p>
+                                <div style="display: flex; gap: 12px; margin-top: 8px; font-size: 0.75rem;">
+                                    <span style="color: var(--gray-500);">Confidence: <strong>${f.confidence}</strong></span>
+                                    <span style="color: var(--gray-500);">Impact: <strong>${f.impact}</strong></span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <!-- Workforce Impacts -->
+            <div class="analysis-section" style="margin-bottom: 24px;">
+                <h4 style="color: var(--primary); margin-bottom: 12px;">Workforce Impacts</h4>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                    <div style="padding: 16px; background: var(--gray-50); border-radius: 8px;">
+                        <h5 style="color: var(--danger); font-size: 0.875rem; margin-bottom: 8px;">High Risk Workers</h5>
+                        <p style="margin: 0; font-size: 0.875rem;">${analysis.workforce_impacts?.high_risk_workers || 'N/A'}</p>
+                    </div>
+                    <div style="padding: 16px; background: var(--gray-50); border-radius: 8px;">
+                        <h5 style="color: var(--secondary); font-size: 0.875rem; margin-bottom: 8px;">Emerging Opportunities</h5>
+                        <p style="margin: 0; font-size: 0.875rem;">${analysis.workforce_impacts?.emerging_opportunities || 'N/A'}</p>
+                    </div>
+                </div>
+                ${analysis.workforce_impacts?.skills_in_demand ? `
+                    <div style="margin-top: 16px;">
+                        <h5 style="font-size: 0.875rem; margin-bottom: 8px;">Skills in Demand</h5>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                            ${analysis.workforce_impacts.skills_in_demand.map(s => `<span style="padding: 4px 12px; background: var(--secondary); color: white; border-radius: 16px; font-size: 0.75rem;">${s}</span>`).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
+
+            <!-- Policy Recommendations -->
+            <div class="analysis-section" style="margin-bottom: 24px;">
+                <h4 style="color: var(--primary); margin-bottom: 12px;">Policy Recommendations</h4>
+                <div style="display: grid; gap: 12px;">
+                    ${(analysis.policy_recommendations || []).map(p => `
+                        <div style="display: flex; gap: 12px; padding: 12px; background: var(--gray-50); border-radius: 8px;">
+                            <div style="width: 80px; text-align: center;">
+                                <span style="display: inline-block; padding: 4px 8px; background: ${p.priority === 'immediate' ? 'var(--danger)' : p.priority === 'short-term' ? 'var(--warning)' : 'var(--primary)'}; color: white; border-radius: 4px; font-size: 0.625rem; text-transform: uppercase;">${p.priority}</span>
+                            </div>
+                            <div style="flex: 1;">
+                                <p style="margin: 0;">${p.policy}</p>
+                                <span style="font-size: 0.75rem; color: var(--gray-500);">Effectiveness: ${p.effectiveness}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <!-- Scenario Variations -->
+            <div class="analysis-section" style="margin-bottom: 24px;">
+                <h4 style="color: var(--primary); margin-bottom: 12px;">Scenario Variations</h4>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+                    <div style="padding: 16px; background: #ecfdf5; border-radius: 8px; border-left: 4px solid var(--secondary);">
+                        <h5 style="color: var(--secondary); font-size: 0.75rem; text-transform: uppercase; margin-bottom: 8px;">Optimistic</h5>
+                        <p style="margin: 0; font-size: 0.875rem;">${analysis.scenario_variations?.optimistic_case || 'N/A'}</p>
+                    </div>
+                    <div style="padding: 16px; background: #fef3c7; border-radius: 8px; border-left: 4px solid var(--warning);">
+                        <h5 style="color: var(--warning); font-size: 0.75rem; text-transform: uppercase; margin-bottom: 8px;">Most Likely</h5>
+                        <p style="margin: 0; font-size: 0.875rem;">${analysis.scenario_variations?.most_likely || 'N/A'}</p>
+                    </div>
+                    <div style="padding: 16px; background: #fef2f2; border-radius: 8px; border-left: 4px solid var(--danger);">
+                        <h5 style="color: var(--danger); font-size: 0.75rem; text-transform: uppercase; margin-bottom: 8px;">Pessimistic</h5>
+                        <p style="margin: 0; font-size: 0.875rem;">${analysis.scenario_variations?.pessimistic_case || 'N/A'}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Narrative Analysis -->
+            ${analysis.narrative_analysis ? `
+                <div class="analysis-section" style="margin-bottom: 24px;">
+                    <h4 style="color: var(--primary); margin-bottom: 12px;">Detailed Analysis</h4>
+                    <div style="padding: 20px; background: var(--gray-50); border-radius: 8px; line-height: 1.8;">
+                        ${analysis.narrative_analysis.split('\n').map(p => `<p style="margin-bottom: 12px;">${p}</p>`).join('')}
+                    </div>
+                </div>
+            ` : ''}
+
+            <!-- Model Confidence -->
+            <div class="analysis-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--gray-100); border-radius: 8px;">
+                    <span style="font-weight: 500;">Model Confidence</span>
+                    <span style="padding: 6px 16px; background: ${analysis.model_confidence?.overall === 'high' ? 'var(--secondary)' : analysis.model_confidence?.overall === 'medium' ? 'var(--warning)' : 'var(--danger)'}; color: white; border-radius: 16px; font-weight: bold; text-transform: uppercase;">${analysis.model_confidence?.overall || 'Unknown'}</span>
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 /**
