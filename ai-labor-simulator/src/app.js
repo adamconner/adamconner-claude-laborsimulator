@@ -903,48 +903,69 @@ function generateDemographicsHTML(demographics) {
         if (n === undefined || n === null || isNaN(n)) return '0';
         if (Math.abs(n) >= 1e6) return (n / 1e6).toFixed(1) + 'M';
         if (Math.abs(n) >= 1e3) return (n / 1e3).toFixed(1) + 'K';
-        return n.toFixed(0);
+        return Math.round(n).toString();
     };
 
     const safePercent = (n) => {
         if (n === undefined || n === null || isNaN(n)) return '0';
-        return (n * 100).toFixed(0);
+        return typeof n === 'number' ? n.toFixed(1) : n;
     };
 
-    // Build age group cards
-    const ageGroupsHTML = demographics.by_age ? Object.entries(demographics.by_age).map(([group, data]) => `
+    // Build age group cards - using estimated_displacement and displacement_rate from analyzer
+    const ageGroupsHTML = demographics.by_age ? Object.entries(demographics.by_age).map(([group, data]) => {
+        const displacement = data.estimated_displacement || 0;
+        const rate = data.displacement_rate || 0;
+        const impactLevel = data.impact_level || 'Low';
+        return `
         <div style="background: var(--gray-50); padding: 12px; border-radius: 8px; min-width: 140px;">
             <div style="font-size: 0.75rem; color: var(--gray-500); text-transform: uppercase;">Age ${group}</div>
-            <div style="font-size: 1.1rem; font-weight: 600; color: ${(data.net_impact || 0) < 0 ? 'var(--danger)' : 'var(--secondary)'};">
-                ${(data.net_impact || 0) < 0 ? '' : '+'}${formatNumber(data.net_impact || 0)} jobs
+            <div style="font-size: 1.1rem; font-weight: 600; color: ${displacement > 0 ? 'var(--danger)' : 'var(--secondary)'};">
+                -${formatNumber(displacement)} jobs
             </div>
-            <div style="font-size: 0.7rem; color: var(--gray-400);">Risk: ${safePercent(data.vulnerability)}%</div>
+            <div style="font-size: 0.7rem; color: var(--gray-400);">Risk: ${safePercent(rate)}%</div>
         </div>
-    `).join('') : '';
+    `}).join('') : '';
 
     // Build education cards
-    const educationHTML = demographics.by_education ? Object.entries(demographics.by_education).map(([level, data]) => `
+    const educationHTML = demographics.by_education ? Object.entries(demographics.by_education).map(([level, data]) => {
+        const displacement = data.estimated_displacement || 0;
+        const rate = data.displacement_rate || 0;
+        return `
         <div style="background: var(--gray-50); padding: 12px; border-radius: 8px; min-width: 140px;">
             <div style="font-size: 0.75rem; color: var(--gray-500); text-transform: uppercase;">${level}</div>
-            <div style="font-size: 1.1rem; font-weight: 600; color: ${(data.net_impact || 0) < 0 ? 'var(--danger)' : 'var(--secondary)'};">
-                ${(data.net_impact || 0) < 0 ? '' : '+'}${formatNumber(data.net_impact || 0)} jobs
+            <div style="font-size: 1.1rem; font-weight: 600; color: ${displacement > 0 ? 'var(--danger)' : 'var(--secondary)'};">
+                -${formatNumber(displacement)} jobs
             </div>
-            <div style="font-size: 0.7rem; color: var(--gray-400);">Risk: ${safePercent(data.vulnerability)}%</div>
+            <div style="font-size: 0.7rem; color: var(--gray-400);">Risk: ${safePercent(rate)}%</div>
         </div>
-    `).join('') : '';
+    `}).join('') : '';
 
-    // Build most vulnerable list
+    // Build most vulnerable list - using displacement_rate from analyzer
     const vulnerableHTML = demographics.most_vulnerable ? demographics.most_vulnerable.slice(0, 5).map((v, i) => `
         <div style="display: flex; justify-content: space-between; padding: 8px; ${i < demographics.most_vulnerable.length - 1 ? 'border-bottom: 1px solid var(--gray-100);' : ''}">
             <span style="font-weight: 500;">${v.group || 'Unknown'}</span>
-            <span style="color: var(--danger);">${safePercent(v.vulnerability)}% at risk</span>
+            <span style="color: var(--danger);">${safePercent(v.displacement_rate)}% at risk</span>
         </div>
     `).join('') : '';
 
-    // Build recommendations
-    const recommendationsHTML = demographics.recommendations ? demographics.recommendations.slice(0, 4).map(rec => `
-        <li style="margin-bottom: 8px; color: var(--text-secondary);">${rec}</li>
-    `).join('') : '';
+    // Build recommendations - these are objects with target, priority, actions
+    const recommendationsHTML = demographics.recommendations ? demographics.recommendations.slice(0, 4).map(rec => {
+        if (typeof rec === 'string') {
+            return `<li style="margin-bottom: 8px; color: var(--text-secondary);">${rec}</li>`;
+        }
+        // Handle object format from analyzer
+        const target = rec.target || 'General';
+        const actions = rec.actions || [];
+        return `
+            <li style="margin-bottom: 12px;">
+                <strong style="color: var(--text-primary);">${target}</strong>
+                <span style="font-size: 0.75rem; color: ${rec.priority === 'Critical' ? 'var(--danger)' : rec.priority === 'High' ? 'var(--warning)' : 'var(--gray-500)'}; margin-left: 8px;">(${rec.priority || 'Medium'} Priority)</span>
+                <ul style="margin: 4px 0 0 0; padding-left: 16px; font-size: 0.85rem; color: var(--text-secondary);">
+                    ${actions.slice(0, 2).map(a => `<li>${a}</li>`).join('')}
+                </ul>
+            </li>
+        `;
+    }).join('') : '';
 
     return `
         <div style="margin-bottom: 20px;">
@@ -1029,31 +1050,60 @@ function generateSkillsGapHTML(skillsGap) {
         </div>
     `).join('') : '';
 
-    // Training recommendations
-    const trainingHTML = skillsGap.training_recommendations ? skillsGap.training_recommendations.slice(0, 4).map(rec => `
+    // Training recommendations - handle object format from analyzer
+    const trainingHTML = skillsGap.training_recommendations ? skillsGap.training_recommendations.slice(0, 4).map(rec => {
+        const skillName = rec.skill || rec.program || 'Training Program';
+        const priority = rec.priority || 'Medium';
+        const careerOutcomes = rec.career_outcomes || rec.career_paths || [];
+        // Get first program if programs is an array
+        const firstProgram = Array.isArray(rec.programs) && rec.programs.length > 0 ? rec.programs[0] : null;
+        const duration = firstProgram?.duration || rec.duration;
+        const cost = firstProgram?.cost || rec.cost || rec.estimated_cost;
+        const provider = firstProgram?.provider || rec.provider;
+
+        return `
         <div style="border: 1px solid var(--gray-200); border-radius: 8px; padding: 12px; margin-bottom: 10px;">
-            <div style="font-weight: 600; margin-bottom: 4px;">${rec.skill || rec.program || 'Training Program'}</div>
-            <div style="display: flex; gap: 16px; font-size: 0.8rem; color: var(--gray-500);">
-                ${rec.duration ? `<span>&#128197; ${rec.duration} months</span>` : ''}
-                ${rec.cost ? `<span>&#128176; ${rec.cost}</span>` : ''}
-                ${rec.provider ? `<span>&#127979; ${rec.provider}</span>` : ''}
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <span style="font-weight: 600;">${skillName}</span>
+                <span style="font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; background: ${priority === 'Critical' ? 'var(--danger)' : priority === 'High' ? 'var(--warning)' : 'var(--gray-200)'}; color: ${priority === 'Critical' || priority === 'High' ? 'white' : 'var(--gray-600)'};">${priority}</span>
             </div>
-            ${rec.career_paths ? `
+            <div style="display: flex; gap: 16px; font-size: 0.8rem; color: var(--gray-500);">
+                ${duration ? `<span>&#128197; ${duration} months</span>` : ''}
+                ${cost ? `<span>&#128176; ${cost}</span>` : ''}
+                ${provider ? `<span>&#127979; ${provider}</span>` : ''}
+            </div>
+            ${careerOutcomes.length > 0 ? `
             <div style="margin-top: 8px; font-size: 0.75rem; color: var(--gray-400);">
-                Leads to: ${rec.career_paths.join(', ')}
+                Leads to: ${careerOutcomes.slice(0, 3).join(', ')}
             </div>
             ` : ''}
         </div>
-    `).join('') : '';
+    `}).join('') : '';
 
-    // Transition paths
-    const transitionsHTML = skillsGap.transition_paths ? Object.entries(skillsGap.transition_paths).slice(0, 4).map(([from, paths]) => `
-        <div style="margin-bottom: 10px;">
-            <span style="color: var(--danger);">${from}</span>
-            <span style="margin: 0 8px;">&#8594;</span>
-            <span style="color: var(--secondary);">${Array.isArray(paths) ? paths.slice(0, 2).join(', ') : paths}</span>
-        </div>
-    `).join('') : '';
+    // Transition paths - handle array format from analyzer (objects with from_skill, to_skill)
+    let transitionsHTML = '';
+    if (skillsGap.transition_paths) {
+        if (Array.isArray(skillsGap.transition_paths)) {
+            // Array of objects format
+            transitionsHTML = skillsGap.transition_paths.slice(0, 4).map(path => `
+                <div style="margin-bottom: 10px;">
+                    <span style="color: var(--danger);">${path.from_skill || 'Unknown'}</span>
+                    <span style="margin: 0 8px;">&#8594;</span>
+                    <span style="color: var(--secondary);">${path.to_skill || 'Unknown'}</span>
+                    ${path.training_duration ? `<span style="font-size: 0.75rem; color: var(--gray-400); margin-left: 8px;">(${path.training_duration})</span>` : ''}
+                </div>
+            `).join('');
+        } else {
+            // Object/dictionary format (fallback)
+            transitionsHTML = Object.entries(skillsGap.transition_paths).slice(0, 4).map(([from, paths]) => `
+                <div style="margin-bottom: 10px;">
+                    <span style="color: var(--danger);">${from}</span>
+                    <span style="margin: 0 8px;">&#8594;</span>
+                    <span style="color: var(--secondary);">${Array.isArray(paths) ? paths.slice(0, 2).join(', ') : (typeof paths === 'string' ? paths : 'Various')}</span>
+                </div>
+            `).join('');
+        }
+    }
 
     return `
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 20px;">
