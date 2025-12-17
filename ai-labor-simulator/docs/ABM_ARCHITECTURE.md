@@ -97,6 +97,31 @@ class WorkerAgent {
     unemploymentSpells: number;    // Count of unemployment periods
     retrainingHistory: RetrainingRecord[];
     jobHistory: JobRecord[];
+
+    // Political / Policy Support (0-1 scale: 0 = strongly oppose, 0.5 = neutral, 1 = strongly support)
+    policySupport: {
+        ubi: number;                   // Universal Basic Income
+        retraining: number;            // Job Retraining Programs
+        wageSubsidy: number;           // Wage Subsidies for Employers
+        reducedWorkWeek: number;       // Reduced Work Week / Job Sharing
+        publicWorks: number;           // Government Job Creation
+        eitcExpansion: number;         // Earned Income Tax Credit Expansion
+        aiRegulation: number;          // AI/Automation Regulation/Taxes
+        tradeProtection: number;       // Trade/Offshoring Restrictions
+        educationInvestment: number;   // Education & Skills Investment
+    };
+
+    // Political behavioral factors
+    politicalEngagement: number;   // 0-1: Likelihood to vote, protest, advocate
+    ideologicalPrior: number;      // -1 to 1: Pre-existing left/right lean (affects baseline support)
+    economicAnxiety: number;       // 0-1: Current level of economic worry
+    trustInGovernment: number;     // 0-1: Belief that government can help
+    networkPoliticalInfluence: number; // How much network affects views
+
+    // Experience-based sentiment
+    personalAIExperience: 'positive' | 'negative' | 'neutral' | 'none';
+    benefitedFromIntervention: InterventionType | null;
+    harmedByLackOfIntervention: boolean;
 }
 ```
 
@@ -148,6 +173,279 @@ IF retraining:
     └── IF dropped_out (financial pressure, etc.):
         └── Return to job search with partial skills
 ```
+
+#### Policy Support Decision Tree
+
+```
+Every Month, Each Worker Updates Policy Support:
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    POLICY SUPPORT UPDATE ALGORITHM                          │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+FOR EACH policy IN [ubi, retraining, wageSubsidy, ...]:
+
+    1. CALCULATE base_shift from PERSONAL EXPERIENCE:
+
+       IF just_lost_job:
+           ├── ubi_support         += 0.15
+           ├── retraining_support  += 0.10
+           ├── wageSubsidy_support += 0.08
+           ├── aiRegulation_support += 0.12
+           └── economicAnxiety     += 0.25
+
+       IF unemployed_duration > 3_months:
+           ├── ubi_support         += 0.02/month (compounding anxiety)
+           ├── publicWorks_support += 0.03/month
+           └── trustInGovernment   -= 0.01/month (if no help received)
+
+       IF found_job_after_unemployment:
+           ├── economicAnxiety     -= 0.20
+           └── IF used_retraining:
+               └── retraining_support += 0.15 (it worked for me!)
+           └── IF found_without_help:
+               └── ubi_support     -= 0.05 (I did it myself)
+
+       IF wage_declined > 10%:
+           ├── wageSubsidy_support += 0.08
+           ├── eitc_support        += 0.10
+           └── aiRegulation_support += 0.05
+
+       IF wage_increased (AI augmentation success):
+           ├── aiRegulation_support -= 0.10 (AI helped me!)
+           └── educationInvestment  += 0.08 (skills matter)
+
+       IF savings_depleted:
+           ├── ubi_support         += 0.20
+           ├── economicAnxiety     += 0.30
+           └── ALL support         += 0.05 (desperate for any help)
+
+    2. APPLY network_influence (social contagion):
+
+       FOR connection IN worker.network:
+           influence_weight = connection.closeness * worker.networkPoliticalInfluence
+
+           IF connection.recently_lost_job:
+               ├── ubi_support     += 0.03 * influence_weight
+               └── economicAnxiety += 0.05 * influence_weight
+
+           IF connection.benefited_from_intervention:
+               └── that_intervention_support += 0.04 * influence_weight
+
+           // Opinion convergence (echo chambers)
+           policy_diff = connection.policySupport[policy] - worker.policySupport[policy]
+           worker.policySupport[policy] += policy_diff * 0.02 * influence_weight
+
+    3. APPLY ideological_prior (sticky beliefs):
+
+       // Left-leaning workers more receptive to government programs
+       IF worker.ideologicalPrior < 0:  // Left-leaning
+           ├── ubi_support_floor         = 0.3
+           ├── retraining_support_floor  = 0.4
+           └── aiRegulation_support_floor = 0.3
+
+       // Right-leaning workers prefer market solutions
+       IF worker.ideologicalPrior > 0:  // Right-leaning
+           ├── ubi_support_ceiling       = 0.6 (unless personally affected)
+           ├── aiRegulation_ceiling      = 0.5
+           └── educationInvestment bias toward private solutions
+
+       // BUT personal hardship can override ideology
+       IF economicAnxiety > 0.7:
+           └── ideology_weight *= 0.5 (survival > ideology)
+
+    4. APPLY trust_in_government modifier:
+
+       IF trustInGovernment < 0.3:
+           ├── ALL government_program_support *= 0.7
+           └── EXCEPT ubi (direct cash = harder to mess up)
+
+       IF trustInGovernment > 0.7:
+           └── ALL government_program_support *= 1.1
+
+    5. APPLY information_effects:
+
+       IF worker.informationLevel > 0.7:  // Well-informed about AI
+           ├── More nuanced policy views
+           ├── Support based on evidence, not just emotion
+           └── Less susceptible to network panic
+
+       IF worker.informationLevel < 0.3:  // Low awareness
+           ├── Reactive to personal experience only
+           ├── Higher network influence weight
+           └── More volatile opinion swings
+
+    6. CLAMP all values to [0, 1]
+```
+
+#### Policy Support Triggers (Event-Driven)
+
+```javascript
+// Major life events cause immediate policy support shifts
+
+class PolicySupportEvents {
+
+    onJobLoss(worker: WorkerAgent, reason: 'automation' | 'downsizing' | 'other') {
+        worker.economicAnxiety += 0.30;
+        worker.policySupport.ubi += 0.15;
+        worker.policySupport.retraining += 0.12;
+
+        if (reason === 'automation') {
+            worker.policySupport.aiRegulation += 0.20;
+            worker.personalAIExperience = 'negative';
+            worker.harmedByLackOfIntervention = true;
+        }
+
+        // Broadcast to network
+        for (const contact of worker.network) {
+            contact.economicAnxiety += 0.05;
+            contact.policySupport.aiRegulation += 0.03;
+        }
+    }
+
+    onRetrainingSuccess(worker: WorkerAgent) {
+        worker.policySupport.retraining += 0.20;
+        worker.policySupport.educationInvestment += 0.15;
+        worker.benefitedFromIntervention = 'retraining';
+        worker.trustInGovernment += 0.10;
+
+        // Positive network effect
+        for (const contact of worker.network) {
+            contact.policySupport.retraining += 0.05;
+        }
+    }
+
+    onRetrainingFailure(worker: WorkerAgent) {
+        worker.policySupport.retraining -= 0.15;
+        worker.trustInGovernment -= 0.15;
+        worker.policySupport.ubi += 0.10; // Maybe just give cash instead
+
+        // Negative network effect
+        for (const contact of worker.network) {
+            contact.policySupport.retraining -= 0.03;
+        }
+    }
+
+    onUBIReceived(worker: WorkerAgent, amount: number) {
+        worker.policySupport.ubi += 0.25;
+        worker.economicAnxiety -= 0.15;
+        worker.benefitedFromIntervention = 'ubi';
+
+        // Strong network effect (everyone talks about getting money)
+        for (const contact of worker.network) {
+            contact.policySupport.ubi += 0.08;
+        }
+    }
+
+    onWageSubsidyHelped(worker: WorkerAgent) {
+        // Worker kept job due to employer receiving subsidy
+        worker.policySupport.wageSubsidy += 0.15;
+        worker.benefitedFromIntervention = 'wageSubsidy';
+    }
+
+    onAIAugmentationSuccess(worker: WorkerAgent, wageIncrease: number) {
+        worker.personalAIExperience = 'positive';
+        worker.policySupport.aiRegulation -= 0.15;
+        worker.policySupport.educationInvestment += 0.10;
+        worker.economicAnxiety -= 0.10;
+
+        // Network sees AI can be good
+        for (const contact of worker.network) {
+            contact.policySupport.aiRegulation -= 0.02;
+        }
+    }
+
+    onNeighborhoodDecline(worker: WorkerAgent, localUnemploymentSpike: number) {
+        // Community-level effects
+        worker.economicAnxiety += localUnemploymentSpike * 0.5;
+        worker.policySupport.publicWorks += 0.10;
+        worker.policySupport.ubi += 0.08;
+        worker.politicalEngagement += 0.05; // More likely to vote/protest
+    }
+
+    onMediaEvent(workers: WorkerAgent[], event: MediaEvent) {
+        // Mass layoff announcement, policy debate, etc.
+        const affectedWorkers = workers.filter(w =>
+            w.informationLevel > 0.5 || // Informed workers hear about it
+            w.industry === event.relevantIndustry // Directly relevant
+        );
+
+        for (const worker of affectedWorkers) {
+            const impact = event.salience * (1 - worker.informationLevel * 0.3); // Informed = less reactive
+            worker.policySupport[event.relevantPolicy] += event.direction * impact;
+        }
+    }
+}
+```
+
+#### Aggregate Political Feasibility Metric
+
+```javascript
+class PoliticalFeasibilityTracker {
+
+    calculateFeasibility(policy: InterventionType, workers: WorkerAgent[]): PoliticalFeasibility {
+        // Calculate support distribution
+        const supportLevels = workers.map(w => w.policySupport[policy]);
+        const meanSupport = mean(supportLevels);
+        const medianSupport = median(supportLevels);
+        const strongSupport = supportLevels.filter(s => s > 0.7).length / workers.length;
+        const strongOppose = supportLevels.filter(s => s < 0.3).length / workers.length;
+
+        // Weight by political engagement (engaged people matter more politically)
+        const engagementWeightedSupport = workers.reduce((sum, w) =>
+            sum + w.policySupport[policy] * w.politicalEngagement, 0
+        ) / workers.reduce((sum, w) => sum + w.politicalEngagement, 0);
+
+        // Regional variation
+        const regionalSupport = {};
+        for (const region of regions) {
+            const regionalWorkers = workers.filter(w => w.region === region.id);
+            regionalSupport[region.id] = mean(regionalWorkers.map(w => w.policySupport[policy]));
+        }
+
+        // Demographic breakdowns
+        const demographicSupport = {
+            byAge: this.calculateByAge(workers, policy),
+            byEducation: this.calculateByEducation(workers, policy),
+            byEmploymentStatus: this.calculateByStatus(workers, policy),
+            byIncome: this.calculateByIncome(workers, policy)
+        };
+
+        // Political feasibility score (0-100)
+        const feasibilityScore = this.calculateScore(
+            meanSupport,
+            strongSupport,
+            strongOppose,
+            engagementWeightedSupport
+        );
+
+        return {
+            policy,
+            meanSupport,
+            medianSupport,
+            strongSupport,       // % strongly in favor
+            strongOppose,        // % strongly opposed
+            engagementWeighted: engagementWeightedSupport,
+            feasibilityScore,
+            feasibilityLabel: this.getLabel(feasibilityScore),
+            regionalSupport,
+            demographicSupport,
+            momentum: this.calculateMomentum(policy), // Is support growing or shrinking?
+            volatility: standardDeviation(supportLevels)
+        };
+    }
+
+    getLabel(score: number): string {
+        if (score >= 80) return 'Highly Feasible - Strong mandate';
+        if (score >= 65) return 'Feasible - Majority support';
+        if (score >= 50) return 'Contested - Close call';
+        if (score >= 35) return 'Difficult - Significant opposition';
+        return 'Unlikely - Strong opposition';
+    }
+}
+```
+
+---
 
 ### 2.2 Firm Agents (50,000 agents)
 
@@ -688,6 +986,115 @@ Interactive US map showing:
 - Shows what triggered each tipping point
 - Counterfactual: "what if this intervention started earlier?"
 
+### 7.5 Policy Support Dashboard
+Real-time tracking of political feasibility:
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    POLICY SUPPORT OVER TIME                             │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  Support %                                                              │
+│  100│                                                                   │
+│     │                                    ╭──── UBI                      │
+│   80│                               ╭────╯                              │
+│     │                          ╭────╯                                   │
+│   60│     ╭────────────────────╯          ╭── Retraining               │
+│     │ ────╯                    ╭──────────╯                             │
+│   40│              ╭───────────╯                                        │
+│     │    ──────────╯                      ──── AI Regulation           │
+│   20│                                                                   │
+│     │                                                                   │
+│    0└────────────────────────────────────────────────────────────────   │
+│      2025    2026    2027    2028    2029    2030                       │
+│                         ▲                                               │
+│                    Mass layoff event                                    │
+│                    (support spike)                                      │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### 7.6 Political Feasibility Gauge
+For each intervention, show:
+```
+┌─────────────────────────────────────────┐
+│  Universal Basic Income                 │
+│                                         │
+│  ◀━━━━━━━━━━━━━●━━━━━━━━▶              │
+│  Oppose      Neutral     Support        │
+│                                         │
+│  Feasibility: 67% (Feasible)           │
+│  Momentum: ↑ +3.2% / month             │
+│  Volatility: Medium                     │
+│                                         │
+│  Strong Support: 34%  Strong Oppose: 18%│
+└─────────────────────────────────────────┘
+```
+
+### 7.7 Support by Demographics Heatmap
+Shows which groups support which policies:
+
+```
+                    UBI   Retrain  Regulate  PublicWorks  EITC
+Age 18-24          ████    ███      ████       ██         ███
+Age 25-34          ███     ████     ███        ██         ███
+Age 35-44          ███     ███      ███        ███        ████
+Age 45-54          ████    ██       ████       ████       ████
+Age 55-64          █████   █        █████      █████      ████
+Age 65+            ███     █        ███        ███        ██
+
+No Degree          █████   ██       █████      █████      █████
+High School        ████    ██       ████       ████       ████
+Some College       ███     ███      ███        ███        ███
+Bachelor's         ██      ████     ██         ██         ██
+Advanced           █       █████    █          █          █
+
+Employed           ██      ███      ██         ██         ██
+Unemployed         █████   ████     █████      █████      █████
+Retraining         ███     █████    ███        ███        ███
+
+█ = Low Support (0-20%)  ███ = Medium (40-60%)  █████ = High (80-100%)
+```
+
+### 7.8 Regional Political Map
+US map colored by policy support, showing:
+- Which states support which policies
+- Urban vs rural divide on interventions
+- Swing regions where support is volatile
+- Overlay with unemployment rates to show correlation
+
+### 7.9 Network Influence Visualization
+Animated network graph showing:
+- How opinions spread through worker networks
+- Echo chamber formation
+- Key influencer nodes
+- Cascade events (when opinion shifts rapidly spread)
+
+### 7.10 Policy Window Indicator
+Shows when political conditions are ripe for action:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    POLICY WINDOW ANALYSIS                       │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  UBI Implementation Window:                                     │
+│  ════════════════╗                                             │
+│                  ║ OPEN NOW                                     │
+│  ════════════════╝                                             │
+│  • Public support: 67% (above 60% threshold)                   │
+│  • Economic anxiety: High (0.72)                               │
+│  • Political engagement: Elevated                               │
+│  • Opposition intensity: Moderate                               │
+│                                                                 │
+│  ⚠️  Window may close if:                                       │
+│     - Economy recovers (anxiety drops)                         │
+│     - Failed pilot program erodes trust                        │
+│     - Counter-narrative gains traction                         │
+│                                                                 │
+│  Recommended action: Implement within 6-12 months              │
+└─────────────────────────────────────────────────────────────────┘
+```
+
 ---
 
 ## 8. Implementation Phases
@@ -784,6 +1191,115 @@ Interactive US map showing:
             "some_college": { "unemployment_change": 3.8, "wage_change": -0.04 },
             "bachelors": { "unemployment_change": 2.1, "wage_change": 0.02 },
             "advanced": { "unemployment_change": 1.2, "wage_change": 0.08 }
+        }
+    },
+    "policy_support": {
+        "final_state": {
+            "ubi": {
+                "mean_support": 0.71,
+                "median_support": 0.74,
+                "strong_support_pct": 0.42,
+                "strong_oppose_pct": 0.12,
+                "feasibility_score": 74,
+                "feasibility_label": "Feasible - Majority support",
+                "momentum": 0.028,
+                "momentum_direction": "increasing"
+            },
+            "retraining": {
+                "mean_support": 0.58,
+                "median_support": 0.55,
+                "strong_support_pct": 0.24,
+                "strong_oppose_pct": 0.15,
+                "feasibility_score": 56,
+                "feasibility_label": "Contested - Close call",
+                "momentum": -0.008,
+                "momentum_direction": "decreasing"
+            },
+            "ai_regulation": {
+                "mean_support": 0.67,
+                "median_support": 0.69,
+                "strong_support_pct": 0.38,
+                "strong_oppose_pct": 0.14,
+                "feasibility_score": 68,
+                "feasibility_label": "Feasible - Majority support",
+                "momentum": 0.015,
+                "momentum_direction": "increasing"
+            },
+            "public_works": {
+                "mean_support": 0.62,
+                "median_support": 0.60,
+                "strong_support_pct": 0.29,
+                "strong_oppose_pct": 0.18,
+                "feasibility_score": 61,
+                "feasibility_label": "Contested - Close call",
+                "momentum": 0.005,
+                "momentum_direction": "stable"
+            }
+        },
+        "support_trajectory": {
+            "ubi": [0.42, 0.45, 0.48, 0.52, 0.58, 0.63, 0.67, 0.69, 0.71, 0.71],
+            "retraining": [0.55, 0.58, 0.61, 0.62, 0.60, 0.59, 0.58, 0.57, 0.58, 0.58],
+            "ai_regulation": [0.38, 0.42, 0.48, 0.55, 0.60, 0.63, 0.65, 0.66, 0.67, 0.67]
+        },
+        "key_shifts": [
+            {
+                "month": 34,
+                "event": "Retail sector mass layoffs",
+                "policy_affected": "ubi",
+                "shift": 0.12,
+                "description": "UBI support surged as 800K retail workers lost jobs in 3 months"
+            },
+            {
+                "month": 52,
+                "event": "High-profile retraining program failures",
+                "policy_affected": "retraining",
+                "shift": -0.08,
+                "description": "Support dropped after reports of low job placement rates"
+            },
+            {
+                "month": 67,
+                "event": "Peak unemployment reached",
+                "policy_affected": "all",
+                "shift": 0.05,
+                "description": "Support for all interventions increased as crisis peaked"
+            }
+        ],
+        "demographic_support_breakdown": {
+            "ubi": {
+                "unemployed": 0.89,
+                "employed_high_risk": 0.72,
+                "employed_low_risk": 0.48,
+                "age_55_plus": 0.78,
+                "age_under_35": 0.68,
+                "no_degree": 0.82,
+                "bachelors_plus": 0.54
+            }
+        },
+        "regional_variation": {
+            "highest_ubi_support": ["MI", "OH", "PA", "WI"],
+            "lowest_ubi_support": ["TX", "UT", "ID"],
+            "most_volatile": ["FL", "AZ", "NC"]
+        },
+        "policy_windows": {
+            "ubi": {
+                "window_open": true,
+                "opened_month": 58,
+                "support_threshold_met": true,
+                "opposition_manageable": true,
+                "recommended_action": "Implement within 12 months while support holds"
+            },
+            "ai_regulation": {
+                "window_open": true,
+                "opened_month": 45,
+                "support_threshold_met": true,
+                "opposition_manageable": true,
+                "recommended_action": "Build coalition now; momentum is positive"
+            },
+            "retraining": {
+                "window_open": false,
+                "reason": "Recent failures eroded trust; rebuild credibility first",
+                "recommended_action": "Pilot improved programs before scaling"
+            }
         }
     },
     "ai_analysis": {
