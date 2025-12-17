@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2025-12-16T06:18:30.658Z",
+  "lastUpdated": "2025-12-17T06:17:48.819Z",
   "sources": {
     "bls": "success",
     "fred": "success"
@@ -7,11 +7,21 @@
   "bls": {
     "unemployment_rate": {
       "seriesId": "LNS14000000",
-      "value": 4.4,
-      "period": "M09",
+      "value": 4.6,
+      "period": "M11",
       "year": "2025",
-      "date": "2025-September",
+      "date": "2025-November",
       "history": [
+        {
+          "period": "M11",
+          "year": "2025",
+          "value": 4.6
+        },
+        {
+          "period": "M10",
+          "year": "2025",
+          "value": null
+        },
         {
           "period": "M09",
           "year": "2025",
@@ -61,35 +71,35 @@
           "period": "M12",
           "year": "2024",
           "value": 4.1
-        },
-        {
-          "period": "M11",
-          "year": "2024",
-          "value": 4.2
-        },
-        {
-          "period": "M10",
-          "year": "2024",
-          "value": 4.1
         }
       ]
     },
     "total_employment": {
       "seriesId": "CES0000000001",
-      "value": 159626000,
-      "period": "M09",
+      "value": 159552000,
+      "period": "M11",
       "year": "2025",
-      "date": "2025-September",
+      "date": "2025-November",
       "history": [
+        {
+          "period": "M11",
+          "year": "2025",
+          "value": 159552000
+        },
+        {
+          "period": "M10",
+          "year": "2025",
+          "value": 159488000
+        },
         {
           "period": "M09",
           "year": "2025",
-          "value": 159626000
+          "value": 159593000
         },
         {
           "period": "M08",
           "year": "2025",
-          "value": 159507000
+          "value": 159485000
         },
         {
           "period": "M07",
@@ -130,26 +140,26 @@
           "period": "M12",
           "year": "2024",
           "value": 158942000
-        },
-        {
-          "period": "M11",
-          "year": "2024",
-          "value": 158619000
-        },
-        {
-          "period": "M10",
-          "year": "2024",
-          "value": 158358000
         }
       ]
     },
     "labor_force_participation": {
       "seriesId": "LNS11300000",
-      "value": 62.4,
-      "period": "M09",
+      "value": 62.5,
+      "period": "M11",
       "year": "2025",
-      "date": "2025-September",
+      "date": "2025-November",
       "history": [
+        {
+          "period": "M11",
+          "year": "2025",
+          "value": 62.5
+        },
+        {
+          "period": "M10",
+          "year": "2025",
+          "value": null
+        },
         {
           "period": "M09",
           "year": "2025",
@@ -199,30 +209,30 @@
           "period": "M12",
           "year": "2024",
           "value": 62.5
-        },
-        {
-          "period": "M11",
-          "year": "2024",
-          "value": 62.5
-        },
-        {
-          "period": "M10",
-          "year": "2024",
-          "value": 62.5
         }
       ]
     },
     "average_hourly_earnings": {
       "seriesId": "CES0500000003",
-      "value": 36.67,
-      "period": "M09",
+      "value": 36.86,
+      "period": "M11",
       "year": "2025",
-      "date": "2025-September",
+      "date": "2025-November",
       "history": [
+        {
+          "period": "M11",
+          "year": "2025",
+          "value": 36.86
+        },
+        {
+          "period": "M10",
+          "year": "2025",
+          "value": 36.81
+        },
         {
           "period": "M09",
           "year": "2025",
-          "value": 36.67
+          "value": 36.65
         },
         {
           "period": "M08",
@@ -268,16 +278,6 @@
           "period": "M12",
           "year": "2024",
           "value": 35.68
-        },
-        {
-          "period": "M11",
-          "year": "2024",
-          "value": 35.61
-        },
-        {
-          "period": "M10",
-          "year": "2024",
-          "value": 35.48
         }
       ]
     },
@@ -1199,12 +1199,12 @@
     }
   },
   "summary": {
-    "unemployment_rate": 4.4,
-    "total_employment": 159626000,
-    "labor_force_participation": 62.4,
-    "average_hourly_earnings": 36.67,
+    "unemployment_rate": 4.6,
+    "total_employment": 159552000,
+    "labor_force_participation": 62.5,
+    "average_hourly_earnings": 36.86,
     "job_openings": 7670000,
-    "data_date": "2025-September",
+    "data_date": "2025-November",
     "real_gdp_growth": 3.8,
     "productivity_growth": 116.143,
     "cpi_inflation": 324.368
