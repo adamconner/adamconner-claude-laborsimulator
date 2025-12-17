@@ -72,7 +72,14 @@ class WorkerAgent {
         this.retrainingHistory = [];
         this.jobHistory = [];
 
-        // Political / Policy Support (0-1 scale)
+        // Political behavioral factors (initialize BEFORE policy support, since it depends on these)
+        this.politicalEngagement = config.politicalEngagement || Math.random() * 0.6 + 0.2;
+        this.ideologicalPrior = config.ideologicalPrior || (Math.random() * 2 - 1); // -1 to 1
+        this.economicAnxiety = config.economicAnxiety || 0.2;
+        this.trustInGovernment = config.trustInGovernment || Math.random() * 0.5 + 0.25;
+        this.networkPoliticalInfluence = config.networkPoliticalInfluence || Math.random() * 0.5;
+
+        // Political / Policy Support (0-1 scale) - depends on ideologicalPrior above
         this.policySupport = {
             ubi: this._initializePolicySupport('ubi'),
             retraining: this._initializePolicySupport('retraining'),
@@ -84,13 +91,6 @@ class WorkerAgent {
             tradeProtection: this._initializePolicySupport('tradeProtection'),
             educationInvestment: this._initializePolicySupport('educationInvestment')
         };
-
-        // Political behavioral factors
-        this.politicalEngagement = config.politicalEngagement || Math.random() * 0.6 + 0.2;
-        this.ideologicalPrior = config.ideologicalPrior || (Math.random() * 2 - 1); // -1 to 1
-        this.economicAnxiety = config.economicAnxiety || 0.2;
-        this.trustInGovernment = config.trustInGovernment || Math.random() * 0.5 + 0.25;
-        this.networkPoliticalInfluence = config.networkPoliticalInfluence || Math.random() * 0.5;
 
         // Experience-based sentiment
         this.personalAIExperience = AIExperience.NONE;

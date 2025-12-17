@@ -4989,6 +4989,430 @@ function setAIPassword(newPassword) {
     console.log('AI simulation password updated');
 }
 
+// ========== ABM (Agent-Based Model) Functions ==========
+
+let currentABMEngine = null;
+let currentABMResults = null;
+let abmCharts = {};
+
+/**
+ * Run full ABM simulation
+ */
+async function runABMSimulation() {
+    // Get configuration from UI
+    const config = {
+        numWorkers: parseInt(document.getElementById('abmWorkers').value),
+        numFirms: parseInt(document.getElementById('abmFirms').value),
+        durationMonths: parseInt(document.getElementById('abmDuration').value),
+        numRegions: parseInt(document.getElementById('abmRegions').value),
+        onProgress: updateABMProgress
+    };
+
+    const scenario = {
+        initialUnemploymentRate: parseFloat(document.getElementById('abmInitialUR').value) / 100,
+        initialAIAdoption: parseFloat(document.getElementById('abmInitialAI').value) / 100,
+        adoptionCurve: document.getElementById('abmAdoptionCurve').value,
+        automationPace: document.getElementById('abmAutomationPace').value
+    };
+
+    // Get active interventions
+    const interventions = [];
+    if (document.getElementById('abmUBI').checked) {
+        interventions.push({ type: 'ubi', monthlyAmount: 1000 });
+    }
+    if (document.getElementById('abmRetraining').checked) {
+        interventions.push({ type: 'retraining', subsidyRate: 0.75, effectiveness: 1.5 });
+    }
+    if (document.getElementById('abmWageSubsidy').checked) {
+        interventions.push({ type: 'wageSubsidy', rate: 0.25, maxWage: 4000 });
+    }
+    scenario.interventions = interventions;
+
+    // Show progress, hide results
+    document.getElementById('abmProgress').style.display = 'block';
+    document.getElementById('abmResults').style.display = 'none';
+    document.getElementById('abmProgressBar').style.width = '0%';
+    document.getElementById('abmProgressPercent').textContent = '0%';
+    document.getElementById('abmProgressText').textContent = 'Initializing agents...';
+
+    try {
+        // Create engine
+        currentABMEngine = new ABMSimulationEngine(config);
+
+        // Run simulation
+        const results = await currentABMEngine.runSimulation(scenario);
+        currentABMResults = results;
+
+        // Display results
+        displayABMResults(results);
+        showNotification('ABM simulation complete!', 'success');
+
+    } catch (error) {
+        console.error('ABM simulation failed:', error);
+        showNotification(`ABM simulation failed: ${error.message}`, 'error');
+        document.getElementById('abmProgress').style.display = 'none';
+    }
+}
+
+/**
+ * Run quick ABM test (smaller scale)
+ */
+async function runQuickABMTest() {
+    // Override with small values for testing
+    document.getElementById('abmWorkers').value = 1000;
+    document.getElementById('abmWorkersValue').textContent = '1,000';
+    document.getElementById('abmFirms').value = 50;
+    document.getElementById('abmFirmsValue').textContent = '50';
+    document.getElementById('abmDuration').value = 12;
+
+    showNotification('Running quick test with 1K workers, 50 firms, 12 months...', 'info');
+    await runABMSimulation();
+}
+
+/**
+ * Update ABM progress display
+ */
+function updateABMProgress(progress) {
+    const percent = Math.round((progress.month / progress.totalMonths) * 100);
+    document.getElementById('abmProgressBar').style.width = `${percent}%`;
+    document.getElementById('abmProgressPercent').textContent = `${percent}%`;
+    document.getElementById('abmCurrentMonth').textContent = progress.month;
+    document.getElementById('abmTotalMonths').textContent = progress.totalMonths;
+
+    // Update status text
+    if (percent < 10) {
+        document.getElementById('abmProgressText').textContent = 'Initializing labor market...';
+    } else if (percent < 30) {
+        document.getElementById('abmProgressText').textContent = 'Simulating early AI adoption...';
+    } else if (percent < 60) {
+        document.getElementById('abmProgressText').textContent = 'Processing workforce transitions...';
+    } else if (percent < 90) {
+        document.getElementById('abmProgressText').textContent = 'Analyzing policy responses...';
+    } else {
+        document.getElementById('abmProgressText').textContent = 'Finalizing results...';
+    }
+}
+
+/**
+ * Display ABM results
+ */
+function displayABMResults(results) {
+    // Hide progress, show results
+    document.getElementById('abmProgress').style.display = 'none';
+    document.getElementById('abmResults').style.display = 'block';
+
+    const summary = results.summary;
+
+    // Summary cards
+    const finalUR = (summary.final.unemploymentRate * 100).toFixed(1);
+    const initialUR = (summary.initial.unemploymentRate * 100).toFixed(1);
+    const urChange = (finalUR - initialUR).toFixed(1);
+    document.getElementById('abmFinalUR').textContent = `${finalUR}%`;
+    document.getElementById('abmURChange').textContent = `${urChange >= 0 ? '+' : ''}${urChange}% from start`;
+
+    document.getElementById('abmPeakUR').textContent = `${(summary.peakUnemployment * 100).toFixed(1)}%`;
+    document.getElementById('abmPeakMonth').textContent = `Month ${summary.peakUnemploymentMonth || '--'}`;
+
+    const finalAI = (summary.final.aiAdoptionRate * 100).toFixed(1);
+    const initialAI = (summary.initial.aiAdoptionRate * 100).toFixed(1);
+    const aiChange = (finalAI - initialAI).toFixed(1);
+    document.getElementById('abmFinalAI').textContent = `${finalAI}%`;
+    document.getElementById('abmAIChange').textContent = `+${aiChange}% from start`;
+
+    const netJobs = summary.totalHires - summary.totalLayoffs;
+    document.getElementById('abmNetJobs').textContent = netJobs.toLocaleString();
+    document.getElementById('abmNetJobs').style.color = netJobs >= 0 ? 'var(--secondary)' : 'var(--danger)';
+
+    // Policy support display
+    displayPolicySupportResults(summary.finalPolicySupport);
+
+    // Render charts
+    renderABMCharts(results);
+
+    // Display emergent patterns
+    displayEmergentPatterns(summary.emergentPatterns);
+
+    // Display demographics
+    displayABMDemographics(results);
+}
+
+/**
+ * Display policy support results
+ */
+function displayPolicySupportResults(policySupport) {
+    const container = document.getElementById('abmPolicySupportContent');
+
+    const policyNames = {
+        ubi: 'Universal Basic Income',
+        retraining: 'Job Retraining Programs',
+        wageSubsidy: 'Wage Subsidies',
+        reducedWorkWeek: 'Reduced Work Week',
+        publicWorks: 'Public Works Programs',
+        eitcExpansion: 'EITC Expansion',
+        aiRegulation: 'AI Regulation',
+        tradeProtection: 'Trade Protection',
+        educationInvestment: 'Education Investment'
+    };
+
+    let html = '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">';
+
+    Object.entries(policySupport).forEach(([policy, stats]) => {
+        const supportPercent = Math.round(stats.mean * 100);
+        const color = supportPercent >= 60 ? 'var(--secondary)' : supportPercent >= 40 ? 'var(--warning)' : 'var(--danger)';
+
+        html += `
+            <div style="background: var(--gray-50); border-radius: 8px; padding: 16px;">
+                <div style="font-weight: 600; margin-bottom: 8px; font-size: 0.875rem;">${policyNames[policy] || policy}</div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="flex: 1; background: var(--gray-200); border-radius: 4px; height: 8px;">
+                        <div style="background: ${color}; height: 100%; border-radius: 4px; width: ${supportPercent}%;"></div>
+                    </div>
+                    <span style="font-weight: 700; color: ${color};">${supportPercent}%</span>
+                </div>
+                <div style="font-size: 0.75rem; color: var(--gray-500); margin-top: 8px;">
+                    Feasibility: ${stats.feasibilityScore}/100
+                </div>
+            </div>
+        `;
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+/**
+ * Render ABM charts
+ */
+function renderABMCharts(results) {
+    // Destroy existing charts
+    Object.values(abmCharts).forEach(chart => chart.destroy());
+    abmCharts = {};
+
+    const months = results.monthlyData.map((_, i) => `Month ${i + 1}`);
+
+    // Unemployment Chart
+    const urCtx = document.getElementById('abmUnemploymentChart').getContext('2d');
+    abmCharts.unemployment = new Chart(urCtx, {
+        type: 'line',
+        data: {
+            labels: months,
+            datasets: [{
+                label: 'Unemployment Rate',
+                data: results.monthlyData.map(d => d.unemploymentRate * 100),
+                borderColor: '#ef4444',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Unemployment Rate (%)' }
+                }
+            }
+        }
+    });
+
+    // Policy Support Chart
+    const psCtx = document.getElementById('abmPolicySupportChart').getContext('2d');
+    const policies = ['ubi', 'retraining', 'aiRegulation'];
+    const colors = ['#6366f1', '#10b981', '#f59e0b'];
+
+    abmCharts.policySupport = new Chart(psCtx, {
+        type: 'line',
+        data: {
+            labels: months,
+            datasets: policies.map((policy, i) => ({
+                label: policy === 'ubi' ? 'UBI' : policy === 'retraining' ? 'Retraining' : 'AI Regulation',
+                data: results.monthlyData.map(d => d.policySupport?.[policy]?.mean * 100 || 50),
+                borderColor: colors[i],
+                backgroundColor: 'transparent',
+                tension: 0.4
+            }))
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top' }
+            },
+            scales: {
+                y: {
+                    min: 0,
+                    max: 100,
+                    title: { display: true, text: 'Support (%)' }
+                }
+            }
+        }
+    });
+
+    // AI Adoption Chart
+    const aiCtx = document.getElementById('abmAIAdoptionChart').getContext('2d');
+    abmCharts.aiAdoption = new Chart(aiCtx, {
+        type: 'line',
+        data: {
+            labels: months,
+            datasets: [{
+                label: 'AI Adoption Rate',
+                data: results.monthlyData.map(d => d.aiAdoptionRate * 100),
+                borderColor: '#8b5cf6',
+                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'AI Adoption (%)' }
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Display emergent patterns
+ */
+function displayEmergentPatterns(patterns) {
+    const container = document.getElementById('abmPatternsContent');
+
+    if (!patterns || patterns.length === 0) {
+        container.innerHTML = '<p style="color: var(--gray-500);">No significant emergent patterns detected in this simulation.</p>';
+        return;
+    }
+
+    let html = '<div style="display: flex; flex-direction: column; gap: 12px;">';
+
+    patterns.forEach(pattern => {
+        const icon = pattern.type === 'tipping_point' ? '⚠️' :
+                    pattern.type === 'feedback_loop' ? '🔄' :
+                    pattern.type === 'cascade' ? '📉' : '📊';
+
+        const severity = pattern.severity || 'medium';
+        const color = severity === 'high' ? 'var(--danger)' :
+                     severity === 'medium' ? 'var(--warning)' : 'var(--gray-500)';
+
+        html += `
+            <div style="background: var(--gray-50); border-radius: 8px; padding: 16px; border-left: 4px solid ${color};">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <span style="font-size: 1.25rem;">${icon}</span>
+                    <span style="font-weight: 600;">${pattern.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                    <span style="margin-left: auto; font-size: 0.75rem; color: var(--gray-500);">Month ${pattern.month || '--'}</span>
+                </div>
+                <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem;">${pattern.description || ''}</p>
+            </div>
+        `;
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+/**
+ * Display ABM demographics breakdown
+ */
+function displayABMDemographics(results) {
+    const container = document.getElementById('abmDemographicsContent');
+
+    // Get final state demographics
+    const finalData = results.monthlyData[results.monthlyData.length - 1];
+    const policySupport = results.summary.finalPolicySupport;
+
+    let html = `
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px;">
+            <div>
+                <h5 style="margin-bottom: 12px; color: var(--primary);">Employment Status Breakdown</h5>
+                <div style="background: var(--gray-50); border-radius: 8px; padding: 16px;">
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--gray-200);">
+                        <span>Employed</span>
+                        <span style="font-weight: 600; color: var(--secondary);">${((1 - finalData.unemploymentRate) * 100).toFixed(1)}%</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--gray-200);">
+                        <span>Unemployed</span>
+                        <span style="font-weight: 600; color: var(--danger);">${(finalData.unemploymentRate * 100).toFixed(1)}%</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0;">
+                        <span>In Retraining</span>
+                        <span style="font-weight: 600; color: var(--primary);">${(finalData.retrainingRate * 100 || 0).toFixed(1)}%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h5 style="margin-bottom: 12px; color: var(--primary);">Top Policy Priorities</h5>
+                <div style="background: var(--gray-50); border-radius: 8px; padding: 16px;">
+                    ${Object.entries(policySupport)
+                        .sort((a, b) => b[1].mean - a[1].mean)
+                        .slice(0, 3)
+                        .map(([policy, stats], i) => `
+                            <div style="display: flex; justify-content: space-between; padding: 8px 0; ${i < 2 ? 'border-bottom: 1px solid var(--gray-200);' : ''}">
+                                <span>${policy.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase())}</span>
+                                <span style="font-weight: 600; color: var(--primary);">${Math.round(stats.mean * 100)}%</span>
+                            </div>
+                        `).join('')}
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 24px;">
+            <h5 style="margin-bottom: 12px; color: var(--primary);">Simulation Summary</h5>
+            <div style="background: var(--gray-50); border-radius: 8px; padding: 16px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; text-align: center;">
+                <div>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--secondary);">${results.summary.totalHires.toLocaleString()}</div>
+                    <div style="font-size: 0.75rem; color: var(--gray-500);">Total Hires</div>
+                </div>
+                <div>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--danger);">${results.summary.totalLayoffs.toLocaleString()}</div>
+                    <div style="font-size: 0.75rem; color: var(--gray-500);">Total Layoffs</div>
+                </div>
+                <div>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">${(results.summary.emergentPatterns?.length || 0)}</div>
+                    <div style="font-size: 0.75rem; color: var(--gray-500);">Patterns Found</div>
+                </div>
+                <div>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--warning);">${results.monthlyData.length}</div>
+                    <div style="font-size: 0.75rem; color: var(--gray-500);">Months Simulated</div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    container.innerHTML = html;
+}
+
+/**
+ * Export ABM results to JSON
+ */
+function exportABMResults() {
+    if (!currentABMResults) {
+        showNotification('No ABM results to export. Run a simulation first.', 'warning');
+        return;
+    }
+
+    const blob = new Blob([JSON.stringify(currentABMResults, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `abm-simulation-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showNotification('ABM results exported!', 'success');
+}
+
 // Add keyboard listener for password modal
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && document.getElementById('passwordModal').style.display === 'flex') {

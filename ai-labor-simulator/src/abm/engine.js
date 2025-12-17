@@ -5,6 +5,21 @@
  * Coordinates workers, firms, and market dynamics over time.
  */
 
+// Import agent classes in Node.js environment
+// In browser, these are loaded via script tags before this file
+if (typeof module !== 'undefined' && module.exports) {
+    try {
+        const { WorkerAgent: WA } = require('./agents/worker.js');
+        const { FirmAgent: FA } = require('./agents/firm.js');
+        const { LaborMarket: LM } = require('./market/labor-market.js');
+        global.WorkerAgent = WA;
+        global.FirmAgent = FA;
+        global.LaborMarket = LM;
+    } catch (e) {
+        console.warn('Agent classes not available:', e.message);
+    }
+}
+
 class ABMSimulationEngine {
     constructor(config = {}) {
         this.config = {
@@ -614,22 +629,6 @@ class AICapabilityFrontier {
         // Generate random exposure for this occupation (would use real data)
         this.occupationExposure[occupation] = 0.3 + Math.random() * 0.5;
         return this.occupationExposure[occupation] * this.currentLevel;
-    }
-}
-
-// Need to import agent classes
-// In browser, these would be loaded via script tags
-if (typeof WorkerAgent === 'undefined') {
-    // Node.js environment
-    try {
-        const { WorkerAgent: WA } = require('./agents/worker.js');
-        const { FirmAgent: FA } = require('./agents/firm.js');
-        const { LaborMarket: LM } = require('./market/labor-market.js');
-        global.WorkerAgent = WA;
-        global.FirmAgent = FA;
-        global.LaborMarket = LM;
-    } catch (e) {
-        console.warn('Agent classes not available:', e.message);
     }
 }
 
