@@ -800,6 +800,27 @@
                         </div>
                     </div>
 
+                    <!-- Results Interpretation Section -->
+                    <div class="card" style="margin-bottom: 24px;">
+                        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h3>🧠 Results Interpretation</h3>
+                                <p style="font-size: 0.875rem; color: var(--gray-500); margin-top: 4px;">
+                                    AI-powered analysis of simulation outcomes
+                                </p>
+                            </div>
+                            <button class="btn btn-outline" onclick="toggleInterpretationDetails()" style="font-size: 0.75rem; padding: 6px 12px;">
+                                Show Details
+                            </button>
+                        </div>
+                        <div id="abmInterpretationContent" style="padding: 20px;">
+                            <p style="color: var(--gray-500);">Run simulation to generate interpretation...</p>
+                        </div>
+                        <div id="abmInterpretationDetails" style="display: none; padding: 0 20px 20px 20px;">
+                            <!-- Detailed interpretation will be inserted here -->
+                        </div>
+                    </div>
+
                     <!-- Policy Support Section -->
                     <div class="card" style="margin-bottom: 24px;">
                         <div class="card-header">
@@ -866,6 +887,49 @@
                         </div>
                     </div>
 
+                    <!-- Regional Heat Map -->
+                    <div class="card" style="margin-top: 24px;">
+                        <div class="card-header">
+                            <h3>🗺️ Regional Impact Analysis</h3>
+                            <p style="font-size: 0.875rem; color: var(--gray-500); margin-top: 4px;">
+                                Geographic distribution of labor market impacts across US states
+                            </p>
+                        </div>
+                        <div id="regionalHeatmapSummary" style="padding: 20px 20px 0 20px;">
+                            <!-- Summary stats will be inserted here -->
+                        </div>
+                        <div id="regionalHeatmapContent" style="padding: 20px;">
+                            <p style="color: var(--gray-500);">Run simulation to view regional impacts...</p>
+                        </div>
+                    </div>
+
+                    <!-- ABM Sensitivity Analysis -->
+                    <div class="card" style="margin-top: 24px;">
+                        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h3>📐 Parameter Sensitivity Analysis</h3>
+                                <p style="font-size: 0.875rem; color: var(--gray-500); margin-top: 4px;">
+                                    Explore how changes in model parameters affect outcomes
+                                </p>
+                            </div>
+                            <button id="runSensitivityBtn" class="btn btn-outline" onclick="runABMSensitivityAnalysis()" style="font-size: 0.875rem;">
+                                Run Analysis
+                            </button>
+                        </div>
+                        <div id="abmSensitivityProgress" style="display: none; padding: 20px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div class="spinner" style="width: 20px; height: 20px;"></div>
+                                <span id="sensitivityProgressText">Running sensitivity analysis...</span>
+                            </div>
+                            <div style="margin-top: 12px; background: var(--gray-200); border-radius: 6px; height: 8px; overflow: hidden;">
+                                <div id="sensitivityProgressBar" style="background: var(--primary); height: 100%; width: 0%; transition: width 0.3s;"></div>
+                            </div>
+                        </div>
+                        <div id="abmSensitivityContent" style="padding: 20px;">
+                            <p style="color: var(--gray-500);">Click "Run Analysis" to perform parameter sensitivity analysis on the current simulation configuration.</p>
+                        </div>
+                    </div>
+
                     <!-- Export Button -->
                     <div style="margin-top: 24px; text-align: center;">
                         <button class="btn btn-outline" onclick="exportABMResults()" style="padding: 12px 24px;">
@@ -879,90 +943,61 @@
             <section id="settings-section" class="section">
                 <div class="card" style="margin-bottom: 24px;">
                     <div class="card-header">
-                        <h3>API Settings</h3>
+                        <h3>AI Analysis</h3>
                         <p style="font-size: 0.875rem; color: var(--gray-500); margin-top: 4px;">
-                            Configure API keys to enable live data fetching and AI-powered analysis
+                            AI-powered analysis is available for all simulation results
                         </p>
                     </div>
 
                     <div style="margin-top: 20px;">
-                        <!-- BLS API Key -->
+                        <!-- AI Analysis Status -->
                         <div style="background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 8px; padding: 20px; margin-bottom: 16px;">
-                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
                                 <div>
-                                    <h4 style="color: var(--gray-800); margin-bottom: 4px;">Bureau of Labor Statistics (BLS) API</h4>
+                                    <h4 style="color: var(--gray-800); margin-bottom: 4px;">Google Gemini AI</h4>
                                     <p style="font-size: 0.75rem; color: var(--gray-500);">
-                                        Access live employment, unemployment, and wage data
+                                        Generates summaries and insights from your simulation results
                                     </p>
                                 </div>
-                                <span id="blsApiStatus" class="tag tag-low">Not Configured</span>
+                                <span class="tag tag-medium" style="background: var(--secondary); color: white;">Active</span>
                             </div>
-                            <div class="form-group" style="margin-bottom: 12px;">
-                                <label style="color: var(--gray-700); font-size: 0.875rem;">API Key</label>
-                                <input type="password" id="blsApiKey" placeholder="Enter your BLS API key"
-                                       style="color: var(--gray-900); width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 6px;">
-                            </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <a href="https://www.bls.gov/developers/" target="_blank" style="font-size: 0.75rem; color: var(--primary);">
-                                    Get free API key from BLS
-                                </a>
-                                <div style="display: flex; gap: 8px;">
-                                    <button class="btn btn-sm btn-outline" onclick="clearApiKey('bls')">Clear</button>
-                                    <button class="btn btn-sm btn-primary" onclick="saveApiKey('bls')">Save Key</button>
-                                </div>
-                            </div>
-                        </div>
 
-                        <!-- FRED API Key -->
-                        <div style="background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 8px; padding: 20px; margin-bottom: 16px;">
-                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
-                                <div>
-                                    <h4 style="color: var(--gray-800); margin-bottom: 4px;">Federal Reserve Economic Data (FRED) API</h4>
-                                    <p style="font-size: 0.75rem; color: var(--gray-500);">
-                                        Access GDP, interest rates, and macroeconomic indicators
-                                    </p>
-                                </div>
-                                <span id="fredApiStatus" class="tag tag-low">Not Configured</span>
+                            <div style="background: var(--gray-100); border-radius: 6px; padding: 12px; margin-bottom: 16px;">
+                                <p style="font-size: 0.8rem; color: var(--gray-600); margin: 0;">
+                                    AI analysis is powered by Google's Gemini model and is available to all users.
+                                    Use the "Advanced AI Simulation" button or view AI insights in your simulation results.
+                                </p>
                             </div>
-                            <div class="form-group" style="margin-bottom: 12px;">
-                                <label style="color: var(--gray-700); font-size: 0.875rem;">API Key</label>
-                                <input type="password" id="fredApiKey" placeholder="Enter your FRED API key"
-                                       style="color: var(--gray-900); width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 6px;">
-                            </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <a href="https://fred.stlouisfed.org/docs/api/api_key.html" target="_blank" style="font-size: 0.75rem; color: var(--primary);">
-                                    Get free API key from FRED
-                                </a>
-                                <div style="display: flex; gap: 8px;">
-                                    <button class="btn btn-sm btn-outline" onclick="clearApiKey('fred')">Clear</button>
-                                    <button class="btn btn-sm btn-primary" onclick="saveApiKey('fred')">Save Key</button>
-                                </div>
-                            </div>
-                        </div>
 
-                        <!-- Gemini API Key -->
-                        <div style="background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 8px; padding: 20px; margin-bottom: 16px;">
-                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
-                                <div>
-                                    <h4 style="color: var(--gray-800); margin-bottom: 4px;">Google Gemini AI API</h4>
-                                    <p style="font-size: 0.75rem; color: var(--gray-500);">
-                                        Enable AI-powered analysis and summaries of simulation results
-                                    </p>
+                            <!-- API Call Counter -->
+                            <div style="border-top: 1px solid var(--gray-300); padding-top: 16px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                    <div>
+                                        <h5 style="color: var(--gray-700); font-size: 0.875rem; margin-bottom: 2px;">Usage Statistics</h5>
+                                        <p style="font-size: 0.7rem; color: var(--gray-500);">Track your AI analysis usage</p>
+                                    </div>
+                                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.75rem; color: var(--gray-600);">
+                                        <input type="checkbox" id="geminiCounterEnabled" onchange="toggleGeminiCounter()" checked style="width: 16px; height: 16px;">
+                                        Track Usage
+                                    </label>
                                 </div>
-                                <span id="geminiApiStatus" class="tag tag-low">Not Configured</span>
-                            </div>
-                            <div class="form-group" style="margin-bottom: 12px;">
-                                <label style="color: var(--gray-700); font-size: 0.875rem;">API Key</label>
-                                <input type="password" id="geminiApiKeySettings" placeholder="Enter your Gemini API key"
-                                       style="color: var(--gray-900); width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 6px;">
-                            </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <a href="https://makersuite.google.com/app/apikey" target="_blank" style="font-size: 0.75rem; color: var(--primary);">
-                                    Get free API key from Google AI Studio
-                                </a>
-                                <div style="display: flex; gap: 8px;">
-                                    <button class="btn btn-sm btn-outline" onclick="clearApiKey('gemini')">Clear</button>
-                                    <button class="btn btn-sm btn-primary" onclick="saveApiKey('gemini')">Save Key</button>
+                                <div id="geminiApiCallStats" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px;">
+                                    <div style="background: var(--gray-100); padding: 10px; border-radius: 6px; text-align: center;">
+                                        <div id="geminiCallsTotal" style="font-size: 1.25rem; font-weight: 700; color: var(--primary);">0</div>
+                                        <div style="font-size: 0.65rem; color: var(--gray-500); text-transform: uppercase;">Total</div>
+                                    </div>
+                                    <div style="background: var(--gray-100); padding: 10px; border-radius: 6px; text-align: center;">
+                                        <div id="geminiCallsToday" style="font-size: 1.25rem; font-weight: 700; color: var(--secondary);">0</div>
+                                        <div style="font-size: 0.65rem; color: var(--gray-500); text-transform: uppercase;">Today</div>
+                                    </div>
+                                    <div style="background: var(--gray-100); padding: 10px; border-radius: 6px; text-align: center;">
+                                        <div id="geminiCallsWeek" style="font-size: 1.25rem; font-weight: 700; color: var(--accent);">0</div>
+                                        <div style="font-size: 0.65rem; color: var(--gray-500); text-transform: uppercase;">This Week</div>
+                                    </div>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span id="geminiLastCall" style="font-size: 0.7rem; color: var(--gray-500);">No calls recorded</span>
+                                    <button class="btn btn-sm btn-outline" onclick="resetGeminiCounter()" style="font-size: 0.7rem; padding: 4px 8px;">Reset Counter</button>
                                 </div>
                             </div>
                         </div>
@@ -991,41 +1026,6 @@
                     </div>
                 </div>
 
-                <!-- Manual Live Data Controls -->
-                <div class="card" style="margin-bottom: 24px;">
-                    <div class="card-header">
-                        <h3>Manual Data Refresh</h3>
-                        <p style="font-size: 0.875rem; color: var(--gray-500); margin-top: 4px;">
-                            Optionally fetch live data directly using your own API keys
-                        </p>
-                    </div>
-                    <div style="margin-top: 20px;">
-                        <div id="liveDataStatus" style="background: var(--gray-50); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-                            <p style="color: var(--gray-600); font-size: 0.875rem;">
-                                <strong>Manual Fetch:</strong> Use your own API keys to fetch the latest data on demand
-                            </p>
-                            <p style="color: var(--gray-500); font-size: 0.75rem; margin-top: 8px;">
-                                Configure BLS and/or FRED API keys above to enable manual data fetching.
-                            </p>
-                        </div>
-                        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                            <button class="btn btn-primary" onclick="fetchLiveData()" id="fetchLiveDataBtn" disabled>
-                                Fetch Live Data
-                            </button>
-                            <button class="btn btn-outline" onclick="resetToBaselineData()">
-                                Reset to Baseline Data
-                            </button>
-                        </div>
-                        <div id="fetchProgress" style="margin-top: 16px; display: none;">
-                            <div class="loading">
-                                <div class="spinner"></div>
-                                <span id="fetchProgressText">Fetching data...</span>
-                            </div>
-                        </div>
-                        <div id="fetchResults" style="margin-top: 16px;"></div>
-                    </div>
-                </div>
-
                 <!-- Data Storage Info -->
                 <div class="card">
                     <div class="card-header">
@@ -1033,15 +1033,19 @@
                     </div>
                     <div style="margin-top: 16px; color: var(--gray-600); font-size: 0.875rem; line-height: 1.6;">
                         <p style="margin-bottom: 12px;">
-                            <strong>API Keys:</strong> All API keys are stored locally in your browser's localStorage.
-                            They are never sent to any server except the respective API providers (BLS, FRED, Google).
+                            <strong>Economic Data:</strong> Live economic data from BLS and FRED is automatically fetched daily
+                            via GitHub Actions and cached for all users. No API keys required.
+                        </p>
+                        <p style="margin-bottom: 12px;">
+                            <strong>API Keys:</strong> Your Gemini API key (if configured) is stored locally in your browser's localStorage.
+                            It is only sent to Google's API servers for AI analysis.
                         </p>
                         <p style="margin-bottom: 12px;">
                             <strong>Simulations:</strong> Your saved simulations and settings are stored locally in your browser.
                         </p>
                         <p>
                             <strong>Clearing Data:</strong> Use your browser's "Clear site data" feature to remove all stored data,
-                            or use the individual "Clear" buttons above to remove specific API keys.
+                            or use the "Clear" button above to remove your API key.
                         </p>
                     </div>
                 </div>
@@ -1336,6 +1340,7 @@
     <script src="src/utils/calculations.js"></script>
     <script src="src/components/visualizations.js"></script>
     <script src="src/services/ai-summary.js"></script>
+    <script src="src/services/results-interpreter.js"></script>
     <script src="src/services/ai-scenario-enhancer.js"></script>
     <script src="src/services/model-trainer.js"></script>
     <script src="src/services/simulation-sharing.js"></script>
@@ -1350,13 +1355,22 @@
     <script src="src/features/url-sharing.js"></script>
     <script src="src/features/pdf-report.js"></script>
     <script src="src/features/demographics-analysis.js"></script>
+    <script src="src/features/regional-heatmap.js"></script>
+    <script src="src/features/abm-sensitivity.js"></script>
     <script src="src/features/skills-gap-analysis.js"></script>
     <!-- Agent-Based Model -->
     <script src="src/abm/agents/worker.js"></script>
     <script src="src/abm/agents/firm.js"></script>
+    <script src="src/abm/agents/training-program.js"></script>
     <script src="src/abm/market/labor-market.js"></script>
+    <script src="src/abm/market/wage-dynamics.js"></script>
+    <script src="src/abm/market/information.js"></script>
+    <script src="src/abm/environment/ai-frontier.js"></script>
+    <script src="src/abm/environment/regions.js"></script>
     <script src="src/abm/engine.js"></script>
     <script src="src/abm/index.js"></script>
+    <!-- Web Worker Manager for ABM -->
+    <script src="src/workers/worker-manager.js"></script>
     <script src="src/app.js"></script>
     <!-- QA Test Suite (optional - for testing) -->
     <script src="tests/qa-test-suite.js"></script>

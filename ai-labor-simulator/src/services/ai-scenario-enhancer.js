@@ -6,10 +6,8 @@
 
 class AIScenarioEnhancer {
     constructor() {
-        // Reuse the existing Gemini service configuration
-        this.apiKey = localStorage.getItem('gemini_api_key') || '';
+        // Cloudflare Worker proxy for Gemini API
         this.proxyEndpoint = 'https://gemini-proxy.adamconner7.workers.dev';
-        this.directEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
         // Storage for AI-enhanced simulations
         this.storageKey = 'ai_enhanced_simulations';
@@ -22,11 +20,11 @@ class AIScenarioEnhancer {
      * Check if service is available
      */
     isAvailable() {
-        return this.proxyEndpoint || this.apiKey;
+        return this.proxyEndpoint && this.proxyEndpoint.length > 0;
     }
 
     /**
-     * Make API request to Gemini
+     * Make API request to Gemini via Cloudflare proxy
      */
     async makeRequest(prompt, options = {}) {
         const body = {
@@ -41,20 +39,11 @@ class AIScenarioEnhancer {
             }
         };
 
-        let response;
-        if (this.apiKey) {
-            response = await fetch(`${this.directEndpoint}?key=${this.apiKey}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
-        } else {
-            response = await fetch(this.proxyEndpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
-        }
+        const response = await fetch(this.proxyEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
 
         if (!response.ok) {
             const error = await response.json();

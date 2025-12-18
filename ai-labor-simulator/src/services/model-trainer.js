@@ -10,14 +10,12 @@ class ModelTrainer {
         this.trainedModelKey = 'trained_model_params';
         this.trainingHistoryKey = 'training_history';
 
-        // Proxy for AI calls
+        // Cloudflare Worker proxy for AI calls
         this.proxyEndpoint = 'https://gemini-proxy.adamconner7.workers.dev';
-        this.directEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
-        this.apiKey = localStorage.getItem('gemini_api_key') || '';
     }
 
     /**
-     * Make AI request
+     * Make AI request via Cloudflare proxy
      */
     async makeRequest(prompt, options = {}) {
         const body = {
@@ -30,20 +28,11 @@ class ModelTrainer {
             }
         };
 
-        let response;
-        if (this.apiKey) {
-            response = await fetch(`${this.directEndpoint}?key=${this.apiKey}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
-        } else {
-            response = await fetch(this.proxyEndpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
-        }
+        const response = await fetch(this.proxyEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
 
         if (!response.ok) {
             throw new Error('Training AI request failed');

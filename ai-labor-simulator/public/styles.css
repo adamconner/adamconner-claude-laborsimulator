@@ -2070,3 +2070,266 @@ body {
 [data-theme="dark"] #demographicsContent div[style*="rgba(239, 68, 68"] {
     background: rgba(239, 68, 68, 0.15) !important;
 }
+
+/* AI Analysis Inline Styles */
+.ai-analysis-inline,
+.ai-analysis {
+    max-width: 100%;
+    overflow-x: hidden;
+    word-wrap: break-word;
+}
+
+.ai-analysis-inline p,
+.ai-analysis p {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
+}
+
+/* AI Analysis responsive grids */
+.ai-analysis-inline .analysis-section,
+.ai-analysis .analysis-section {
+    max-width: 100%;
+    overflow: hidden;
+}
+
+/* Key Findings Grid */
+.ai-findings-grid {
+    display: grid;
+    gap: 12px;
+}
+
+.ai-finding-card {
+    padding: 12px;
+    background: var(--gray-50);
+    border-radius: 8px;
+    border-left: 4px solid var(--gray-300);
+}
+
+.ai-finding-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 8px;
+    font-size: 0.75rem;
+    color: var(--gray-500);
+}
+
+/* Workforce Grid */
+.ai-workforce-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.ai-workforce-card {
+    padding: 16px;
+    background: var(--gray-50);
+    border-radius: 8px;
+}
+
+/* Skills List */
+.ai-skills-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.ai-skill-tag {
+    padding: 4px 12px;
+    background: var(--secondary);
+    color: white;
+    border-radius: 16px;
+    font-size: 0.75rem;
+}
+
+/* Policy Grid */
+.ai-policy-grid {
+    display: grid;
+    gap: 12px;
+}
+
+.ai-policy-card {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    background: var(--gray-50);
+    border-radius: 8px;
+}
+
+.ai-policy-priority {
+    flex-shrink: 0;
+    width: 80px;
+    text-align: center;
+}
+
+.ai-priority-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    color: white;
+    border-radius: 4px;
+    font-size: 0.625rem;
+    text-transform: uppercase;
+}
+
+.ai-policy-content {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Scenarios Grid */
+.ai-scenarios-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.ai-scenario-card {
+    padding: 16px;
+    border-radius: 8px;
+    border-left: 4px solid;
+}
+
+.ai-scenario-card h5 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.ai-scenario-optimistic {
+    background: #ecfdf5;
+    border-left-color: var(--secondary);
+}
+
+.ai-scenario-optimistic h5 {
+    color: var(--secondary);
+}
+
+.ai-scenario-likely {
+    background: #fef3c7;
+    border-left-color: var(--warning);
+}
+
+.ai-scenario-likely h5 {
+    color: var(--warning);
+}
+
+.ai-scenario-pessimistic {
+    background: #fef2f2;
+    border-left-color: var(--danger);
+}
+
+.ai-scenario-pessimistic h5 {
+    color: var(--danger);
+}
+
+/* Narrative Box */
+.ai-narrative-box {
+    padding: 20px;
+    background: var(--gray-50);
+    border-radius: 8px;
+    line-height: 1.8;
+}
+
+/* Confidence Bar */
+.ai-confidence-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 16px;
+    background: var(--gray-100);
+    border-radius: 8px;
+}
+
+.ai-confidence-badge {
+    padding: 6px 16px;
+    color: white;
+    border-radius: 16px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+/* Responsive: Tablet */
+@media (max-width: 900px) {
+    .ai-workforce-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .ai-scenarios-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Responsive: Mobile */
+@media (max-width: 768px) {
+    .ai-policy-card {
+        flex-direction: column;
+    }
+
+    .ai-policy-priority {
+        width: 100%;
+        text-align: left;
+    }
+
+    .ai-analysis-inline,
+    .ai-analysis {
+        font-size: 0.9rem;
+    }
+
+    .ai-finding-meta {
+        flex-direction: column;
+        gap: 4px;
+    }
+}
+
+@media (max-width: 480px) {
+    .ai-analysis-inline h4,
+    .ai-analysis h4 {
+        font-size: 1rem;
+    }
+
+    .ai-analysis-inline p,
+    .ai-analysis p {
+        font-size: 0.875rem;
+        line-height: 1.5;
+    }
+
+    .ai-skill-tag {
+        font-size: 0.7rem;
+        padding: 3px 10px;
+    }
+}
+
+/* Main content area responsive fixes */
+.main-content {
+    overflow-x: hidden;
+    max-width: 100%;
+}
+
+.section {
+    overflow-x: hidden;
+    max-width: 100%;
+}
+
+/* Simulation Results Section responsive */
+@media (max-width: 900px) {
+    /* Make nav tabs scrollable */
+    .nav-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .nav-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Header buttons stack */
+    .header > div:last-child {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+}

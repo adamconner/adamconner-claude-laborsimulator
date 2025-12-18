@@ -2,7 +2,7 @@
  * ABM Simulation Engine
  *
  * Main engine that orchestrates the agent-based labor market simulation.
- * Coordinates workers, firms, and market dynamics over time.
+ * Coordinates workers, firms, training programs, and market dynamics over time.
  */
 
 // Import agent classes in Node.js environment
@@ -11,12 +11,22 @@ if (typeof module !== 'undefined' && module.exports) {
     try {
         const { WorkerAgent: WA } = require('./agents/worker.js');
         const { FirmAgent: FA } = require('./agents/firm.js');
+        const { TrainingProgramAgent: TPA } = require('./agents/training-program.js');
         const { LaborMarket: LM } = require('./market/labor-market.js');
+        const { WageDynamics: WD } = require('./market/wage-dynamics.js');
+        const { InformationDiffusion: ID } = require('./market/information.js');
+        const { AICapabilityFrontier: AICF } = require('./environment/ai-frontier.js');
+        const { RegionalMarketSystem: RMS } = require('./environment/regions.js');
         global.WorkerAgent = WA;
         global.FirmAgent = FA;
+        global.TrainingProgramAgent = TPA;
         global.LaborMarket = LM;
+        global.WageDynamics = WD;
+        global.InformationDiffusion = ID;
+        global.AICapabilityFrontier = AICF;
+        global.RegionalMarketSystem = RMS;
     } catch (e) {
-        console.warn('Agent classes not available:', e.message);
+        console.warn('Some ABM classes not available:', e.message);
     }
 }
 
@@ -26,6 +36,7 @@ class ABMSimulationEngine {
             numWorkers: config.numWorkers || 10000,      // Default 10K for performance
             numFirms: config.numFirms || 500,
             numRegions: config.numRegions || 10,
+            numTrainingPrograms: config.numTrainingPrograms || 50,
             durationMonths: config.durationMonths || 60, // 5 years default
             ...config
         };
@@ -33,19 +44,26 @@ class ABMSimulationEngine {
         // Agent populations
         this.workers = [];
         this.firms = [];
+        this.trainingPrograms = [];
 
-        // Market mechanism
+        // Market mechanisms
         this.laborMarket = null;
+        this.wageDynamics = null;
+        this.informationDiffusion = null;
 
-        // AI capability tracker
+        // Environment
         this.aiCapability = null;
+        this.regionalSystem = null;
 
         // Results collection
         this.results = {
             monthly: [],
+            monthlyData: [], // Alias for monthly (for compatibility with display functions)
             summary: null,
             policySupport: [],
-            emergentPatterns: []
+            emergentPatterns: [],
+            regionalSnapshots: [],
+            wageDistribution: []
         };
 
         // Simulation state
@@ -64,8 +82,18 @@ class ABMSimulationEngine {
     async initialize(scenario = {}) {
         console.log('Initializing ABM simulation...');
 
-        // Create AI capability tracker
-        this.aiCapability = new AICapabilityFrontier(scenario);
+        // Create AI capability tracker (use new separate module if available)
+        if (typeof AICapabilityFrontier !== 'undefined') {
+            this.aiCapability = new AICapabilityFrontier(scenario);
+        } else {
+            // Fallback to inline implementation
+            this.aiCapability = new AICapabilityFrontierInline(scenario);
+        }
+
+        // Initialize regional system (use new module if available)
+        if (typeof RegionalMarketSystem !== 'undefined') {
+            this.regionalSystem = new RegionalMarketSystem(this.config.numRegions);
+        }
 
         // Generate worker population
         this.workers = this._generateWorkers(this.config.numWorkers, scenario);
@@ -74,6 +102,10 @@ class ABMSimulationEngine {
         // Generate firm population
         this.firms = this._generateFirms(this.config.numFirms, scenario);
         console.log(`Created ${this.firms.length} firm agents`);
+
+        // Generate training programs
+        this.trainingPrograms = this._generateTrainingPrograms(this.config.numTrainingPrograms, scenario);
+        console.log(`Created ${this.trainingPrograms.length} training program agents`);
 
         // Assign workers to firms (initial employment)
         this._assignInitialEmployment();
@@ -91,13 +123,26 @@ class ABMSimulationEngine {
             searchRadius: 2
         });
 
+        // Initialize wage dynamics (if available)
+        if (typeof WageDynamics !== 'undefined') {
+            this.wageDynamics = new WageDynamics();
+        }
+
+        // Initialize information diffusion (if available)
+        if (typeof InformationDiffusion !== 'undefined') {
+            this.informationDiffusion = new InformationDiffusion();
+        }
+
         // Reset state
         this.currentMonth = 0;
         this.results = {
             monthly: [],
+            monthlyData: [], // Alias for monthly (for compatibility)
             summary: null,
             policySupport: [],
-            emergentPatterns: []
+            emergentPatterns: [],
+            regionalSnapshots: [],
+            wageDistribution: []
         };
 
         console.log('ABM initialization complete');
@@ -184,18 +229,31 @@ class ABMSimulationEngine {
             worker.makeMonthlyDecisions(this.laborMarket, this.aiCapability, scenario.interventions);
         });
 
-        // 4. Labor market matching
+        // 4. Training programs process enrollments and graduations
+        this._processTrainingPrograms(month);
+
+        // 5. Labor market matching
         const matchingResults = this.laborMarket.runMonthlyMatching();
 
-        // 5. Apply interventions
+        // 6. Wage dynamics adjustment
+        if (this.wageDynamics) {
+            this.wageDynamics.adjustMarketWages(this.workers, this.firms, this.laborMarket);
+        }
+
+        // 7. Apply interventions
         if (scenario.interventions) {
             this._applyInterventions(scenario.interventions, month);
         }
 
-        // 6. Information diffusion
-        this._diffuseInformation();
+        // 8. Information diffusion
+        this._diffuseInformation(month, matchingResults);
 
-        // 7. Detect emergent patterns
+        // 9. Update regional statistics
+        if (this.regionalSystem) {
+            this.regionalSystem.updateAllRegions(this.workers, this.firms);
+        }
+
+        // 10. Detect emergent patterns
         if (month > 0 && month % 6 === 0) {
             this._detectPatterns(month);
         }
@@ -206,12 +264,18 @@ class ABMSimulationEngine {
     _generateWorkers(count, scenario) {
         const workers = [];
 
-        // Distribute workers across regions based on population distribution
+        // Use regional system for population distribution if available
+        const selectRegion = this.regionalSystem
+            ? () => this.regionalSystem.selectRegionByPopulation()
+            : (regionPops) => this._selectRegion(regionPops);
+
         const regionPopulations = this._getRegionPopulations(this.config.numRegions);
 
         for (let i = 0; i < count; i++) {
-            // Select region based on population distribution
-            const region = this._selectRegion(regionPopulations);
+            // Select region
+            const region = this.regionalSystem
+                ? this.regionalSystem.selectRegionByPopulation()
+                : this._selectRegion(regionPopulations);
 
             const worker = new WorkerAgent({
                 id: `w_${i}`,
@@ -232,9 +296,13 @@ class ABMSimulationEngine {
         const firms = [];
 
         for (let i = 0; i < count; i++) {
+            const region = this.regionalSystem
+                ? this.regionalSystem.selectRegionByPopulation()
+                : Math.floor(Math.random() * this.config.numRegions) + 1;
+
             const firm = new FirmAgent({
                 id: `f_${i}`,
-                region: Math.floor(Math.random() * this.config.numRegions) + 1
+                region
             });
 
             // Initial AI adoption based on scenario
@@ -246,6 +314,71 @@ class ABMSimulationEngine {
         }
 
         return firms;
+    }
+
+    _generateTrainingPrograms(count, scenario) {
+        const programs = [];
+
+        // Only generate if TrainingProgramAgent is available
+        if (typeof TrainingProgramAgent === 'undefined') {
+            return programs;
+        }
+
+        for (let i = 0; i < count; i++) {
+            const region = this.regionalSystem
+                ? this.regionalSystem.selectRegionByPopulation()
+                : Math.floor(Math.random() * this.config.numRegions) + 1;
+
+            const program = new TrainingProgramAgent({
+                id: `prog_${i}`,
+                region,
+                subsidyAvailable: scenario.trainingSubsidy || 0.3
+            });
+
+            programs.push(program);
+        }
+
+        return programs;
+    }
+
+    _processTrainingPrograms(month) {
+        if (this.trainingPrograms.length === 0) return;
+
+        // Process each training program
+        this.trainingPrograms.forEach(program => {
+            program.processMonth(month);
+        });
+
+        // Enroll workers who want retraining
+        const workersWantingRetraining = this.workers.filter(w =>
+            w.wantsRetraining &&
+            !w.retrainingProgram &&
+            w.age < 60
+        );
+
+        // Match workers to programs
+        workersWantingRetraining.forEach(worker => {
+            // Find suitable program in same region (or nearby)
+            const suitablePrograms = this.trainingPrograms.filter(p =>
+                p.isAcceptingApplications() &&
+                (p.region === worker.region || Math.random() < 0.2) // 20% chance to consider other regions
+            );
+
+            if (suitablePrograms.length > 0) {
+                // Sort by best fit (ROI, quality, etc.)
+                suitablePrograms.sort((a, b) => {
+                    const roiA = a.calculateROIForWorker(worker);
+                    const roiB = b.calculateROIForWorker(worker);
+                    return roiB.roi - roiA.roi;
+                });
+
+                // Try to enroll in best program
+                const result = suitablePrograms[0].enrollWorker(worker, month);
+                if (result.success) {
+                    worker.wantsRetraining = false;
+                }
+            }
+        });
     }
 
     _assignInitialEmployment() {
@@ -374,7 +507,16 @@ class ABMSimulationEngine {
     }
 
     _applyRetraining(intervention, month) {
-        // Offer retraining to eligible workers
+        // If we have training programs, use them
+        if (this.trainingPrograms.length > 0) {
+            // Increase subsidies for training programs
+            this.trainingPrograms.forEach(program => {
+                program.receiveSubsidy(intervention.subsidyLevel || 0.5);
+            });
+            return;
+        }
+
+        // Fallback: direct enrollment (old behavior)
         const eligibleWorkers = this.workers.filter(w =>
             (w.status === 'unemployed' || w.wantsRetraining) &&
             w.age < 60 &&
@@ -416,8 +558,21 @@ class ABMSimulationEngine {
         });
     }
 
-    _diffuseInformation() {
-        // Information about AI spreads through networks
+    _diffuseInformation(month, matchingResults = {}) {
+        // Use advanced information diffusion if available
+        if (this.informationDiffusion) {
+            const marketConditions = {
+                unemploymentRate: this.laborMarket.getMarketStatistics()?.unemploymentRate || 0.05,
+                layoffCount: matchingResults.layoffs || 0,
+                aiAdoptionRate: this.aiCapability.getCurrentLevel(),
+                policyChanges: [] // Could track policy changes here
+            };
+
+            this.informationDiffusion.processMonth(this.workers, this.firms, month, marketConditions);
+            return;
+        }
+
+        // Fallback: simple information diffusion
         this.workers.forEach(worker => {
             if (worker.network.length === 0) return;
 
@@ -460,6 +615,32 @@ class ABMSimulationEngine {
                 effect: 'Competitive pressure cascade'
             });
         }
+
+        // Check information diffusion cascades
+        if (this.informationDiffusion) {
+            const cascades = this.informationDiffusion.detectCascades();
+            cascades.forEach(cascade => {
+                this.results.emergentPatterns.push({
+                    type: 'information_cascade',
+                    month,
+                    description: `${cascade.type} ${cascade.direction} by ${(cascade.magnitude * 100).toFixed(1)}%`,
+                    metrics: cascade
+                });
+            });
+        }
+
+        // Check for regional divergence
+        if (this.regionalSystem) {
+            const nationalStats = this.regionalSystem.getNationalStats();
+            if (nationalStats.regionalVariation.stdDev > 0.03) {
+                this.results.emergentPatterns.push({
+                    type: 'regional_divergence',
+                    month,
+                    description: `Regional unemployment diverging (std dev: ${(nationalStats.regionalVariation.stdDev * 100).toFixed(1)}%)`,
+                    metrics: nationalStats.regionalVariation
+                });
+            }
+        }
     }
 
     _collectMonthlyResults(month) {
@@ -473,12 +654,31 @@ class ABMSimulationEngine {
                 f.aiAdoptionStatus === status).length;
         });
 
+        // Wage distribution
+        let wageDistribution = null;
+        if (this.wageDynamics) {
+            wageDistribution = this.wageDynamics.getWageDistribution(this.workers);
+        }
+
+        // Training program stats
+        const trainingStats = {
+            totalPrograms: this.trainingPrograms.length,
+            totalEnrolled: this.trainingPrograms.reduce((sum, p) => sum + p.currentEnrollment, 0),
+            totalGraduates: this.trainingPrograms.reduce((sum, p) => sum + p.totalGraduates, 0),
+            avgCompletionRate: this.trainingPrograms.length > 0
+                ? this.trainingPrograms.reduce((sum, p) => sum + p.completionRate, 0) / this.trainingPrograms.length
+                : 0
+        };
+
         this.results.monthly.push({
             month,
             year: Math.floor(month / 12) + 2025,
             ...stats,
             aiAdoptionByStatus,
-            policySupport: policyStats
+            policySupport: policyStats,
+            wageDistribution,
+            trainingStats,
+            aiCapabilityLevel: this.aiCapability.getCurrentLevel()
         });
 
         // Track policy support trajectory
@@ -486,21 +686,42 @@ class ABMSimulationEngine {
             month,
             ...policyStats
         });
+
+        // Track regional snapshots (every 6 months)
+        if (this.regionalSystem && month % 6 === 0) {
+            this.results.regionalSnapshots.push({
+                month,
+                regions: this.regionalSystem.getAllRegionSnapshots()
+            });
+        }
+
+        // Track wage distribution
+        if (wageDistribution) {
+            this.results.wageDistribution.push({
+                month,
+                ...wageDistribution
+            });
+        }
     }
 
     _finalizeResults() {
         const firstMonth = this.results.monthly[0];
         const lastMonth = this.results.monthly[this.results.monthly.length - 1];
 
+        // Provide monthlyData as alias for monthly (for compatibility with display functions)
+        this.results.monthlyData = this.results.monthly;
+
         this.results.summary = {
             durationMonths: this.config.durationMonths,
             totalWorkers: this.config.numWorkers,
             totalFirms: this.config.numFirms,
+            totalTrainingPrograms: this.trainingPrograms.length,
 
             initial: {
                 unemploymentRate: firstMonth?.unemploymentRate || 0,
                 aiAdoptionRate: firstMonth?.aiAdoptionRate || 0,
-                medianWage: firstMonth?.medianWage || 0
+                medianWage: firstMonth?.medianWage || 0,
+                aiCapabilityLevel: firstMonth?.aiCapabilityLevel || 0
             },
 
             final: {
@@ -509,7 +730,8 @@ class ABMSimulationEngine {
                 medianWage: lastMonth?.medianWage || 0,
                 employed: lastMonth?.employed || 0,
                 unemployed: lastMonth?.unemployed || 0,
-                outOfLaborForce: lastMonth?.outOfLaborForce || 0
+                outOfLaborForce: lastMonth?.outOfLaborForce || 0,
+                aiCapabilityLevel: lastMonth?.aiCapabilityLevel || 0
             },
 
             changes: {
@@ -524,14 +746,35 @@ class ABMSimulationEngine {
                 m.unemploymentRate === Math.max(...this.results.monthly.map(m => m.unemploymentRate))),
 
             // Total job flows
-            totalHires: this.results.monthly.reduce((sum, m) => sum + m.monthlyHires, 0),
-            totalLayoffs: this.results.monthly.reduce((sum, m) => sum + m.monthlyLayoffs, 0),
+            totalHires: this.results.monthly.reduce((sum, m) => sum + (m.monthlyHires || 0), 0),
+            totalLayoffs: this.results.monthly.reduce((sum, m) => sum + (m.monthlyLayoffs || 0), 0),
+
+            // Training outcomes
+            trainingOutcomes: {
+                totalGraduates: this.trainingPrograms.reduce((sum, p) => sum + p.totalGraduates, 0),
+                totalDropouts: this.trainingPrograms.reduce((sum, p) => sum + p.totalDropouts, 0),
+                avgCompletionRate: this.trainingPrograms.length > 0
+                    ? this.trainingPrograms.reduce((sum, p) => sum + p.completionRate, 0) / this.trainingPrograms.length
+                    : 0
+            },
+
+            // Wage inequality
+            wageInequality: lastMonth?.wageDistribution ? {
+                gini: lastMonth.wageDistribution.gini,
+                p90p10Ratio: lastMonth.wageDistribution.p90 / (lastMonth.wageDistribution.p10 || 1)
+            } : null,
 
             // Final policy support
             finalPolicySupport: lastMonth?.policySupport || {},
 
             // Emergent patterns
-            emergentPatterns: this.results.emergentPatterns
+            emergentPatterns: this.results.emergentPatterns,
+
+            // AI capability summary
+            aiCapabilitySummary: this.aiCapability.getSummary ? this.aiCapability.getSummary() : null,
+
+            // Information diffusion summary
+            informationSummary: this.informationDiffusion?.getSummary() || null
         };
     }
 
@@ -566,27 +809,53 @@ class ABMSimulationEngine {
             isPaused: this.isPaused,
             workerCount: this.workers.length,
             firmCount: this.firms.length,
-            currentStats: this.laborMarket?.getMarketStatistics() || null
+            trainingProgramCount: this.trainingPrograms.length,
+            currentStats: this.laborMarket?.getMarketStatistics() || null,
+            aiCapabilityLevel: this.aiCapability?.getCurrentLevel() || 0
         };
+    }
+
+    /**
+     * Get detailed breakdown by region
+     */
+    getRegionalBreakdown() {
+        if (!this.regionalSystem) {
+            return null;
+        }
+        return this.regionalSystem.getAllRegionSnapshots();
+    }
+
+    /**
+     * Get training program statistics
+     */
+    getTrainingStats() {
+        return this.trainingPrograms.map(p => p.getSummary());
+    }
+
+    /**
+     * Get wage analysis
+     */
+    getWageAnalysis() {
+        if (!this.wageDynamics) {
+            return null;
+        }
+        return this.wageDynamics.getSummary(this.workers);
     }
 }
 
 /**
- * AI Capability Frontier - Tracks what AI can do over time
+ * Fallback AI Capability Frontier - Used when separate module not loaded
  */
-class AICapabilityFrontier {
+class AICapabilityFrontierInline {
     constructor(scenario = {}) {
         this.scenario = scenario;
         this.currentLevel = scenario.initialAILevel || 0.3;
         this.adoptionCurve = scenario.adoptionCurve || 's_curve';
         this.automationPace = scenario.automationPace || 'moderate';
-
-        // Occupation-specific exposure (would be loaded from data)
         this.occupationExposure = {};
     }
 
     advance(month, scenario) {
-        // Advance AI capabilities based on adoption curve
         const paceMultipliers = {
             slow: 0.5,
             moderate: 1.0,
@@ -605,8 +874,7 @@ class AICapabilityFrontier {
                 break;
             case 's_curve':
             default:
-                // S-curve: slow start, fast middle, slow end
-                const midpoint = 60; // Peak growth around month 60
+                const midpoint = 60;
                 const steepness = 0.05;
                 const sCurveGrowth = 0.01 * pace / (1 + Math.exp(-steepness * (month - midpoint)));
                 this.currentLevel += sCurveGrowth;
@@ -621,18 +889,23 @@ class AICapabilityFrontier {
     }
 
     getOccupationExposure(occupation) {
-        // Return cached or calculate exposure
         if (this.occupationExposure[occupation]) {
             return this.occupationExposure[occupation] * this.currentLevel;
         }
-
-        // Generate random exposure for this occupation (would use real data)
         this.occupationExposure[occupation] = 0.3 + Math.random() * 0.5;
         return this.occupationExposure[occupation] * this.currentLevel;
+    }
+
+    getSummary() {
+        return {
+            currentLevel: this.currentLevel,
+            adoptionCurve: this.adoptionCurve,
+            automationPace: this.automationPace
+        };
     }
 }
 
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { ABMSimulationEngine, AICapabilityFrontier };
+    module.exports = { ABMSimulationEngine, AICapabilityFrontierInline };
 }

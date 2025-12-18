@@ -25,12 +25,8 @@ const DEFAULT_CONFIG = {
 // Storage key for saved simulations
 const STORAGE_KEY = 'ai_labor_simulator_saved_simulations';
 
-// Storage keys for API keys
-const API_KEYS_STORAGE = {
-    bls: 'ai_labor_sim_bls_api_key',
-    fred: 'ai_labor_sim_fred_api_key',
-    gemini: 'ai_labor_sim_gemini_api_key'
-};
+// Storage keys for API keys (legacy - kept for cleanup)
+const API_KEYS_STORAGE = {};
 
 /**
  * Initialize the application
@@ -2363,86 +2359,19 @@ function updateAISettingsStatus() {
     const statusDiv = document.getElementById('aiSettingsStatus');
     if (!statusDiv) return;
 
-    if (typeof aiSummaryService !== 'undefined' && aiSummaryService.hasApiKey()) {
+    if (typeof aiSummaryService !== 'undefined' && aiSummaryService.isAvailable()) {
         statusDiv.innerHTML = `
             <p style="font-size: 0.875rem; color: var(--secondary);">
-                &#10003; API key configured
+                &#10003; AI analysis available
             </p>
         `;
     } else {
         statusDiv.innerHTML = `
-            <p style="font-size: 0.875rem; color: var(--gray-400);">API key not configured</p>
+            <p style="font-size: 0.875rem; color: var(--gray-400);">AI analysis unavailable</p>
         `;
     }
 }
 
-/**
- * Show AI settings modal
- */
-function showAISettingsModal() {
-    const modal = document.getElementById('aiSettingsModal');
-    const input = document.getElementById('geminiApiKey');
-
-    // Load existing key (masked)
-    if (typeof aiSummaryService !== 'undefined' && aiSummaryService.hasApiKey()) {
-        const key = aiSummaryService.getApiKey();
-        input.value = key;
-    } else {
-        input.value = '';
-    }
-
-    modal.style.display = 'flex';
-}
-
-/**
- * Hide AI settings modal
- */
-function hideAISettingsModal() {
-    document.getElementById('aiSettingsModal').style.display = 'none';
-}
-
-/**
- * Save AI API key
- */
-function saveAIApiKey() {
-    const key = document.getElementById('geminiApiKey').value.trim();
-
-    if (!key) {
-        alert('Please enter an API key.');
-        return;
-    }
-
-    if (typeof aiSummaryService !== 'undefined') {
-        aiSummaryService.setApiKey(key);
-        updateAISettingsStatus();
-        hideAISettingsModal();
-        alert('API key saved successfully! AI analysis will be available when you run simulations.');
-
-        // If we have current results, offer to generate summary
-        if (currentResults) {
-            if (confirm('Would you like to generate an AI analysis for the current simulation?')) {
-                generateAISummary(currentResults);
-            }
-        }
-    }
-}
-
-/**
- * Clear AI API key
- */
-function clearAIApiKey() {
-    if (!confirm('Are you sure you want to remove your API key?')) {
-        return;
-    }
-
-    if (typeof aiSummaryService !== 'undefined') {
-        aiSummaryService.clearApiKey();
-        document.getElementById('geminiApiKey').value = '';
-        updateAISettingsStatus();
-        hideAISettingsModal();
-        alert('API key removed.');
-    }
-}
 
 /**
  * Generate AI summary for simulation results
@@ -3024,6 +2953,97 @@ function initializeSettings() {
 
     // Update auto data status
     updateAutoDataStatus();
+
+    // Initialize Gemini API call counter
+    initializeGeminiCounter();
+}
+
+// ==========================================
+// GEMINI API CALL COUNTER
+// ==========================================
+
+/**
+ * Initialize the Gemini API call counter display
+ */
+function initializeGeminiCounter() {
+    // Set initial checkbox state
+    const checkbox = document.getElementById('geminiCounterEnabled');
+    if (checkbox && typeof aiSummaryService !== 'undefined') {
+        checkbox.checked = aiSummaryService.isCounterEnabled();
+    }
+
+    // Update the display
+    updateGeminiCounterDisplay();
+
+    // Listen for API call events
+    window.addEventListener('geminiApiCallUpdated', updateGeminiCounterDisplay);
+}
+
+/**
+ * Update the Gemini counter display
+ */
+function updateGeminiCounterDisplay() {
+    if (typeof aiSummaryService === 'undefined') return;
+
+    const stats = aiSummaryService.getApiCallStats();
+
+    // Update counter values
+    const totalEl = document.getElementById('geminiCallsTotal');
+    const todayEl = document.getElementById('geminiCallsToday');
+    const weekEl = document.getElementById('geminiCallsWeek');
+    const lastCallEl = document.getElementById('geminiLastCall');
+
+    if (totalEl) totalEl.textContent = stats.total.toLocaleString();
+    if (todayEl) todayEl.textContent = stats.today.toLocaleString();
+    if (weekEl) weekEl.textContent = stats.thisWeek.toLocaleString();
+
+    if (lastCallEl) {
+        if (stats.lastCall) {
+            const lastTime = new Date(stats.lastCall.timestamp);
+            const timeAgo = getTimeAgo(lastTime);
+            lastCallEl.textContent = `Last call: ${timeAgo} (${stats.lastCall.type})`;
+        } else {
+            lastCallEl.textContent = 'No calls recorded';
+        }
+    }
+}
+
+/**
+ * Toggle the Gemini counter enabled state
+ */
+function toggleGeminiCounter() {
+    if (typeof aiSummaryService === 'undefined') return;
+
+    const checkbox = document.getElementById('geminiCounterEnabled');
+    if (checkbox) {
+        aiSummaryService.setCounterEnabled(checkbox.checked);
+    }
+}
+
+/**
+ * Reset the Gemini API call counter
+ */
+function resetGeminiCounter() {
+    if (typeof aiSummaryService === 'undefined') return;
+
+    if (confirm('Are you sure you want to reset the API call counter? This cannot be undone.')) {
+        aiSummaryService.resetApiCallCount();
+        updateGeminiCounterDisplay();
+    }
+}
+
+/**
+ * Get human-readable time ago string
+ */
+function getTimeAgo(date) {
+    const seconds = Math.floor((new Date() - date) / 1000);
+
+    if (seconds < 60) return 'just now';
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+    if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+
+    return date.toLocaleDateString();
 }
 
 /**
@@ -3084,390 +3104,40 @@ function updateAutoDataStatus() {
 }
 
 /**
- * Load saved API keys into input fields
+ * Legacy function stubs - API keys now managed via GitHub Actions and Cloudflare proxy
  */
 function loadApiKeyFields() {
-    const blsKey = getApiKey('bls');
-    const fredKey = getApiKey('fred');
-    const geminiKey = getApiKey('gemini');
-
-    const blsInput = document.getElementById('blsApiKey');
-    const fredInput = document.getElementById('fredApiKey');
-    const geminiInput = document.getElementById('geminiApiKeySettings');
-
-    if (blsInput && blsKey) blsInput.value = blsKey;
-    if (fredInput && fredKey) fredInput.value = fredKey;
-    if (geminiInput && geminiKey) geminiInput.value = geminiKey;
+    // No longer needed - API keys managed server-side
 }
 
-/**
- * Get API key from localStorage
- */
 function getApiKey(service) {
-    const storageKey = API_KEYS_STORAGE[service];
-    if (!storageKey) return null;
-
-    try {
-        return localStorage.getItem(storageKey) || null;
-    } catch (error) {
-        console.error(`Error loading ${service} API key:`, error);
-        return null;
-    }
+    // Legacy function - always returns null
+    return null;
 }
 
-/**
- * Save API key
- */
 function saveApiKey(service) {
-    const inputMap = {
-        bls: 'blsApiKey',
-        fred: 'fredApiKey',
-        gemini: 'geminiApiKeySettings'
-    };
-
-    const inputId = inputMap[service];
-    const input = document.getElementById(inputId);
-
-    if (!input) {
-        alert('Error: Input field not found.');
-        return;
-    }
-
-    const key = input.value.trim();
-
-    if (!key) {
-        alert('Please enter an API key.');
-        return;
-    }
-
-    const storageKey = API_KEYS_STORAGE[service];
-
-    try {
-        localStorage.setItem(storageKey, key);
-
-        // Also update the aiSummaryService if it's the Gemini key
-        if (service === 'gemini' && typeof aiSummaryService !== 'undefined') {
-            aiSummaryService.setApiKey(key);
-        }
-
-        updateAllApiStatuses();
-        updateFetchButtonState();
-
-        const serviceNames = {
-            bls: 'BLS',
-            fred: 'FRED',
-            gemini: 'Gemini'
-        };
-
-        alert(`${serviceNames[service]} API key saved successfully!`);
-    } catch (error) {
-        console.error(`Error saving ${service} API key:`, error);
-        alert('Failed to save API key. Storage may be full.');
-    }
+    // No longer needed
 }
 
-/**
- * Clear API key
- */
 function clearApiKey(service) {
-    if (!confirm(`Are you sure you want to remove the ${service.toUpperCase()} API key?`)) {
-        return;
-    }
-
-    const storageKey = API_KEYS_STORAGE[service];
-    const inputMap = {
-        bls: 'blsApiKey',
-        fred: 'fredApiKey',
-        gemini: 'geminiApiKeySettings'
-    };
-
-    try {
-        localStorage.removeItem(storageKey);
-
-        // Clear the input field
-        const input = document.getElementById(inputMap[service]);
-        if (input) input.value = '';
-
-        // Also clear from aiSummaryService if it's the Gemini key
-        if (service === 'gemini' && typeof aiSummaryService !== 'undefined') {
-            aiSummaryService.clearApiKey();
-        }
-
-        updateAllApiStatuses();
-        updateFetchButtonState();
-
-        alert('API key removed.');
-    } catch (error) {
-        console.error(`Error clearing ${service} API key:`, error);
-        alert('Failed to clear API key.');
-    }
+    // No longer needed
 }
 
-/**
- * Update all API status badges
- */
 function updateAllApiStatuses() {
-    updateApiStatus('bls', 'blsApiStatus');
-    updateApiStatus('fred', 'fredApiStatus');
-    updateApiStatus('gemini', 'geminiApiStatus');
-
-    // Also update the sidebar AI settings status
+    // Update the sidebar AI settings status
     updateAISettingsStatus();
 }
 
-/**
- * Update a single API status badge
- */
 function updateApiStatus(service, elementId) {
-    const statusElement = document.getElementById(elementId);
-    if (!statusElement) return;
-
-    const hasKey = !!getApiKey(service);
-
-    if (hasKey) {
-        statusElement.className = 'tag tag-medium';
-        statusElement.textContent = 'Configured';
-        statusElement.style.background = 'var(--secondary)';
-        statusElement.style.color = 'white';
-    } else {
-        statusElement.className = 'tag tag-low';
-        statusElement.textContent = 'Not Configured';
-        statusElement.style.background = '';
-        statusElement.style.color = '';
-    }
+    // No longer needed
 }
 
-/**
- * Update fetch button state based on available API keys
- */
 function updateFetchButtonState() {
-    const fetchBtn = document.getElementById('fetchLiveDataBtn');
-    const statusDiv = document.getElementById('liveDataStatus');
-
-    const hasBlsKey = !!getApiKey('bls');
-    const hasFredKey = !!getApiKey('fred');
-    const hasAnyKey = hasBlsKey || hasFredKey;
-
-    if (fetchBtn) {
-        fetchBtn.disabled = !hasAnyKey;
-    }
-
-    if (statusDiv) {
-        if (hasAnyKey) {
-            const sources = [];
-            if (hasBlsKey) sources.push('BLS');
-            if (hasFredKey) sources.push('FRED');
-
-            statusDiv.innerHTML = `
-                <p style="color: var(--secondary); font-size: 0.875rem;">
-                    <strong>Ready to fetch live data</strong> from ${sources.join(' and ')}
-                </p>
-                <p style="color: var(--gray-500); font-size: 0.75rem; margin-top: 8px;">
-                    Click "Fetch Live Data" to update metrics with the latest available data.
-                </p>
-            `;
-        } else {
-            statusDiv.innerHTML = `
-                <p style="color: var(--gray-600); font-size: 0.875rem;">
-                    <strong>Current Data Status:</strong> Using cached baseline data from late 2024
-                </p>
-                <p style="color: var(--gray-500); font-size: 0.75rem; margin-top: 8px;">
-                    Configure BLS and/or FRED API keys above to enable live data fetching.
-                </p>
-            `;
-        }
-    }
+    // No longer needed - live data fetched via GitHub Actions
 }
 
-/**
- * Fetch live data from configured APIs
- */
-async function fetchLiveData() {
-    const progressDiv = document.getElementById('fetchProgress');
-    const progressText = document.getElementById('fetchProgressText');
-    const resultsDiv = document.getElementById('fetchResults');
-    const fetchBtn = document.getElementById('fetchLiveDataBtn');
-
-    const blsKey = getApiKey('bls');
-    const fredKey = getApiKey('fred');
-
-    if (!blsKey && !fredKey) {
-        alert('Please configure at least one API key to fetch live data.');
-        return;
-    }
-
-    // Show progress
-    if (progressDiv) progressDiv.style.display = 'block';
-    if (fetchBtn) fetchBtn.disabled = true;
-    if (resultsDiv) resultsDiv.innerHTML = '';
-
-    const results = {
-        bls: { success: false, data: null, error: null },
-        fred: { success: false, data: null, error: null }
-    };
-
-    try {
-        // Fetch BLS data if key is available
-        if (blsKey) {
-            if (progressText) progressText.textContent = 'Fetching BLS data...';
-
-            try {
-                const currentYear = new Date().getFullYear();
-                const blsData = await dataService.fetchBLSData(
-                    [
-                        dataService.blsSeries.unemployment_rate,
-                        dataService.blsSeries.total_employment,
-                        dataService.blsSeries.labor_force_participation,
-                        dataService.blsSeries.average_hourly_earnings,
-                        dataService.blsSeries.job_openings
-                    ],
-                    currentYear - 1,
-                    currentYear,
-                    blsKey
-                );
-
-                results.bls.success = true;
-                results.bls.data = blsData;
-
-                // Update the metrics system with new BLS data
-                if (blsData && blsData.length > 0) {
-                    updateMetricsFromBLS(blsData);
-                }
-            } catch (error) {
-                results.bls.error = error.message;
-                console.error('BLS fetch error:', error);
-            }
-        }
-
-        // Fetch FRED data if key is available
-        if (fredKey) {
-            if (progressText) progressText.textContent = 'Fetching FRED data...';
-
-            try {
-                const fredData = await dataService.fetchFREDData(
-                    dataService.fredSeries.real_gdp_growth,
-                    fredKey
-                );
-
-                results.fred.success = true;
-                results.fred.data = fredData;
-            } catch (error) {
-                results.fred.error = error.message;
-                console.error('FRED fetch error:', error);
-            }
-        }
-
-        // Display results
-        displayFetchResults(results);
-
-    } catch (error) {
-        console.error('Fetch error:', error);
-        if (resultsDiv) {
-            resultsDiv.innerHTML = `
-                <div style="background: var(--danger); color: white; padding: 12px; border-radius: 6px;">
-                    <strong>Error:</strong> ${error.message}
-                </div>
-            `;
-        }
-    } finally {
-        if (progressDiv) progressDiv.style.display = 'none';
-        if (fetchBtn) fetchBtn.disabled = false;
-    }
-}
-
-/**
- * Update metrics from BLS API response
- */
-function updateMetricsFromBLS(blsData) {
-    if (!blsData || typeof realMetricsSystem === 'undefined') return;
-
-    const seriesMap = {
-        'LNS14000000': 'unemployment_rate',
-        'CES0000000001': 'total_employment',
-        'LNS11300000': 'labor_force_participation',
-        'CES0500000003': 'average_hourly_earnings',
-        'JTS000000000000000JOL': 'job_openings'
-    };
-
-    blsData.forEach(series => {
-        const metricId = seriesMap[series.seriesID];
-        if (metricId && series.data && series.data.length > 0) {
-            // Get the most recent value
-            const latestData = series.data[0];
-            const value = parseFloat(latestData.value);
-
-            if (!isNaN(value)) {
-                // For employment figures, multiply by 1000 (BLS reports in thousands)
-                if (metricId === 'total_employment' || metricId === 'job_openings') {
-                    realMetricsSystem.setMetricValue(metricId, value * 1000);
-                } else {
-                    realMetricsSystem.setMetricValue(metricId, value);
-                }
-            }
-        }
-    });
-
-    // Re-render the metrics display
-    renderRealMetrics();
-}
-
-/**
- * Display fetch results
- */
-function displayFetchResults(results) {
-    const resultsDiv = document.getElementById('fetchResults');
-    if (!resultsDiv) return;
-
-    let html = '';
-
-    if (results.bls.success || results.fred.success) {
-        html += `
-            <div style="background: var(--secondary); color: white; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
-                <strong>Data updated successfully!</strong>
-            </div>
-        `;
-    }
-
-    if (results.bls.success) {
-        const seriesCount = results.bls.data ? results.bls.data.length : 0;
-        html += `
-            <div style="background: var(--gray-50); border: 1px solid var(--gray-200); padding: 12px; border-radius: 6px; margin-bottom: 8px;">
-                <strong style="color: var(--gray-800);">BLS Data:</strong>
-                <span style="color: var(--secondary);"> ${seriesCount} series updated</span>
-            </div>
-        `;
-    } else if (results.bls.error) {
-        html += `
-            <div style="background: var(--gray-50); border: 1px solid var(--danger); padding: 12px; border-radius: 6px; margin-bottom: 8px;">
-                <strong style="color: var(--danger);">BLS Error:</strong>
-                <span style="color: var(--gray-600);"> ${results.bls.error}</span>
-            </div>
-        `;
-    }
-
-    if (results.fred.success) {
-        html += `
-            <div style="background: var(--gray-50); border: 1px solid var(--gray-200); padding: 12px; border-radius: 6px; margin-bottom: 8px;">
-                <strong style="color: var(--gray-800);">FRED Data:</strong>
-                <span style="color: var(--secondary);"> Updated successfully</span>
-            </div>
-        `;
-    } else if (results.fred.error) {
-        html += `
-            <div style="background: var(--gray-50); border: 1px solid var(--danger); padding: 12px; border-radius: 6px; margin-bottom: 8px;">
-                <strong style="color: var(--danger);">FRED Error:</strong>
-                <span style="color: var(--gray-600);"> ${results.fred.error}</span>
-            </div>
-        `;
-    }
-
-    html += `
-        <p style="font-size: 0.75rem; color: var(--gray-500); margin-top: 12px;">
-            Last updated: ${new Date().toLocaleString()}
-        </p>
-    `;
-
-    resultsDiv.innerHTML = html;
+function fetchLiveData() {
+    // No longer needed - live data fetched automatically via GitHub Actions
 }
 
 /**
@@ -4264,6 +3934,10 @@ function showNotification(message, type = 'info') {
         info: 'var(--primary)'
     };
 
+    // Determine if this notification should be persistent
+    const isPersistent = type === 'error' || type === 'warning';
+    const duration = isPersistent ? 0 : 4000; // 0 = no auto-dismiss
+
     const notification = document.createElement('div');
     notification.style.cssText = `
         position: fixed;
@@ -4278,14 +3952,50 @@ function showNotification(message, type = 'info') {
         box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         font-weight: 500;
         animation: fadeIn 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        max-width: 90vw;
     `;
-    notification.textContent = message;
+
+    // Add message text
+    const messageSpan = document.createElement('span');
+    messageSpan.textContent = message;
+    messageSpan.style.flex = '1';
+    notification.appendChild(messageSpan);
+
+    // Add dismiss button for persistent notifications
+    if (isPersistent) {
+        const dismissBtn = document.createElement('button');
+        dismissBtn.innerHTML = '&times;';
+        dismissBtn.style.cssText = `
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0 4px;
+            line-height: 1;
+            opacity: 0.8;
+        `;
+        dismissBtn.onclick = () => {
+            notification.style.animation = 'fadeOut 0.3s ease forwards';
+            setTimeout(() => notification.remove(), 300);
+        };
+        dismissBtn.onmouseover = () => dismissBtn.style.opacity = '1';
+        dismissBtn.onmouseout = () => dismissBtn.style.opacity = '0.8';
+        notification.appendChild(dismissBtn);
+    }
+
     document.body.appendChild(notification);
 
-    setTimeout(() => {
-        notification.style.animation = 'fadeOut 0.3s ease forwards';
-        setTimeout(() => notification.remove(), 300);
-    }, 3000);
+    // Auto-dismiss for non-persistent notifications
+    if (duration > 0) {
+        setTimeout(() => {
+            notification.style.animation = 'fadeOut 0.3s ease forwards';
+            setTimeout(() => notification.remove(), 300);
+        }, duration);
+    }
 }
 
 // ============================================
@@ -4625,15 +4335,13 @@ function generateInlineAIAnalysisHTML(analysis, enhancedParams) {
             <!-- Key Findings -->
             <div class="analysis-section" style="margin-bottom: 24px;">
                 <h4 style="color: var(--primary); margin-bottom: 12px;">Key Findings</h4>
-                <div style="display: grid; gap: 12px;">
+                <div class="ai-findings-grid">
                     ${(analysis.key_findings || []).map(f => `
-                        <div style="display: flex; gap: 12px; padding: 12px; background: var(--gray-50); border-radius: 8px; border-left: 4px solid ${f.impact === 'high' ? 'var(--danger)' : f.impact === 'medium' ? 'var(--warning)' : 'var(--secondary)'};">
-                            <div style="flex: 1;">
-                                <p style="margin: 0; font-weight: 500;">${f.finding}</p>
-                                <div style="display: flex; gap: 12px; margin-top: 8px; font-size: 0.75rem;">
-                                    <span style="color: var(--gray-500);">Confidence: <strong>${f.confidence}</strong></span>
-                                    <span style="color: var(--gray-500);">Impact: <strong>${f.impact}</strong></span>
-                                </div>
+                        <div class="ai-finding-card" style="border-left-color: ${f.impact === 'high' ? 'var(--danger)' : f.impact === 'medium' ? 'var(--warning)' : 'var(--secondary)'};">
+                            <p style="margin: 0; font-weight: 500;">${f.finding}</p>
+                            <div class="ai-finding-meta">
+                                <span>Confidence: <strong>${f.confidence}</strong></span>
+                                <span>Impact: <strong>${f.impact}</strong></span>
                             </div>
                         </div>
                     `).join('')}
@@ -4643,12 +4351,12 @@ function generateInlineAIAnalysisHTML(analysis, enhancedParams) {
             <!-- Workforce Impacts -->
             <div class="analysis-section" style="margin-bottom: 24px;">
                 <h4 style="color: var(--primary); margin-bottom: 12px;">Workforce Impacts</h4>
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
-                    <div style="padding: 16px; background: var(--gray-50); border-radius: 8px;">
+                <div class="ai-workforce-grid">
+                    <div class="ai-workforce-card">
                         <h5 style="color: var(--danger); font-size: 0.875rem; margin-bottom: 8px;">High Risk Workers</h5>
                         <p style="margin: 0; font-size: 0.875rem;">${analysis.workforce_impacts?.high_risk_workers || 'N/A'}</p>
                     </div>
-                    <div style="padding: 16px; background: var(--gray-50); border-radius: 8px;">
+                    <div class="ai-workforce-card">
                         <h5 style="color: var(--secondary); font-size: 0.875rem; margin-bottom: 8px;">Emerging Opportunities</h5>
                         <p style="margin: 0; font-size: 0.875rem;">${analysis.workforce_impacts?.emerging_opportunities || 'N/A'}</p>
                     </div>
@@ -4656,8 +4364,8 @@ function generateInlineAIAnalysisHTML(analysis, enhancedParams) {
                 ${analysis.workforce_impacts?.skills_in_demand ? `
                     <div style="margin-top: 16px;">
                         <h5 style="font-size: 0.875rem; margin-bottom: 8px;">Skills in Demand</h5>
-                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                            ${analysis.workforce_impacts.skills_in_demand.map(s => `<span style="padding: 4px 12px; background: var(--secondary); color: white; border-radius: 16px; font-size: 0.75rem;">${s}</span>`).join('')}
+                        <div class="ai-skills-list">
+                            ${analysis.workforce_impacts.skills_in_demand.map(s => `<span class="ai-skill-tag">${s}</span>`).join('')}
                         </div>
                     </div>
                 ` : ''}
@@ -4666,13 +4374,13 @@ function generateInlineAIAnalysisHTML(analysis, enhancedParams) {
             <!-- Policy Recommendations -->
             <div class="analysis-section" style="margin-bottom: 24px;">
                 <h4 style="color: var(--primary); margin-bottom: 12px;">Policy Recommendations</h4>
-                <div style="display: grid; gap: 12px;">
+                <div class="ai-policy-grid">
                     ${(analysis.policy_recommendations || []).map(p => `
-                        <div style="display: flex; gap: 12px; padding: 12px; background: var(--gray-50); border-radius: 8px;">
-                            <div style="width: 80px; text-align: center;">
-                                <span style="display: inline-block; padding: 4px 8px; background: ${p.priority === 'immediate' ? 'var(--danger)' : p.priority === 'short-term' ? 'var(--warning)' : 'var(--primary)'}; color: white; border-radius: 4px; font-size: 0.625rem; text-transform: uppercase;">${p.priority}</span>
+                        <div class="ai-policy-card">
+                            <div class="ai-policy-priority">
+                                <span class="ai-priority-badge" style="background: ${p.priority === 'immediate' ? 'var(--danger)' : p.priority === 'short-term' ? 'var(--warning)' : 'var(--primary)'};">${p.priority}</span>
                             </div>
-                            <div style="flex: 1;">
+                            <div class="ai-policy-content">
                                 <p style="margin: 0;">${p.policy}</p>
                                 <span style="font-size: 0.75rem; color: var(--gray-500);">Effectiveness: ${p.effectiveness}</span>
                             </div>
@@ -4684,17 +4392,17 @@ function generateInlineAIAnalysisHTML(analysis, enhancedParams) {
             <!-- Scenario Variations -->
             <div class="analysis-section" style="margin-bottom: 24px;">
                 <h4 style="color: var(--primary); margin-bottom: 12px;">Scenario Variations</h4>
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
-                    <div style="padding: 16px; background: #ecfdf5; border-radius: 8px; border-left: 4px solid var(--secondary);">
-                        <h5 style="color: var(--secondary); font-size: 0.75rem; text-transform: uppercase; margin-bottom: 8px;">Optimistic</h5>
+                <div class="ai-scenarios-grid">
+                    <div class="ai-scenario-card ai-scenario-optimistic">
+                        <h5>Optimistic</h5>
                         <p style="margin: 0; font-size: 0.875rem;">${analysis.scenario_variations?.optimistic_case || 'N/A'}</p>
                     </div>
-                    <div style="padding: 16px; background: #fef3c7; border-radius: 8px; border-left: 4px solid var(--warning);">
-                        <h5 style="color: var(--warning); font-size: 0.75rem; text-transform: uppercase; margin-bottom: 8px;">Most Likely</h5>
+                    <div class="ai-scenario-card ai-scenario-likely">
+                        <h5>Most Likely</h5>
                         <p style="margin: 0; font-size: 0.875rem;">${analysis.scenario_variations?.most_likely || 'N/A'}</p>
                     </div>
-                    <div style="padding: 16px; background: #fef2f2; border-radius: 8px; border-left: 4px solid var(--danger);">
-                        <h5 style="color: var(--danger); font-size: 0.75rem; text-transform: uppercase; margin-bottom: 8px;">Pessimistic</h5>
+                    <div class="ai-scenario-card ai-scenario-pessimistic">
+                        <h5>Pessimistic</h5>
                         <p style="margin: 0; font-size: 0.875rem;">${analysis.scenario_variations?.pessimistic_case || 'N/A'}</p>
                     </div>
                 </div>
@@ -4704,7 +4412,7 @@ function generateInlineAIAnalysisHTML(analysis, enhancedParams) {
             ${analysis.narrative_analysis ? `
                 <div class="analysis-section" style="margin-bottom: 24px;">
                     <h4 style="color: var(--primary); margin-bottom: 12px;">Detailed Analysis</h4>
-                    <div style="padding: 20px; background: var(--gray-50); border-radius: 8px; line-height: 1.8;">
+                    <div class="ai-narrative-box">
                         ${analysis.narrative_analysis.split('\n').map(p => `<p style="margin-bottom: 12px;">${p}</p>`).join('')}
                     </div>
                 </div>
@@ -4712,9 +4420,9 @@ function generateInlineAIAnalysisHTML(analysis, enhancedParams) {
 
             <!-- Model Confidence -->
             <div class="analysis-section">
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--gray-100); border-radius: 8px;">
+                <div class="ai-confidence-bar">
                     <span style="font-weight: 500;">Model Confidence</span>
-                    <span style="padding: 6px 16px; background: ${analysis.model_confidence?.overall === 'high' ? 'var(--secondary)' : analysis.model_confidence?.overall === 'medium' ? 'var(--warning)' : 'var(--danger)'}; color: white; border-radius: 16px; font-weight: bold; text-transform: uppercase;">${analysis.model_confidence?.overall || 'Unknown'}</span>
+                    <span class="ai-confidence-badge" style="background: ${analysis.model_confidence?.overall === 'high' ? 'var(--secondary)' : analysis.model_confidence?.overall === 'medium' ? 'var(--warning)' : 'var(--danger)'};">${analysis.model_confidence?.overall || 'Unknown'}</span>
                 </div>
             </div>
         </div>
@@ -4994,9 +4702,11 @@ function setAIPassword(newPassword) {
 let currentABMEngine = null;
 let currentABMResults = null;
 let abmCharts = {};
+let abmWorkerManager = null;
 
 /**
  * Run full ABM simulation
+ * Uses Web Worker for better performance when available
  */
 async function runABMSimulation() {
     // Get configuration from UI
@@ -5018,13 +4728,13 @@ async function runABMSimulation() {
     // Get active interventions
     const interventions = [];
     if (document.getElementById('abmUBI').checked) {
-        interventions.push({ type: 'ubi', monthlyAmount: 1000 });
+        interventions.push({ type: 'ubi', active: true, monthlyAmount: 1000 });
     }
     if (document.getElementById('abmRetraining').checked) {
-        interventions.push({ type: 'retraining', subsidyRate: 0.75, effectiveness: 1.5 });
+        interventions.push({ type: 'retraining', active: true, subsidyRate: 0.75, effectiveness: 1.5 });
     }
     if (document.getElementById('abmWageSubsidy').checked) {
-        interventions.push({ type: 'wageSubsidy', rate: 0.25, maxWage: 4000 });
+        interventions.push({ type: 'wage_subsidy', active: true, rate: 0.25, maxWage: 4000 });
     }
     scenario.interventions = interventions;
 
@@ -5035,12 +4745,21 @@ async function runABMSimulation() {
     document.getElementById('abmProgressPercent').textContent = '0%';
     document.getElementById('abmProgressText').textContent = 'Initializing agents...';
 
-    try {
-        // Create engine
-        currentABMEngine = new ABMSimulationEngine(config);
+    // Check if we should use Web Worker (for large simulations)
+    const useWebWorker = config.numWorkers >= 5000 && typeof WorkerManager !== 'undefined' && WorkerManager.isSupported();
 
-        // Run simulation
-        const results = await currentABMEngine.runSimulation(scenario);
+    try {
+        let results;
+
+        if (useWebWorker) {
+            // Use Web Worker for parallel execution
+            results = await runABMWithWorker(config, scenario);
+        } else {
+            // Use main thread (original approach)
+            currentABMEngine = new ABMSimulationEngine(config);
+            results = await currentABMEngine.runSimulation(scenario);
+        }
+
         currentABMResults = results;
 
         // Display results
@@ -5051,6 +4770,56 @@ async function runABMSimulation() {
         console.error('ABM simulation failed:', error);
         showNotification(`ABM simulation failed: ${error.message}`, 'error');
         document.getElementById('abmProgress').style.display = 'none';
+    }
+}
+
+/**
+ * Run ABM simulation using Web Worker
+ */
+async function runABMWithWorker(config, scenario) {
+    // Terminate existing worker if any
+    if (abmWorkerManager) {
+        abmWorkerManager.terminate();
+    }
+
+    // Create new worker manager
+    abmWorkerManager = new WorkerManager();
+
+    // Set progress callback
+    abmWorkerManager.setProgressCallback((progress) => {
+        updateABMProgress({
+            month: progress.month,
+            totalMonths: progress.totalMonths,
+            progress: progress.progress,
+            currentStats: progress.currentStats
+        });
+    });
+
+    try {
+        // Initialize worker
+        document.getElementById('abmProgressText').textContent = 'Starting Web Worker...';
+        await abmWorkerManager.initialize(config, scenario);
+
+        // Run simulation
+        document.getElementById('abmProgressText').textContent = 'Running simulation in background...';
+        const results = await abmWorkerManager.runSimulation(scenario);
+
+        return results;
+
+    } catch (error) {
+        // Fallback to main thread if worker fails
+        console.warn('Web Worker failed, falling back to main thread:', error);
+        showNotification('Worker unavailable, running on main thread...', 'info');
+
+        currentABMEngine = new ABMSimulationEngine(config);
+        return await currentABMEngine.runSimulation(scenario);
+
+    } finally {
+        // Cleanup worker
+        if (abmWorkerManager) {
+            abmWorkerManager.terminate();
+            abmWorkerManager = null;
+        }
     }
 }
 
@@ -5103,43 +4872,200 @@ function displayABMResults(results) {
 
     const summary = results.summary;
 
-    // Summary cards
-    const finalUR = (summary.final.unemploymentRate * 100).toFixed(1);
-    const initialUR = (summary.initial.unemploymentRate * 100).toFixed(1);
-    const urChange = (finalUR - initialUR).toFixed(1);
-    document.getElementById('abmFinalUR').textContent = `${finalUR}%`;
-    document.getElementById('abmURChange').textContent = `${urChange >= 0 ? '+' : ''}${urChange}% from start`;
+    // Summary cards - wrapped in try-catch for resilience
+    try {
+        const finalUR = (summary.final.unemploymentRate * 100).toFixed(1);
+        const initialUR = (summary.initial.unemploymentRate * 100).toFixed(1);
+        const urChange = (finalUR - initialUR).toFixed(1);
+        document.getElementById('abmFinalUR').textContent = `${finalUR}%`;
+        document.getElementById('abmURChange').textContent = `${urChange >= 0 ? '+' : ''}${urChange}% from start`;
 
-    document.getElementById('abmPeakUR').textContent = `${(summary.peakUnemployment * 100).toFixed(1)}%`;
-    document.getElementById('abmPeakMonth').textContent = `Month ${summary.peakUnemploymentMonth || '--'}`;
+        document.getElementById('abmPeakUR').textContent = `${(summary.peakUnemployment * 100).toFixed(1)}%`;
+        document.getElementById('abmPeakMonth').textContent = `Month ${summary.peakUnemploymentMonth || '--'}`;
 
-    const finalAI = (summary.final.aiAdoptionRate * 100).toFixed(1);
-    const initialAI = (summary.initial.aiAdoptionRate * 100).toFixed(1);
-    const aiChange = (finalAI - initialAI).toFixed(1);
-    document.getElementById('abmFinalAI').textContent = `${finalAI}%`;
-    document.getElementById('abmAIChange').textContent = `+${aiChange}% from start`;
+        const finalAI = (summary.final.aiAdoptionRate * 100).toFixed(1);
+        const initialAI = (summary.initial.aiAdoptionRate * 100).toFixed(1);
+        const aiChange = (finalAI - initialAI).toFixed(1);
+        document.getElementById('abmFinalAI').textContent = `${finalAI}%`;
+        document.getElementById('abmAIChange').textContent = `+${aiChange}% from start`;
 
-    const netJobs = summary.totalHires - summary.totalLayoffs;
-    document.getElementById('abmNetJobs').textContent = netJobs.toLocaleString();
-    document.getElementById('abmNetJobs').style.color = netJobs >= 0 ? 'var(--secondary)' : 'var(--danger)';
+        const netJobs = summary.totalHires - summary.totalLayoffs;
+        document.getElementById('abmNetJobs').textContent = netJobs.toLocaleString();
+        document.getElementById('abmNetJobs').style.color = netJobs >= 0 ? 'var(--secondary)' : 'var(--danger)';
+    } catch (error) {
+        console.error('Error displaying ABM summary cards:', error);
+    }
+
+    // Display results interpretation
+    try {
+        displayResultsInterpretation(results);
+    } catch (error) {
+        console.error('Error displaying results interpretation:', error);
+        const container = document.getElementById('abmInterpretationContent');
+        if (container) {
+            container.innerHTML = `<p style="color: var(--danger);">Error loading interpretation: ${error.message}</p>`;
+        }
+    }
 
     // Policy support display
-    displayPolicySupportResults(summary.finalPolicySupport);
+    try {
+        displayPolicySupportResults(summary.finalPolicySupport, results);
+    } catch (error) {
+        console.error('Error displaying policy support:', error);
+        const container = document.getElementById('abmPolicySupportContent');
+        if (container) {
+            container.innerHTML = `<p style="color: var(--danger);">Error loading policy support: ${error.message}</p>`;
+        }
+    }
 
     // Render charts
-    renderABMCharts(results);
+    try {
+        renderABMCharts(results);
+    } catch (error) {
+        console.error('Error rendering ABM charts:', error);
+    }
 
     // Display emergent patterns
-    displayEmergentPatterns(summary.emergentPatterns);
+    try {
+        displayEmergentPatterns(summary.emergentPatterns);
+    } catch (error) {
+        console.error('Error displaying emergent patterns:', error);
+        const container = document.getElementById('abmPatternsContent');
+        if (container) {
+            container.innerHTML = `<p style="color: var(--danger);">Error loading patterns: ${error.message}</p>`;
+        }
+    }
 
     // Display demographics
-    displayABMDemographics(results);
+    try {
+        displayABMDemographics(results);
+    } catch (error) {
+        console.error('Error displaying demographics:', error);
+        const container = document.getElementById('abmDemographicsContent');
+        if (container) {
+            container.innerHTML = `<p style="color: var(--danger);">Error loading demographics: ${error.message}</p>`;
+        }
+    }
+
+    // Display regional heat map
+    try {
+        displayRegionalHeatMap(results);
+    } catch (error) {
+        console.error('Error displaying regional heat map:', error);
+        const container = document.getElementById('regionalHeatmapContent');
+        if (container) {
+            container.innerHTML = `<p style="color: var(--danger);">Error loading regional data: ${error.message}</p>`;
+        }
+    }
 }
 
 /**
- * Display policy support results
+ * Display regional heat map visualization
  */
-function displayPolicySupportResults(policySupport) {
+function displayRegionalHeatMap(results) {
+    if (typeof regionalHeatMap === 'undefined') {
+        console.warn('Regional heat map not available');
+        return;
+    }
+
+    // Initialize with simulation results
+    regionalHeatMap.initialize(results);
+
+    // Render the summary panel
+    regionalHeatMap.renderSummaryPanel('regionalHeatmapSummary');
+
+    // Render the heat map
+    regionalHeatMap.render('regionalHeatmapContent', 'unemployment');
+}
+
+/**
+ * Run ABM sensitivity analysis
+ */
+async function runABMSensitivityAnalysis() {
+    if (typeof abmSensitivity === 'undefined') {
+        alert('Sensitivity analysis module not available');
+        return;
+    }
+
+    // Get current ABM configuration
+    const config = getABMConfig();
+
+    // Show progress
+    const progressDiv = document.getElementById('abmSensitivityProgress');
+    const contentDiv = document.getElementById('abmSensitivityContent');
+    const progressText = document.getElementById('sensitivityProgressText');
+    const progressBar = document.getElementById('sensitivityProgressBar');
+    const btn = document.getElementById('runSensitivityBtn');
+
+    progressDiv.style.display = 'block';
+    contentDiv.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Running...';
+
+    // Select parameters to analyze
+    const paramsToAnalyze = [
+        'initialAIAdoption',
+        'aiAdoptionSpeed',
+        'laborMarketFriction',
+        'retrainingEffectiveness',
+        'wageFlexibility'
+    ];
+
+    try {
+        // Run multi-parameter analysis
+        const results = await abmSensitivity.runMultiParameterAnalysis(
+            paramsToAnalyze,
+            null, // Engine not needed for mock analysis
+            config,
+            (progress) => {
+                if (progress.phase === 'parameter') {
+                    progressText.textContent = `Analyzing ${progress.paramName}... (${progress.current}/${progress.total})`;
+                    progressBar.style.width = `${(progress.current / progress.total) * 100}%`;
+                } else {
+                    progressText.textContent = `${progress.parameter}: ${progress.current}/${progress.total} simulations`;
+                    const overallProgress = ((progress.paramIndex - 1) / progress.paramTotal) +
+                        (progress.current / progress.total) / progress.paramTotal;
+                    progressBar.style.width = `${overallProgress * 100}%`;
+                }
+            }
+        );
+
+        // Render dashboard
+        abmSensitivity.renderDashboard('abmSensitivityContent', results);
+
+    } catch (error) {
+        console.error('Sensitivity analysis error:', error);
+        contentDiv.innerHTML = `<p style="color: var(--danger);">Error running sensitivity analysis: ${error.message}</p>`;
+    }
+
+    // Hide progress, show content
+    progressDiv.style.display = 'none';
+    contentDiv.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Run Analysis';
+}
+
+/**
+ * Get current ABM configuration from UI
+ */
+function getABMConfig() {
+    return {
+        numWorkers: 1000,
+        numFirms: 100,
+        simulationMonths: parseInt(document.getElementById('abmMonths')?.value || 60),
+        initialAIAdoption: 0.2,
+        aiAdoptionSpeed: 1.0,
+        laborMarketFriction: 0.1,
+        retrainingEffectiveness: 0.3,
+        wageFlexibility: 0.05,
+        informationSpread: 0.1
+    };
+}
+
+/**
+ * Display enhanced policy support dashboard
+ */
+function displayPolicySupportResults(policySupport, results = null) {
     const container = document.getElementById('abmPolicySupportContent');
 
     const policyNames = {
@@ -5154,30 +5080,437 @@ function displayPolicySupportResults(policySupport) {
         educationInvestment: 'Education Investment'
     };
 
-    let html = '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">';
+    const policyIcons = {
+        ubi: '💰',
+        retraining: '📚',
+        wageSubsidy: '💵',
+        publicWorks: '🏗️',
+        aiRegulation: '⚖️',
+        educationInvestment: '🎓'
+    };
+
+    // Calculate momentum from historical data if available
+    const getMomentum = (policy) => {
+        if (!results || !results.policySupport || results.policySupport.length < 6) {
+            return { value: 0, direction: 'stable' };
+        }
+
+        const recent = results.policySupport.slice(-6);
+        const first = recent[0]?.[policy]?.mean || 0.5;
+        const last = recent[recent.length - 1]?.[policy]?.mean || 0.5;
+        const change = (last - first) * 100;
+
+        return {
+            value: change.toFixed(1),
+            direction: change > 1 ? 'increasing' : change < -1 ? 'decreasing' : 'stable'
+        };
+    };
+
+    // Calculate feasibility label
+    const getFeasibilityLabel = (score) => {
+        if (score >= 80) return { label: 'Highly Feasible', color: 'var(--secondary)', icon: '✓✓' };
+        if (score >= 65) return { label: 'Feasible', color: 'var(--secondary)', icon: '✓' };
+        if (score >= 50) return { label: 'Contested', color: 'var(--warning)', icon: '~' };
+        if (score >= 35) return { label: 'Difficult', color: 'var(--warning)', icon: '!' };
+        return { label: 'Unlikely', color: 'var(--danger)', icon: '✗' };
+    };
+
+    // Check if policy window is open
+    const isPolicyWindowOpen = (stats) => {
+        return stats.mean > 0.6 && (stats.strongOppose || 0) < 0.25;
+    };
+
+    let html = '';
+
+    // Summary stats
+    const feasibleCount = Object.values(policySupport).filter(s => (s.feasibilityScore || s.mean * 100) >= 65).length;
+    const totalPolicies = Object.keys(policySupport).length;
+
+    html += `
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px;">
+            <div style="background: linear-gradient(135deg, var(--primary), #8b5cf6); color: white; padding: 16px; border-radius: 12px; text-align: center;">
+                <div style="font-size: 2rem; font-weight: 700;">${feasibleCount}</div>
+                <div style="font-size: 0.75rem; opacity: 0.9;">Feasible Policies</div>
+            </div>
+            <div style="background: linear-gradient(135deg, var(--secondary), #059669); color: white; padding: 16px; border-radius: 12px; text-align: center;">
+                <div style="font-size: 2rem; font-weight: 700;">${Object.values(policySupport).filter(s => isPolicyWindowOpen(s)).length}</div>
+                <div style="font-size: 0.75rem; opacity: 0.9;">Open Windows</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 16px; border-radius: 12px; text-align: center;">
+                <div style="font-size: 2rem; font-weight: 700;">${Object.values(policySupport).filter(s => getMomentum(Object.keys(policySupport).find(k => policySupport[k] === s)).direction === 'increasing').length}</div>
+                <div style="font-size: 0.75rem; opacity: 0.9;">Rising Support</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #64748b, #475569); color: white; padding: 16px; border-radius: 12px; text-align: center;">
+                <div style="font-size: 2rem; font-weight: 700;">${totalPolicies}</div>
+                <div style="font-size: 0.75rem; opacity: 0.9;">Policies Tracked</div>
+            </div>
+        </div>
+    `;
+
+    // Policy cards
+    html += '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">';
 
     Object.entries(policySupport).forEach(([policy, stats]) => {
-        const supportPercent = Math.round(stats.mean * 100);
-        const color = supportPercent >= 60 ? 'var(--secondary)' : supportPercent >= 40 ? 'var(--warning)' : 'var(--danger)';
+        const supportPercent = Math.round((stats.mean || 0.5) * 100);
+        const strongSupport = Math.round((stats.strongSupport || 0) * 100);
+        const strongOppose = Math.round((stats.strongOppose || 0) * 100);
+        const feasibilityScore = stats.feasibilityScore || Math.round(stats.mean * 100);
+        const feasibility = getFeasibilityLabel(feasibilityScore);
+        const momentum = getMomentum(policy);
+        const windowOpen = isPolicyWindowOpen(stats);
+
+        const mainColor = supportPercent >= 60 ? 'var(--secondary)' : supportPercent >= 40 ? 'var(--warning)' : 'var(--danger)';
+        const icon = policyIcons[policy] || '📋';
 
         html += `
-            <div style="background: var(--gray-50); border-radius: 8px; padding: 16px;">
-                <div style="font-weight: 600; margin-bottom: 8px; font-size: 0.875rem;">${policyNames[policy] || policy}</div>
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <div style="flex: 1; background: var(--gray-200); border-radius: 4px; height: 8px;">
-                        <div style="background: ${color}; height: 100%; border-radius: 4px; width: ${supportPercent}%;"></div>
+            <div style="background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 12px; padding: 20px; position: relative;">
+                ${windowOpen ? '<div style="position: absolute; top: 12px; right: 12px; background: var(--secondary); color: white; font-size: 0.65rem; padding: 4px 8px; border-radius: 12px; font-weight: 600;">WINDOW OPEN</div>' : ''}
+
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                    <span style="font-size: 1.5rem;">${icon}</span>
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.95rem; color: var(--gray-800);">${policyNames[policy] || policy}</div>
+                        <div style="font-size: 0.75rem; color: ${feasibility.color};">${feasibility.icon} ${feasibility.label}</div>
                     </div>
-                    <span style="font-weight: 700; color: ${color};">${supportPercent}%</span>
                 </div>
-                <div style="font-size: 0.75rem; color: var(--gray-500); margin-top: 8px;">
-                    Feasibility: ${stats.feasibilityScore}/100
+
+                <!-- Support Gauge -->
+                <div style="margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="font-size: 0.75rem; color: var(--gray-500);">Public Support</span>
+                        <span style="font-size: 1.25rem; font-weight: 700; color: ${mainColor};">${supportPercent}%</span>
+                    </div>
+                    <div style="background: var(--gray-200); border-radius: 6px; height: 10px; overflow: hidden;">
+                        <div style="background: linear-gradient(90deg, var(--danger) 0%, var(--warning) 40%, var(--secondary) 60%, var(--secondary) 100%); height: 100%; width: 100%; position: relative;">
+                            <div style="position: absolute; left: ${supportPercent}%; top: -2px; transform: translateX(-50%); width: 14px; height: 14px; background: white; border: 3px solid ${mainColor}; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--gray-400); margin-top: 4px;">
+                        <span>Oppose</span>
+                        <span>Neutral</span>
+                        <span>Support</span>
+                    </div>
+                </div>
+
+                <!-- Support Distribution -->
+                <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+                    <div style="flex: 1; text-align: center; padding: 8px; background: rgba(16, 185, 129, 0.1); border-radius: 6px;">
+                        <div style="font-size: 1.1rem; font-weight: 700; color: var(--secondary);">${strongSupport}%</div>
+                        <div style="font-size: 0.65rem; color: var(--gray-500);">Strong Support</div>
+                    </div>
+                    <div style="flex: 1; text-align: center; padding: 8px; background: rgba(239, 68, 68, 0.1); border-radius: 6px;">
+                        <div style="font-size: 1.1rem; font-weight: 700; color: var(--danger);">${strongOppose}%</div>
+                        <div style="font-size: 0.65rem; color: var(--gray-500);">Strong Oppose</div>
+                    </div>
+                </div>
+
+                <!-- Momentum Indicator -->
+                <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid var(--gray-200);">
+                    <span style="font-size: 0.75rem; color: var(--gray-500);">Momentum</span>
+                    <span style="font-size: 0.85rem; font-weight: 600; color: ${momentum.direction === 'increasing' ? 'var(--secondary)' : momentum.direction === 'decreasing' ? 'var(--danger)' : 'var(--gray-500)'};">
+                        ${momentum.direction === 'increasing' ? '↑' : momentum.direction === 'decreasing' ? '↓' : '→'}
+                        ${momentum.value > 0 ? '+' : ''}${momentum.value}%
+                        <span style="font-weight: 400; color: var(--gray-400);">/ 6mo</span>
+                    </span>
                 </div>
             </div>
         `;
     });
 
     html += '</div>';
+
+    // Policy Window Analysis Section
+    const openWindows = Object.entries(policySupport).filter(([_, stats]) => isPolicyWindowOpen(stats));
+
+    if (openWindows.length > 0) {
+        html += `
+            <div style="margin-top: 24px; padding: 20px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05)); border: 1px solid var(--secondary); border-radius: 12px;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                    <span style="font-size: 1.25rem;">🪟</span>
+                    <h4 style="margin: 0; color: var(--secondary);">Policy Windows Open</h4>
+                </div>
+                <p style="font-size: 0.875rem; color: var(--gray-600); margin-bottom: 16px;">
+                    The following policies have sufficient public support and manageable opposition for implementation:
+                </p>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    ${openWindows.map(([policy, stats]) => `
+                        <span style="background: var(--secondary); color: white; padding: 8px 16px; border-radius: 20px; font-size: 0.875rem; font-weight: 500;">
+                            ${policyIcons[policy] || '📋'} ${policyNames[policy] || policy}
+                            <span style="opacity: 0.8;">(${Math.round(stats.mean * 100)}%)</span>
+                        </span>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+
     container.innerHTML = html;
+}
+
+/**
+ * Display results interpretation from ResultsInterpreter API
+ */
+function displayResultsInterpretation(results) {
+    const container = document.getElementById('abmInterpretationContent');
+    const detailsContainer = document.getElementById('abmInterpretationDetails');
+
+    // Check if ResultsInterpreter is available
+    if (typeof resultsInterpreter === 'undefined') {
+        container.innerHTML = '<p style="color: var(--gray-500);">Results interpreter not available</p>';
+        return;
+    }
+
+    // Transform ABM results to the format expected by the interpreter
+    const interpretableResults = transformABMResultsForInterpreter(results);
+    const interpretation = resultsInterpreter.interpret(interpretableResults);
+
+    if (interpretation.error) {
+        container.innerHTML = `<p style="color: var(--danger);">${interpretation.error}</p>`;
+        return;
+    }
+
+    // Main interpretation content
+    let html = '';
+
+    // Overview banner
+    const overview = interpretation.overview;
+    const outlookColors = {
+        positive: { bg: 'rgba(16, 185, 129, 0.1)', border: 'var(--secondary)', icon: '✅' },
+        neutral: { bg: 'rgba(100, 116, 139, 0.1)', border: 'var(--gray-400)', icon: '➡️' },
+        negative: { bg: 'rgba(245, 158, 11, 0.1)', border: 'var(--warning)', icon: '⚠️' },
+        critical: { bg: 'rgba(239, 68, 68, 0.1)', border: 'var(--danger)', icon: '🚨' }
+    };
+    const colors = outlookColors[overview.outlook] || outlookColors.neutral;
+
+    html += `
+        <div style="background: ${colors.bg}; border-left: 4px solid ${colors.border}; padding: 16px 20px; border-radius: 8px; margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                <span style="font-size: 1.5rem;">${colors.icon}</span>
+                <div>
+                    <div style="font-weight: 700; font-size: 1.1rem; color: var(--gray-800);">${overview.headline}</div>
+                    <div style="font-size: 0.875rem; color: var(--gray-600);">${overview.subheadline}</div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Quick insights
+    const quickInsights = interpretation.keyFindings.slice(0, 4);
+    html += '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px;">';
+    quickInsights.forEach(finding => {
+        const statusColors = {
+            positive: 'var(--secondary)',
+            critical: 'var(--danger)',
+            high: 'var(--danger)',
+            warning: 'var(--warning)',
+            neutral: 'var(--gray-500)',
+            moderate: 'var(--warning)',
+            low: 'var(--secondary)'
+        };
+        const color = statusColors[finding.severity] || statusColors[finding.impact] || 'var(--gray-600)';
+
+        html += `
+            <div style="display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--gray-50); border-radius: 8px;">
+                <span style="font-size: 1.25rem;">${finding.icon}</span>
+                <div>
+                    <div style="font-size: 0.875rem; color: var(--gray-700);">${finding.finding}</div>
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+
+    // Risk assessment summary
+    const risk = interpretation.riskAssessment;
+    const riskColors = {
+        critical: { bg: 'var(--danger)', text: 'white' },
+        high: { bg: 'var(--warning)', text: 'white' },
+        medium: { bg: '#fbbf24', text: 'var(--gray-800)' },
+        low: { bg: 'var(--secondary)', text: 'white' }
+    };
+    const riskColor = riskColors[risk.overallLevel] || riskColors.medium;
+
+    html += `
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px; background: var(--gray-50); border-radius: 8px;">
+            <div>
+                <div style="font-size: 0.875rem; color: var(--gray-500); margin-bottom: 4px;">Overall Risk Assessment</div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span style="background: ${riskColor.bg}; color: ${riskColor.text}; padding: 4px 12px; border-radius: 20px; font-size: 0.875rem; font-weight: 600; text-transform: uppercase;">${risk.overallLevel}</span>
+                    <span style="color: var(--gray-600); font-size: 0.875rem;">Score: ${risk.overallScore}/100</span>
+                </div>
+            </div>
+            <div style="text-align: right;">
+                ${risk.riskCount.critical > 0 ? `<span style="color: var(--danger); font-weight: 600;">${risk.riskCount.critical} Critical</span> ` : ''}
+                ${risk.riskCount.high > 0 ? `<span style="color: var(--warning); font-weight: 600;">${risk.riskCount.high} High</span> ` : ''}
+                ${risk.riskCount.medium > 0 ? `<span style="color: var(--gray-500);">${risk.riskCount.medium} Medium</span>` : ''}
+            </div>
+        </div>
+    `;
+
+    container.innerHTML = html;
+
+    // Detailed interpretation content
+    let detailsHtml = '';
+
+    // Narrative Summary
+    detailsHtml += `
+        <div style="margin-bottom: 24px;">
+            <h4 style="margin-bottom: 12px; color: var(--gray-700);">📝 Narrative Summary</h4>
+            <p style="color: var(--gray-600); line-height: 1.6; font-size: 0.925rem;">${interpretation.narrativeSummary}</p>
+        </div>
+    `;
+
+    // Risk Details
+    if (risk.risks.length > 0) {
+        detailsHtml += `
+            <div style="margin-bottom: 24px;">
+                <h4 style="margin-bottom: 12px; color: var(--gray-700);">⚠️ Identified Risks</h4>
+                <div style="display: grid; gap: 12px;">
+        `;
+        risk.risks.forEach(r => {
+            const levelColor = r.level === 'critical' ? 'var(--danger)' : r.level === 'high' ? 'var(--warning)' : 'var(--gray-500)';
+            detailsHtml += `
+                <div style="padding: 16px; background: var(--gray-50); border-radius: 8px; border-left: 3px solid ${levelColor};">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-weight: 600; color: var(--gray-700);">${r.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                        <span style="color: ${levelColor}; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">${r.level}</span>
+                    </div>
+                    <p style="font-size: 0.875rem; color: var(--gray-600); margin-bottom: 8px;">${r.description}</p>
+                    <p style="font-size: 0.8rem; color: var(--primary);">💡 ${r.mitigation}</p>
+                </div>
+            `;
+        });
+        detailsHtml += '</div></div>';
+    }
+
+    // Policy Recommendations
+    const recommendations = interpretation.policyRecommendations.slice(0, 5);
+    detailsHtml += `
+        <div style="margin-bottom: 24px;">
+            <h4 style="margin-bottom: 12px; color: var(--gray-700);">📋 Policy Recommendations</h4>
+            <div style="display: grid; gap: 12px;">
+    `;
+    recommendations.forEach(rec => {
+        const priorityBadge = {
+            high: { bg: 'var(--danger)', text: 'HIGH PRIORITY' },
+            medium: { bg: 'var(--warning)', text: 'MEDIUM' },
+            standard: { bg: 'var(--gray-400)', text: 'STANDARD' }
+        };
+        const badge = priorityBadge[rec.priority] || priorityBadge.standard;
+
+        detailsHtml += `
+            <div style="padding: 16px; background: var(--gray-50); border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                    <span style="font-weight: 600; color: var(--gray-700);">${rec.title}</span>
+                    <span style="background: ${badge.bg}; color: white; font-size: 0.65rem; padding: 2px 8px; border-radius: 10px;">${badge.text}</span>
+                </div>
+                <p style="font-size: 0.875rem; color: var(--gray-600); margin-bottom: 6px;">${rec.description}</p>
+                <p style="font-size: 0.8rem; color: var(--secondary);">Expected: ${rec.expectedImpact}</p>
+            </div>
+        `;
+    });
+    detailsHtml += '</div></div>';
+
+    // Comparative Benchmarks
+    const benchmarks = interpretation.comparativeBenchmarks;
+    detailsHtml += `
+        <div style="margin-bottom: 24px;">
+            <h4 style="margin-bottom: 12px; color: var(--gray-700);">📊 Comparative Benchmarks</h4>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                <div style="padding: 16px; background: var(--gray-50); border-radius: 8px;">
+                    <div style="font-size: 0.875rem; font-weight: 600; color: var(--gray-700); margin-bottom: 12px;">Unemployment Comparison</div>
+                    ${benchmarks.unemploymentBenchmarks.map(b => `
+                        <div style="display: flex; justify-content: space-between; padding: 6px 0; ${b.current ? 'font-weight: 600; color: var(--primary);' : 'color: var(--gray-600);'}">
+                            <span>${b.label}</span>
+                            <span>${b.value}%</span>
+                        </div>
+                    `).join('')}
+                </div>
+                <div style="padding: 16px; background: var(--gray-50); border-radius: 8px;">
+                    <div style="font-size: 0.875rem; font-weight: 600; color: var(--gray-700); margin-bottom: 12px;">Displacement Comparison</div>
+                    ${benchmarks.displacementBenchmarks.map(b => `
+                        <div style="display: flex; justify-content: space-between; padding: 6px 0; ${b.current ? 'font-weight: 600; color: var(--primary);' : 'color: var(--gray-600);'}">
+                            <span>${b.label}</span>
+                            <span>${b.value}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            <p style="font-size: 0.875rem; color: var(--gray-500); margin-top: 12px; text-align: center;">${benchmarks.context}</p>
+        </div>
+    `;
+
+    detailsContainer.innerHTML = detailsHtml;
+}
+
+/**
+ * Transform ABM results to format expected by ResultsInterpreter
+ */
+function transformABMResultsForInterpreter(results) {
+    const summary = results.summary;
+
+    return {
+        summary: {
+            labor_market_changes: {
+                unemployment_rate: {
+                    initial: summary.initial.unemploymentRate * 100,
+                    final: summary.final.unemploymentRate * 100,
+                    change: (summary.final.unemploymentRate - summary.initial.unemploymentRate) * 100
+                },
+                total_employment: {
+                    initial: summary.initial.totalEmployed || 150000000,
+                    final: summary.final.totalEmployed || 150000000,
+                    change: (summary.final.totalEmployed || 0) - (summary.initial.totalEmployed || 0)
+                }
+            },
+            ai_impact: {
+                ai_adoption: {
+                    initial: summary.initial.aiAdoptionRate * 100,
+                    final: summary.final.aiAdoptionRate * 100
+                },
+                cumulative_displacement: summary.totalLayoffs || 0,
+                cumulative_new_jobs: summary.totalHires || 0,
+                net_impact: (summary.totalHires || 0) - (summary.totalLayoffs || 0)
+            },
+            wages: {
+                average_hourly: {
+                    initial: 30,
+                    final: 30 * (1 + (summary.wageChange || 0)),
+                    change_percent: (summary.wageChange || 0) * 100
+                }
+            },
+            productivity: {
+                growth_rate: {
+                    initial: 1.5,
+                    final: summary.final.productivityGrowth || 2.5
+                }
+            },
+            inequality: summary.inequality || null,
+            sectorImpacts: summary.sectorImpacts || null
+        },
+        scenario: results.scenario || {
+            name: 'Custom Scenario',
+            timeframe: { start_year: 2024, end_year: 2029 }
+        },
+        monthlyData: results.monthlyData || [],
+        policySupport: results.policySupport || []
+    };
+}
+
+/**
+ * Toggle interpretation details visibility
+ */
+function toggleInterpretationDetails() {
+    const details = document.getElementById('abmInterpretationDetails');
+    const btn = event.target;
+
+    if (details.style.display === 'none') {
+        details.style.display = 'block';
+        btn.textContent = 'Hide Details';
+    } else {
+        details.style.display = 'none';
+        btn.textContent = 'Show Details';
+    }
 }
 
 /**

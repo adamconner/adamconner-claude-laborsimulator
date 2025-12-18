@@ -2,68 +2,131 @@
  * AI Summary Service - Gemini API Integration
  * Generates natural language summaries of simulation results
  *
- * Supports two modes:
- * 1. Public proxy (free for all users, rate-limited)
- * 2. User's own API key (unlimited for that user)
+ * Uses Cloudflare Worker proxy for secure API access
  */
 
 class AISummaryService {
     constructor() {
-        this.apiKey = localStorage.getItem('gemini_api_key') || '';
-
-        // Cloudflare Worker proxy URL for public AI analysis access
+        // Cloudflare Worker proxy URL for AI analysis access
         this.proxyEndpoint = 'https://gemini-proxy.adamconner7.workers.dev';
-
-        // Direct Gemini API endpoint (used when user provides their own key)
-        this.directEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
         // Track quota from proxy responses
         this.lastQuotaInfo = null;
+
+        // API call counter - persisted in localStorage
+        this.apiCallCount = parseInt(localStorage.getItem('gemini_api_call_count') || '0', 10);
+        this.apiCallHistory = JSON.parse(localStorage.getItem('gemini_api_call_history') || '[]');
+        this.counterEnabled = localStorage.getItem('gemini_counter_enabled') !== 'false'; // Default enabled
     }
 
     /**
-     * Set and save API key
+     * Get the total API call count
      */
-    setApiKey(key) {
-        this.apiKey = key;
-        localStorage.setItem('gemini_api_key', key);
+    getApiCallCount() {
+        return this.apiCallCount;
     }
 
     /**
-     * Get stored API key
+     * Get API call history
      */
-    getApiKey() {
-        return this.apiKey;
+    getApiCallHistory() {
+        return this.apiCallHistory;
     }
 
     /**
-     * Check if API key is configured
+     * Check if counter is enabled
      */
-    hasApiKey() {
-        return this.apiKey && this.apiKey.length > 0;
+    isCounterEnabled() {
+        return this.counterEnabled;
     }
 
     /**
-     * Check if public proxy is available
+     * Enable/disable the counter
      */
-    hasProxy() {
-        return this.proxyEndpoint && this.proxyEndpoint.length > 0;
+    setCounterEnabled(enabled) {
+        this.counterEnabled = enabled;
+        localStorage.setItem('gemini_counter_enabled', enabled.toString());
     }
 
     /**
-     * Check if AI analysis is available (either proxy or user key)
+     * Reset the API call counter
+     */
+    resetApiCallCount() {
+        this.apiCallCount = 0;
+        this.apiCallHistory = [];
+        localStorage.setItem('gemini_api_call_count', '0');
+        localStorage.setItem('gemini_api_call_history', '[]');
+    }
+
+    /**
+     * Increment and track API call
+     */
+    _trackApiCall(type = 'unknown') {
+        if (!this.counterEnabled) return;
+
+        this.apiCallCount++;
+
+        const callRecord = {
+            timestamp: new Date().toISOString(),
+            type: type,
+            mode: this.getMode(),
+            count: this.apiCallCount
+        };
+
+        this.apiCallHistory.push(callRecord);
+
+        // Keep only last 100 calls in history
+        if (this.apiCallHistory.length > 100) {
+            this.apiCallHistory = this.apiCallHistory.slice(-100);
+        }
+
+        // Persist
+        localStorage.setItem('gemini_api_call_count', this.apiCallCount.toString());
+        localStorage.setItem('gemini_api_call_history', JSON.stringify(this.apiCallHistory));
+
+        // Dispatch event for UI updates
+        window.dispatchEvent(new CustomEvent('geminiApiCallUpdated', {
+            detail: { count: this.apiCallCount, lastCall: callRecord }
+        }));
+    }
+
+    /**
+     * Get stats summary
+     */
+    getApiCallStats() {
+        const today = new Date().toDateString();
+        const todayCalls = this.apiCallHistory.filter(c =>
+            new Date(c.timestamp).toDateString() === today
+        ).length;
+
+        const thisWeek = new Date();
+        thisWeek.setDate(thisWeek.getDate() - 7);
+        const weekCalls = this.apiCallHistory.filter(c =>
+            new Date(c.timestamp) >= thisWeek
+        ).length;
+
+        return {
+            total: this.apiCallCount,
+            today: todayCalls,
+            thisWeek: weekCalls,
+            lastCall: this.apiCallHistory.length > 0
+                ? this.apiCallHistory[this.apiCallHistory.length - 1]
+                : null
+        };
+    }
+
+    /**
+     * Check if AI analysis is available
      */
     isAvailable() {
-        return this.hasProxy() || this.hasApiKey();
+        return this.proxyEndpoint && this.proxyEndpoint.length > 0;
     }
 
     /**
      * Get the mode being used
      */
     getMode() {
-        if (this.hasApiKey()) return 'personal';
-        if (this.hasProxy()) return 'public';
-        return 'none';
+        return 'proxy';
     }
 
     /**
@@ -71,14 +134,6 @@ class AISummaryService {
      */
     getQuotaInfo() {
         return this.lastQuotaInfo;
-    }
-
-    /**
-     * Clear API key
-     */
-    clearApiKey() {
-        this.apiKey = '';
-        localStorage.removeItem('gemini_api_key');
     }
 
     /**
@@ -128,30 +183,19 @@ Keep the tone professional but accessible. Use specific numbers from the data.`;
     }
 
     /**
-     * Make API request (handles both proxy and direct modes)
+     * Make API request via Cloudflare proxy
      */
     async makeRequest(body) {
-        // If user has their own API key, use direct endpoint
-        if (this.hasApiKey()) {
-            const response = await fetch(`${this.directEndpoint}?key=${this.apiKey}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
-            return response;
+        if (!this.isAvailable()) {
+            throw new Error('AI analysis is not available.');
         }
 
-        // Otherwise, use proxy if available
-        if (this.hasProxy()) {
-            const response = await fetch(this.proxyEndpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
-            return response;
-        }
-
-        throw new Error('AI analysis not available. Please configure an API key in Settings.');
+        const response = await fetch(this.proxyEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        return response;
     }
 
     /**
@@ -159,7 +203,7 @@ Keep the tone professional but accessible. Use specific numbers from the data.`;
      */
     async generateSummary(results) {
         if (!this.isAvailable()) {
-            throw new Error('AI analysis not available. Please configure an API key in Settings.');
+            throw new Error('AI analysis is not available.');
         }
 
         const prompt = this.buildPrompt(results);
@@ -202,12 +246,9 @@ Keep the tone professional but accessible. Use specific numbers from the data.`;
 
                 // Handle rate limit from proxy
                 if (response.status === 429) {
-                    throw new Error('Daily AI analysis limit reached. Please try again tomorrow or add your own API key in Settings.');
+                    throw new Error('Daily AI analysis limit reached. Please try again tomorrow.');
                 }
 
-                if (response.status === 400 && errorData.error?.message?.includes('API key')) {
-                    throw new Error('Invalid API key. Please check your Gemini API key and try again.');
-                }
                 throw new Error(`API request failed: ${errorData.error?.message || response.statusText}`);
             }
 
@@ -217,6 +258,9 @@ Keep the tone professional but accessible. Use specific numbers from the data.`;
             if (data._quota) {
                 this.lastQuotaInfo = data._quota;
             }
+
+            // Track the API call (successful)
+            this._trackApiCall('summary');
 
             if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
                 return data.candidates[0].content.parts[0].text;
@@ -264,6 +308,9 @@ Format as 4 bullet points starting with an emoji. Focus on the most important in
             if (!response.ok) return null;
 
             const data = await response.json();
+
+            // Track the API call (successful)
+            this._trackApiCall('quick_insights');
 
             // Store quota info if using proxy
             if (data._quota) {
