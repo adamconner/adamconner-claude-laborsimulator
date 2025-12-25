@@ -2,6 +2,25 @@
  * AI Labor Market Impact Simulator - Main Application
  */
 
+// Import required modules
+import { EconomicDataService } from './data/economic-data.js';
+import { EconomicIndicators } from './models/indicators.js';
+import { SimulationEngine } from './simulation/engine.js';
+import { InterventionSystem } from './simulation/interventions.js';
+import { VisualizationManager } from './components/visualizations.js';
+import { RealMetricsSystem } from './models/real-metrics.js';
+import { HypotheticalIndicatorsSystem } from './models/hypothetical-indicators.js';
+import { AISummaryService } from './services/ai-summary.js';
+import { AIScenarioEnhancer } from './services/ai-scenario-enhancer.js';
+import { PDFExporter } from './features/pdf-export.js';
+import { PDFReportGenerator } from './features/pdf-report.js';
+import { SensitivityAnalysis } from './features/sensitivity-analysis.js';
+import { MonteCarloSimulation } from './features/monte-carlo.js';
+import { ScenarioComparison } from './features/scenario-comparison.js';
+import { OccupationDrilldown } from './features/occupation-drilldown.js';
+import { SimulationHistoryService } from './services/simulation-history.js';
+import { SimulationSharingService } from './services/simulation-sharing.js';
+
 // HTML escape helper for XSS prevention
 const escapeHtml = (str) => {
     if (str === null || str === undefined) return '';
