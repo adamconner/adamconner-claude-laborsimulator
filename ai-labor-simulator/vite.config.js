@@ -3,7 +3,7 @@ import { resolve } from 'path';
 
 export default defineConfig({
   root: '.',
-  base: './',
+  base: '/adamconner-claude-laborsimulator/',
   build: {
     outDir: 'dist',
     sourcemap: true,
