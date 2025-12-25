@@ -225,7 +225,7 @@ async function main() {
     }
 
     // Write to file
-    const outputPath = path.join(__dirname, '..', 'ai-labor-simulator', 'data', 'live-data.json');
+    const outputPath = path.join(__dirname, '..', 'ai-labor-simulator', 'public', 'data', 'live-data.json');
 
     // Ensure directory exists
     const dir = path.dirname(outputPath);
