@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - 'claude/*'
   workflow_dispatch:  # Allow manual trigger
   workflow_call:  # Allow being called by other workflows
 
