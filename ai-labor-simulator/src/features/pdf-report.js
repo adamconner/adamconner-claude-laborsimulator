@@ -554,6 +554,11 @@ class PDFReportGenerator {
 // Global instance
 const pdfReportGenerator = new PDFReportGenerator();
 
-// Export for use
-window.PDFReportGenerator = PDFReportGenerator;
-window.pdfReportGenerator = pdfReportGenerator;
+// Export for ES modules
+export { PDFReportGenerator, pdfReportGenerator };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.PDFReportGenerator = PDFReportGenerator;
+    window.pdfReportGenerator = pdfReportGenerator;
+}

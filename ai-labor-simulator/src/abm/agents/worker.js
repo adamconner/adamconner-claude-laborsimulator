@@ -783,7 +783,13 @@ class WorkerAgent {
     }
 }
 
-// Export for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { WorkerAgent, EmploymentStatus, EducationLevel, AIExperience };
+// Export for ES modules
+export { WorkerAgent, EmploymentStatus, EducationLevel, AIExperience };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.WorkerAgent = WorkerAgent;
+    window.EmploymentStatus = EmploymentStatus;
+    window.EducationLevel = EducationLevel;
+    window.AIExperience = AIExperience;
 }

@@ -371,5 +371,10 @@ class EconomicDataService {
     }
 }
 
-// Export for use in other modules
-window.EconomicDataService = EconomicDataService;
+// Export for ES modules
+export { EconomicDataService };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.EconomicDataService = EconomicDataService;
+}

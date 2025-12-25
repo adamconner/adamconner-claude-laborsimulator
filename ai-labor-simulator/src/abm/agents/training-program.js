@@ -651,7 +651,12 @@ class TrainingProgramAgent {
     }
 }
 
-// Export for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { TrainingProgramAgent, ProgramType, ProgramStatus };
+// Export for ES modules
+export { TrainingProgramAgent, ProgramType, ProgramStatus };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.TrainingProgramAgent = TrainingProgramAgent;
+    window.ProgramType = ProgramType;
+    window.ProgramStatus = ProgramStatus;
 }

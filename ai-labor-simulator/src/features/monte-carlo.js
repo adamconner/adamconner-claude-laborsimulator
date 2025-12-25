@@ -357,5 +357,10 @@ class MonteCarloSimulation {
     }
 }
 
-// Export for use
-window.MonteCarloSimulation = MonteCarloSimulation;
+// Export for ES modules
+export { MonteCarloSimulation };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.MonteCarloSimulation = MonteCarloSimulation;
+}

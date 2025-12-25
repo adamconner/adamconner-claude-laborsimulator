@@ -400,3 +400,12 @@ class ScenarioComparison {
 
 // Global instance
 const scenarioComparison = new ScenarioComparison();
+
+// Export for ES modules
+export { ScenarioComparison, scenarioComparison };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.ScenarioComparison = ScenarioComparison;
+    window.scenarioComparison = scenarioComparison;
+}

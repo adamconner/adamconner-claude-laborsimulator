@@ -47,3 +47,9 @@ jobs:
           git add ai-labor-simulator/data/live-data.json
           git commit -m "Update economic data from BLS and FRED APIs"
           git push
+
+  # Trigger deploy workflow after data update
+  trigger-deploy:
+    needs: update-data
+    if: needs.update-data.result == 'success'
+    uses: ./.github/workflows/deploy.yml

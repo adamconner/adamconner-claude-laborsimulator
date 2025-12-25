@@ -514,7 +514,10 @@ class WageDynamics {
     }
 }
 
-// Export for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { WageDynamics };
+// Export for ES modules
+export { WageDynamics };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.WageDynamics = WageDynamics;
 }

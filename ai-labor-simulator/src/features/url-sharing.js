@@ -538,3 +538,39 @@ function updateSlidersFromInputs() {
         }
     });
 }
+
+// Aliases for backwards compatibility
+const showShareModal = copyScenarioURL;
+const hideShareModal = () => {
+    const modal = document.querySelector('.modal-overlay');
+    if (modal) modal.remove();
+};
+const copyShareUrl = copyScenarioURL;
+
+// Export for ES modules
+export {
+    URLSharingService,
+    urlSharing,
+    copyScenarioURL,
+    showShareURLModal,
+    copyShareInput,
+    applyScenarioFromURL,
+    updateSlidersFromInputs,
+    showShareModal,
+    hideShareModal,
+    copyShareUrl
+};
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.URLSharingService = URLSharingService;
+    window.urlSharing = urlSharing;
+    window.copyScenarioURL = copyScenarioURL;
+    window.showShareURLModal = showShareURLModal;
+    window.copyShareInput = copyShareInput;
+    window.applyScenarioFromURL = applyScenarioFromURL;
+    window.updateSlidersFromInputs = updateSlidersFromInputs;
+    window.showShareModal = showShareModal;
+    window.hideShareModal = hideShareModal;
+    window.copyShareUrl = copyShareUrl;
+}

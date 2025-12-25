@@ -630,5 +630,10 @@ class SimulationEngine {
     }
 }
 
-// Export for use in other modules
-window.SimulationEngine = SimulationEngine;
+// Export for ES modules
+export { SimulationEngine };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.SimulationEngine = SimulationEngine;
+}

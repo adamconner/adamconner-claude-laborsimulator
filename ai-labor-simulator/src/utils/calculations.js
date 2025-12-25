@@ -293,5 +293,10 @@ const EconomicCalculations = {
     }
 };
 
-// Export for use in other modules
-window.EconomicCalculations = EconomicCalculations;
+// Export for ES modules
+export { EconomicCalculations };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.EconomicCalculations = EconomicCalculations;
+}

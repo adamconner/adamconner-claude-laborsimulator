@@ -2,6 +2,14 @@
  * AI Labor Market Impact Simulator - Main Application
  */
 
+// HTML escape helper for XSS prevention
+const escapeHtml = (str) => {
+    if (str === null || str === undefined) return '';
+    const div = document.createElement('div');
+    div.textContent = String(str);
+    return div.innerHTML;
+};
+
 // Global instances
 let dataService;
 let indicators;
@@ -382,14 +390,12 @@ async function runSimulation() {
 
     // Show loading state
     const resultsDiv = document.getElementById('simulation-results');
-    resultsDiv.innerHTML = `
-        <div class="card" style="text-align: center; padding: 60px;">
-            <div class="loading">
-                <div class="spinner"></div>
-                <span>Running simulation...</span>
-            </div>
-        </div>
-    `;
+    resultsDiv.textContent = '';
+    const loadingCard = DOMUtils.createCard({
+        content: DOMUtils.createLoadingSpinner('Running simulation...'),
+        style: { textAlign: 'center', padding: '60px' }
+    });
+    resultsDiv.appendChild(loadingCard);
 
     // Switch to simulation tab (index 3)
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -423,12 +429,8 @@ async function runSimulation() {
 
     } catch (error) {
         console.error('Simulation error:', error);
-        resultsDiv.innerHTML = `
-            <div class="card" style="text-align: center; padding: 60px;">
-                <h3 style="color: var(--danger);">Simulation Error</h3>
-                <p>${error.message}</p>
-            </div>
-        `;
+        resultsDiv.textContent = '';
+        resultsDiv.appendChild(DOMUtils.createErrorMessage(error.message));
     }
 }
 
@@ -1340,7 +1342,7 @@ function displaySimulationResults(results) {
                     <tbody>
                         <tr>
                             <td><strong>Scenario Name</strong></td>
-                            <td>${results.scenario.name}</td>
+                            <td>${escapeHtml(results.scenario.name)}</td>
                         </tr>
                         <tr>
                             <td><strong>Timeframe</strong></td>
@@ -1908,7 +1910,7 @@ function updateSavedSimulationsList() {
             " onmouseover="this.style.background='var(--gray-600)'" onmouseout="this.style.background='var(--gray-700)'">
                 <div style="display: flex; justify-content: space-between; align-items: start;">
                     <div>
-                        <div style="font-weight: 500; font-size: 0.875rem;">${sim.name}</div>
+                        <div style="font-weight: 500; font-size: 0.875rem;">${escapeHtml(sim.name)}</div>
                         <div style="font-size: 0.75rem; color: var(--gray-400);">${date}</div>
                         <div style="font-size: 0.75rem; color: var(--gray-400);">
                             UR: ${sim.summary.labor_market_changes.unemployment_rate.final}%
@@ -1950,7 +1952,7 @@ function showSavedSimulationsModal() {
                 <div class="card" style="margin-bottom: 12px; cursor: pointer;" onclick="loadSavedSimulation(${sim.id})">
                     <div style="display: flex; justify-content: space-between; align-items: start;">
                         <div>
-                            <h4 style="margin-bottom: 4px;">${sim.name}</h4>
+                            <h4 style="margin-bottom: 4px;">${escapeHtml(sim.name)}</h4>
                             <p style="font-size: 0.875rem; color: var(--gray-500); margin-bottom: 8px;">
                                 Saved: ${date} at ${time}
                             </p>
@@ -3297,7 +3299,7 @@ async function checkForSharedSimulation() {
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         `;
         notification.innerHTML = `
-            <strong>Viewing shared simulation:</strong> ${simulation.name}
+            <strong>Viewing shared simulation:</strong> ${escapeHtml(simulation.name)}
             <br><small>Shared ${new Date(simulation.createdAt).toLocaleDateString()} • ${simulation.views} views</small>
         `;
         document.body.appendChild(notification);
@@ -3744,7 +3746,7 @@ function renderHistoryList() {
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                 <div>
                     <h4 style="font-size: 1rem; font-weight: 600; color: var(--text-primary, var(--gray-800)); margin-bottom: 4px;">
-                        ${item.name}
+                        ${escapeHtml(item.name)}
                     </h4>
                     <span style="font-size: 0.75rem; color: var(--text-muted, var(--gray-500));">
                         ${simulationHistory.formatTimestamp(item.timestamp)}
@@ -5766,5 +5768,146 @@ document.addEventListener('DOMContentLoaded', () => {
 // Initialize theme early (before DOMContentLoaded to prevent flash)
 initTheme();
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', initApp);
+// Initialize on page load (only if not loaded via module)
+if (typeof window !== 'undefined' && !window.__VITE_MODULE_LOADED__) {
+    document.addEventListener('DOMContentLoaded', initApp);
+}
+
+// Mark as loaded by Vite module system
+if (typeof window !== 'undefined') {
+    window.__VITE_MODULE_LOADED__ = true;
+}
+
+// Export all functions to window for onclick handlers
+if (typeof window !== 'undefined') {
+    // Core functions
+    window.initApp = initApp;
+    window.showSection = showSection;
+    window.loadPreset = loadPreset;
+    window.runSimulation = runSimulation;
+    window.getCurrentScenario = getCurrentScenario;
+
+    // Optimizer functions
+    window.toggleTargetOptimizer = toggleTargetOptimizer;
+    window.optimizeInterventions = optimizeInterventions;
+    window.applyOptimizedInterventions = applyOptimizedInterventions;
+
+    // PDF functions
+    window.downloadPDFReport = downloadPDFReport;
+
+    // Intervention functions
+    window.showInterventionModal = showInterventionModal;
+    window.hideInterventionModal = hideInterventionModal;
+    window.updateInterventionParams = updateInterventionParams;
+    window.addIntervention = addIntervention;
+    window.quickAddIntervention = quickAddIntervention;
+    window.toggleIntervention = toggleIntervention;
+    window.removeIntervention = removeIntervention;
+
+    // Export functions
+    window.exportResults = exportResults;
+    window.exportAsPDF = exportAsPDF;
+    window.exportAsJSON = exportAsJSON;
+
+    // Reset functions
+    window.resetSimulation = resetSimulation;
+    window.resetToDefaults = resetToDefaults;
+    window.resetEverything = resetEverything;
+    window.resetToBaselineData = resetToBaselineData;
+
+    // Saved simulations
+    window.saveSimulation = saveSimulation;
+    window.loadSavedSimulation = loadSavedSimulation;
+    window.deleteSavedSimulation = deleteSavedSimulation;
+    window.showSavedSimulationsModal = showSavedSimulationsModal;
+    window.hideSavedSimulationsModal = hideSavedSimulationsModal;
+    window.clearAllSavedSimulations = clearAllSavedSimulations;
+
+    // Hypothetical indicators
+    window.renderHypotheticalIndicators = renderHypotheticalIndicators;
+    window.updateIndicatorValue = updateIndicatorValue;
+    window.resetIndicator = resetIndicator;
+    window.resetAllHypotheticalIndicators = resetAllHypotheticalIndicators;
+    window.showIndicatorDetails = showIndicatorDetails;
+    window.toggleSourcesDetails = toggleSourcesDetails;
+    window.showCustomIndicatorModal = showCustomIndicatorModal;
+    window.hideCustomIndicatorModal = hideCustomIndicatorModal;
+    window.saveCustomIndicator = saveCustomIndicator;
+    window.deleteCustomIndicator = deleteCustomIndicator;
+
+    // AI functions
+    window.generateAISummary = generateAISummary;
+    window.regenerateAISummary = regenerateAISummary;
+    window.runAdvancedAISimulation = runAdvancedAISimulation;
+    window.showPasswordModal = showPasswordModal;
+    window.hidePasswordModal = hidePasswordModal;
+    window.submitAIPassword = submitAIPassword;
+    window.showAIAnalysis = showAIAnalysis;
+    window.hideAIResultsModal = hideAIResultsModal;
+    window.showTrainingModal = showTrainingModal;
+    window.hideTrainingModal = hideTrainingModal;
+    window.trainModel = trainModel;
+    window.exportTrainingData = exportTrainingData;
+
+    // Comparison functions
+    window.renderComparisonView = renderComparisonView;
+    window.addToComparison = addToComparison;
+    window.clearAllComparisons = clearAllComparisons;
+    window.removeFromComparison = removeFromComparison;
+
+    // Occupation functions
+    window.renderOccupationList = renderOccupationList;
+    window.showOccupationDetails = showOccupationDetails;
+    window.hideOccupationDetails = hideOccupationDetails;
+
+    // Sensitivity functions
+    window.renderSensitivityOverview = renderSensitivityOverview;
+    window.runParameterSensitivity = runParameterSensitivity;
+
+    // Settings functions
+    window.initializeSettings = initializeSettings;
+    window.updateApiStatus = updateApiStatus;
+    window.fetchLiveData = fetchLiveData;
+
+    // Sharing functions
+    window.shareSimulation = shareSimulation;
+    window.showShareButton = showShareButton;
+
+    // Monte Carlo
+    window.runMonteCarloAnalysis = runMonteCarloAnalysis;
+
+    // Mobile menu
+    window.openMobileMenu = openMobileMenu;
+    window.closeMobileMenu = closeMobileMenu;
+
+    // History functions
+    window.showHistoryModal = showHistoryModal;
+    window.hideHistoryModal = hideHistoryModal;
+    window.loadFromHistory = loadFromHistory;
+    window.deleteFromHistory = deleteFromHistory;
+    window.clearAllHistory = clearAllHistory;
+
+    // Theme functions
+    window.toggleTheme = toggleTheme;
+
+    // Notification
+    window.showNotification = showNotification;
+
+    // ABM functions
+    window.runABMSimulation = runABMSimulation;
+    window.runQuickABMTest = runQuickABMTest;
+    window.runABMSensitivityAnalysis = runABMSensitivityAnalysis;
+    window.getABMConfig = getABMConfig;
+    window.toggleInterpretationDetails = toggleInterpretationDetails;
+    window.exportABMResults = exportABMResults;
+}
+
+// Export for ES modules
+export {
+    initApp,
+    showSection,
+    loadPreset,
+    runSimulation,
+    getCurrentScenario,
+    escapeHtml
+};

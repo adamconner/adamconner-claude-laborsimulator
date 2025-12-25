@@ -299,7 +299,11 @@ class ParallelSimulationManager {
     }
 }
 
-// Export for use
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { WorkerManager, ParallelSimulationManager };
+// Export for ES modules
+export { WorkerManager, ParallelSimulationManager };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.WorkerManager = WorkerManager;
+    window.ParallelSimulationManager = ParallelSimulationManager;
 }

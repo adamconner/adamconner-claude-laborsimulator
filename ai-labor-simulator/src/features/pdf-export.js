@@ -431,3 +431,12 @@ Configuration:
 
 // Global instance
 const pdfExporter = new PDFExporter();
+
+// Export for ES modules
+export { PDFExporter, pdfExporter };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.PDFExporter = PDFExporter;
+    window.pdfExporter = pdfExporter;
+}

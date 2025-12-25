@@ -499,12 +499,13 @@ class AICapabilityFrontier {
     }
 }
 
-// Export for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        AICapabilityFrontier,
-        TaskCategories,
-        OCCUPATION_AUTOMATION_DATA,
-        INDUSTRY_AUTOMATION
-    };
+// Export for ES modules
+export { AICapabilityFrontier, TaskCategories, OCCUPATION_AUTOMATION_DATA, INDUSTRY_AUTOMATION };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.AICapabilityFrontier = AICapabilityFrontier;
+    window.TaskCategories = TaskCategories;
+    window.OCCUPATION_AUTOMATION_DATA = OCCUPATION_AUTOMATION_DATA;
+    window.INDUSTRY_AUTOMATION = INDUSTRY_AUTOMATION;
 }

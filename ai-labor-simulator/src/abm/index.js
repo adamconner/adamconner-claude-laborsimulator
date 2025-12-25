@@ -5,38 +5,6 @@
  * Exports all agent classes, market mechanisms, and the simulation engine.
  */
 
-// For browser usage, classes are loaded via script tags
-// For Node.js, we use require
-
-if (typeof module !== 'undefined' && module.exports) {
-    // Node.js exports
-    const { WorkerAgent, EmploymentStatus, EducationLevel, AIExperience } = require('./agents/worker.js');
-    const { FirmAgent, AIAdoptionStatus, FirmSize, LaborStrategy } = require('./agents/firm.js');
-    const { LaborMarket } = require('./market/labor-market.js');
-    const { ABMSimulationEngine, AICapabilityFrontier } = require('./engine.js');
-
-    module.exports = {
-        // Agents
-        WorkerAgent,
-        FirmAgent,
-
-        // Enums
-        EmploymentStatus,
-        EducationLevel,
-        AIExperience,
-        AIAdoptionStatus,
-        FirmSize,
-        LaborStrategy,
-
-        // Market
-        LaborMarket,
-
-        // Engine
-        ABMSimulationEngine,
-        AICapabilityFrontier
-    };
-}
-
 /**
  * Browser initialization helper
  * Call this after all ABM scripts are loaded
@@ -103,4 +71,13 @@ async function testABM() {
         console.error('ABM test failed:', error);
         throw error;
     }
+}
+
+// Export for ES modules
+export { initializeABM, testABM };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.initializeABM = initializeABM;
+    window.testABM = testABM;
 }

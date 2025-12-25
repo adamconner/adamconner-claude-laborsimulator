@@ -684,3 +684,13 @@ function initializeTimeline(simulationResults) {
     }
     return false;
 }
+
+// Export for ES modules
+export { TimelinePlayer, TimelineUI, initializeTimeline };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.TimelinePlayer = TimelinePlayer;
+    window.TimelineUI = TimelineUI;
+    window.initializeTimeline = initializeTimeline;
+}

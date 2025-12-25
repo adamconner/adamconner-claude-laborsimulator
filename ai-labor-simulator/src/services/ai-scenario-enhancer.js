@@ -376,3 +376,12 @@ Respond with ONLY a valid JSON object (no markdown) in this format:
 
 // Global instance
 const aiScenarioEnhancer = new AIScenarioEnhancer();
+
+// Export for ES modules
+export { AIScenarioEnhancer, aiScenarioEnhancer };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.AIScenarioEnhancer = AIScenarioEnhancer;
+    window.aiScenarioEnhancer = aiScenarioEnhancer;
+}

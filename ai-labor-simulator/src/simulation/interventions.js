@@ -780,5 +780,10 @@ class InterventionSystem {
     }
 }
 
-// Export for use in other modules
-window.InterventionSystem = InterventionSystem;
+// Export for ES modules
+export { InterventionSystem };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.InterventionSystem = InterventionSystem;
+}

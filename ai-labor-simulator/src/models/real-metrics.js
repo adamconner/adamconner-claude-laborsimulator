@@ -454,3 +454,12 @@ class RealMetricsSystem {
 
 // Global instance
 const realMetricsSystem = new RealMetricsSystem();
+
+// Export for ES modules
+export { RealMetricsSystem, realMetricsSystem };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.RealMetricsSystem = RealMetricsSystem;
+    window.realMetricsSystem = realMetricsSystem;
+}

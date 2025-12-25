@@ -509,5 +509,11 @@ class SkillsGapAnalyzer {
 // Global instance
 const skillsGapAnalyzer = new SkillsGapAnalyzer();
 
-window.SkillsGapAnalyzer = SkillsGapAnalyzer;
-window.skillsGapAnalyzer = skillsGapAnalyzer;
+// Export for ES modules
+export { SkillsGapAnalyzer, skillsGapAnalyzer };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.SkillsGapAnalyzer = SkillsGapAnalyzer;
+    window.skillsGapAnalyzer = skillsGapAnalyzer;
+}

@@ -157,3 +157,12 @@ class SimulationHistoryService {
 
 // Global instance
 const simulationHistory = new SimulationHistoryService();
+
+// Export for ES modules
+export { SimulationHistoryService, simulationHistory };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.SimulationHistoryService = SimulationHistoryService;
+    window.simulationHistory = simulationHistory;
+}

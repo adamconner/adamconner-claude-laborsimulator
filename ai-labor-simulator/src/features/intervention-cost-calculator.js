@@ -386,3 +386,12 @@ class InterventionCostCalculator {
 
 // Global instance
 const interventionCostCalculator = new InterventionCostCalculator();
+
+// Export for ES modules
+export { InterventionCostCalculator, interventionCostCalculator };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.InterventionCostCalculator = InterventionCostCalculator;
+    window.interventionCostCalculator = interventionCostCalculator;
+}

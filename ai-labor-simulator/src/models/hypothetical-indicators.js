@@ -603,3 +603,12 @@ class HypotheticalIndicatorsSystem {
 
 // Global instance
 const hypotheticalIndicators = new HypotheticalIndicatorsSystem();
+
+// Export for ES modules
+export { HypotheticalIndicatorsSystem, hypotheticalIndicators };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.HypotheticalIndicatorsSystem = HypotheticalIndicatorsSystem;
+    window.hypotheticalIndicators = hypotheticalIndicators;
+}

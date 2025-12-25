@@ -541,3 +541,12 @@ class RegionalHeatMap {
 
 // Global instance
 const regionalHeatMap = new RegionalHeatMap();
+
+// Export for ES modules
+export { RegionalHeatMap, regionalHeatMap };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.RegionalHeatMap = RegionalHeatMap;
+    window.regionalHeatMap = regionalHeatMap;
+}

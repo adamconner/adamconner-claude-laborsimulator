@@ -585,5 +585,11 @@ class DemographicsAnalyzer {
 // Global instance
 const demographicsAnalyzer = new DemographicsAnalyzer();
 
-window.DemographicsAnalyzer = DemographicsAnalyzer;
-window.demographicsAnalyzer = demographicsAnalyzer;
+// Export for ES modules
+export { DemographicsAnalyzer, demographicsAnalyzer };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.DemographicsAnalyzer = DemographicsAnalyzer;
+    window.demographicsAnalyzer = demographicsAnalyzer;
+}

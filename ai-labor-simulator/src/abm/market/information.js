@@ -491,7 +491,12 @@ class InformationDiffusion {
     }
 }
 
-// Export for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { InformationDiffusion, InformationType, MediaEventType };
+// Export for ES modules
+export { InformationDiffusion, InformationType, MediaEventType };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.InformationDiffusion = InformationDiffusion;
+    window.InformationType = InformationType;
+    window.MediaEventType = MediaEventType;
 }

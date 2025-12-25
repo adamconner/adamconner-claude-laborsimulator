@@ -672,5 +672,10 @@ class VisualizationManager {
     }
 }
 
-// Export for use in other modules
-window.VisualizationManager = VisualizationManager;
+// Export for ES modules
+export { VisualizationManager };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.VisualizationManager = VisualizationManager;
+}

@@ -319,3 +319,12 @@ Base your parameters on patterns observed in the training data. Use realistic ec
 
 // Global instance
 const modelTrainer = new ModelTrainer();
+
+// Export for ES modules
+export { ModelTrainer, modelTrainer };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.ModelTrainer = ModelTrainer;
+    window.modelTrainer = modelTrainer;
+}

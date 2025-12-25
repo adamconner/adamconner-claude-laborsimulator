@@ -778,3 +778,12 @@ class ResultsInterpreter {
 
 // Global instance
 const resultsInterpreter = new ResultsInterpreter();
+
+// Export for ES modules
+export { ResultsInterpreter, resultsInterpreter };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.ResultsInterpreter = ResultsInterpreter;
+    window.resultsInterpreter = resultsInterpreter;
+}

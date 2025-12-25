@@ -445,7 +445,10 @@ class LaborMarket {
     }
 }
 
-// Export for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { LaborMarket };
+// Export for ES modules
+export { LaborMarket };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.LaborMarket = LaborMarket;
 }

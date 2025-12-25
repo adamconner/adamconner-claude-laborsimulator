@@ -905,7 +905,11 @@ class AICapabilityFrontierInline {
     }
 }
 
-// Export for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { ABMSimulationEngine, AICapabilityFrontierInline };
+// Export for ES modules
+export { ABMSimulationEngine, AICapabilityFrontierInline };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.ABMSimulationEngine = ABMSimulationEngine;
+    window.AICapabilityFrontierInline = AICapabilityFrontierInline;
 }

@@ -535,7 +535,13 @@ class RegionalMarketSystem {
     }
 }
 
-// Export for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { Region, RegionalMarketSystem, US_REGIONS, INDUSTRY_SECTORS };
+// Export for ES modules
+export { Region, RegionalMarketSystem, US_REGIONS, INDUSTRY_SECTORS };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.Region = Region;
+    window.RegionalMarketSystem = RegionalMarketSystem;
+    window.US_REGIONS = US_REGIONS;
+    window.INDUSTRY_SECTORS = INDUSTRY_SECTORS;
 }

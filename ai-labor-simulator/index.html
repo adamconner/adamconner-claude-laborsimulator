@@ -6,7 +6,6 @@
     <title>AI Labor Market Impact Simulator</title>
     <link rel="stylesheet" href="public/styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="app-container">
@@ -1330,49 +1329,7 @@
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script src="src/data/economic-data.js"></script>
-    <script src="src/models/indicators.js"></script>
-    <script src="src/models/real-metrics.js"></script>
-    <script src="src/models/hypothetical-indicators.js"></script>
-    <script src="src/simulation/engine.js"></script>
-    <script src="src/simulation/interventions.js"></script>
-    <script src="src/utils/calculations.js"></script>
-    <script src="src/components/visualizations.js"></script>
-    <script src="src/services/ai-summary.js"></script>
-    <script src="src/services/results-interpreter.js"></script>
-    <script src="src/services/ai-scenario-enhancer.js"></script>
-    <script src="src/services/model-trainer.js"></script>
-    <script src="src/services/simulation-sharing.js"></script>
-    <script src="src/services/simulation-history.js"></script>
-    <script src="src/features/scenario-comparison.js"></script>
-    <script src="src/features/occupation-drilldown.js"></script>
-    <script src="src/features/pdf-export.js"></script>
-    <script src="src/features/sensitivity-analysis.js"></script>
-    <script src="src/features/monte-carlo.js"></script>
-    <script src="src/features/intervention-cost-calculator.js"></script>
-    <script src="src/features/timeline-player.js"></script>
-    <script src="src/features/url-sharing.js"></script>
-    <script src="src/features/pdf-report.js"></script>
-    <script src="src/features/demographics-analysis.js"></script>
-    <script src="src/features/regional-heatmap.js"></script>
-    <script src="src/features/abm-sensitivity.js"></script>
-    <script src="src/features/skills-gap-analysis.js"></script>
-    <!-- Agent-Based Model -->
-    <script src="src/abm/agents/worker.js"></script>
-    <script src="src/abm/agents/firm.js"></script>
-    <script src="src/abm/agents/training-program.js"></script>
-    <script src="src/abm/market/labor-market.js"></script>
-    <script src="src/abm/market/wage-dynamics.js"></script>
-    <script src="src/abm/market/information.js"></script>
-    <script src="src/abm/environment/ai-frontier.js"></script>
-    <script src="src/abm/environment/regions.js"></script>
-    <script src="src/abm/engine.js"></script>
-    <script src="src/abm/index.js"></script>
-    <!-- Web Worker Manager for ABM -->
-    <script src="src/workers/worker-manager.js"></script>
-    <script src="src/app.js"></script>
-    <!-- QA Test Suite (optional - for testing) -->
-    <script src="tests/qa-test-suite.js"></script>
+    <!-- Main Entry Point (Vite bundles all modules) -->
+    <script type="module" src="src/main.js"></script>
 </body>
 </html>

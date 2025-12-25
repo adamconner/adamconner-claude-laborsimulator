@@ -326,3 +326,12 @@ Format as 4 bullet points starting with an emoji. Focus on the most important in
 
 // Global instance
 const aiSummaryService = new AISummaryService();
+
+// Export for ES modules
+export { AISummaryService, aiSummaryService };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.AISummaryService = AISummaryService;
+    window.aiSummaryService = aiSummaryService;
+}

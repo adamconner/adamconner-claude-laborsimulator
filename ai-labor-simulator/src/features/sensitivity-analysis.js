@@ -335,3 +335,12 @@ class SensitivityAnalysis {
 
 // Global instance
 const sensitivityAnalysis = new SensitivityAnalysis();
+
+// Export for ES modules
+export { SensitivityAnalysis, sensitivityAnalysis };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.SensitivityAnalysis = SensitivityAnalysis;
+    window.sensitivityAnalysis = sensitivityAnalysis;
+}

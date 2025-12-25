@@ -126,3 +126,12 @@ class SimulationSharingService {
 
 // Global instance
 const simulationSharing = new SimulationSharingService();
+
+// Export for ES modules
+export { SimulationSharingService, simulationSharing };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.SimulationSharingService = SimulationSharingService;
+    window.simulationSharing = simulationSharing;
+}

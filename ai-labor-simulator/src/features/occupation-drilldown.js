@@ -605,3 +605,12 @@ class OccupationDrilldown {
 
 // Global instance
 const occupationDrilldown = new OccupationDrilldown();
+
+// Export for ES modules
+export { OccupationDrilldown, occupationDrilldown };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.OccupationDrilldown = OccupationDrilldown;
+    window.occupationDrilldown = occupationDrilldown;
+}

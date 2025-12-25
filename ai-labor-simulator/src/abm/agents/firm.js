@@ -613,7 +613,13 @@ class FirmAgent {
     }
 }
 
-// Export for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { FirmAgent, AIAdoptionStatus, FirmSize, LaborStrategy };
+// Export for ES modules
+export { FirmAgent, AIAdoptionStatus, FirmSize, LaborStrategy };
+
+// Also export to window for backwards compatibility with script tags
+if (typeof window !== 'undefined') {
+    window.FirmAgent = FirmAgent;
+    window.AIAdoptionStatus = AIAdoptionStatus;
+    window.FirmSize = FirmSize;
+    window.LaborStrategy = LaborStrategy;
 }
