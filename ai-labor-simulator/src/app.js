@@ -199,9 +199,50 @@ function showSection(sectionId) {
     // Show selected section
     document.getElementById(`${sectionId}-section`).classList.add('active');
 
-    // Update nav tabs
+    // Update nav tabs - find by data-section attribute
     document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-    event.target.classList.add('active');
+    const activeTab = document.querySelector(`.nav-tab[data-section="${sectionId}"]`);
+    if (activeTab) {
+        activeTab.classList.add('active');
+    }
+
+    // Close More dropdown if open
+    closeNavMore();
+}
+
+/**
+ * Toggle the "More..." dropdown menu
+ */
+function toggleNavMore(event) {
+    event.stopPropagation();
+    const menu = document.getElementById('navMoreMenu');
+    menu.classList.toggle('open');
+
+    // Close when clicking outside
+    if (menu.classList.contains('open')) {
+        document.addEventListener('click', closeNavMoreOnOutsideClick);
+    }
+}
+
+/**
+ * Close the "More..." dropdown menu
+ */
+function closeNavMore() {
+    const menu = document.getElementById('navMoreMenu');
+    if (menu) {
+        menu.classList.remove('open');
+        document.removeEventListener('click', closeNavMoreOnOutsideClick);
+    }
+}
+
+/**
+ * Close dropdown when clicking outside
+ */
+function closeNavMoreOnOutsideClick(event) {
+    const dropdown = document.getElementById('navMoreDropdown');
+    if (dropdown && !dropdown.contains(event.target)) {
+        closeNavMore();
+    }
 }
 
 /**
@@ -5904,6 +5945,10 @@ if (typeof window !== 'undefined') {
     window.loadPreset = loadPreset;
     window.runSimulation = runSimulation;
     window.getCurrentScenario = getCurrentScenario;
+
+    // Nav dropdown functions
+    window.toggleNavMore = toggleNavMore;
+    window.closeNavMore = closeNavMore;
 
     // Optimizer functions
     window.toggleTargetOptimizer = toggleTargetOptimizer;

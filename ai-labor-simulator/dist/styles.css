@@ -464,6 +464,77 @@ body {
     color: white;
 }
 
+/* Responsive Nav Dropdown for overflow tabs */
+.nav-more-dropdown {
+    position: relative;
+}
+
+.nav-more-btn {
+    padding: 10px 16px;
+    border: none;
+    background: var(--gray-200);
+    color: var(--gray-600);
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.nav-more-btn:hover {
+    background: var(--gray-300);
+}
+
+.nav-more-menu {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    margin-top: 4px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    min-width: 200px;
+    z-index: 100;
+    display: none;
+}
+
+.nav-more-menu.open {
+    display: block;
+}
+
+.nav-more-menu .nav-tab {
+    display: block;
+    width: 100%;
+    text-align: left;
+    border-radius: 0;
+}
+
+.nav-more-menu .nav-tab:first-child {
+    border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.nav-more-menu .nav-tab:last-child {
+    border-radius: 0 0 var(--radius) var(--radius);
+}
+
+[data-theme="dark"] .nav-more-btn {
+    background: var(--gray-200);
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .nav-more-btn:hover {
+    background: var(--gray-300);
+}
+
+[data-theme="dark"] .nav-more-menu {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+}
+
 /* Cards */
 .card {
     background: white;
