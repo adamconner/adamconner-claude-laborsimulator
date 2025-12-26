@@ -52,8 +52,8 @@ export default {
       // Get request body
       const body = await request.json();
 
-      // Gemini API endpoint
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+      // Gemini API endpoint - using gemini-2.0-flash-exp (the current latest flash model)
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
 
       // Forward request to Gemini
       const geminiResponse = await fetch(geminiUrl, {
