@@ -3909,23 +3909,25 @@ function updateChartTheme(theme) {
     Chart.defaults.color = textColor;
     Chart.defaults.borderColor = gridColor;
 
-    // Update existing charts if any
-    Chart.helpers.each(Chart.instances, (chart) => {
-        if (chart.options.scales) {
-            Object.keys(chart.options.scales).forEach(scaleKey => {
-                if (chart.options.scales[scaleKey].grid) {
-                    chart.options.scales[scaleKey].grid.color = gridColor;
-                }
-                if (chart.options.scales[scaleKey].ticks) {
-                    chart.options.scales[scaleKey].ticks.color = textColor;
-                }
-            });
+    // Update existing charts if any (Chart.js v4 compatible)
+    Object.values(Chart.instances || {}).forEach((chart) => {
+        if (chart && chart.options) {
+            if (chart.options.scales) {
+                Object.keys(chart.options.scales).forEach(scaleKey => {
+                    if (chart.options.scales[scaleKey].grid) {
+                        chart.options.scales[scaleKey].grid.color = gridColor;
+                    }
+                    if (chart.options.scales[scaleKey].ticks) {
+                        chart.options.scales[scaleKey].ticks.color = textColor;
+                    }
+                });
+            }
+            if (chart.options.plugins && chart.options.plugins.legend) {
+                chart.options.plugins.legend.labels = chart.options.plugins.legend.labels || {};
+                chart.options.plugins.legend.labels.color = textColor;
+            }
+            chart.update();
         }
-        if (chart.options.plugins && chart.options.plugins.legend) {
-            chart.options.plugins.legend.labels = chart.options.plugins.legend.labels || {};
-            chart.options.plugins.legend.labels.color = textColor;
-        }
-        chart.update();
     });
 }
 
