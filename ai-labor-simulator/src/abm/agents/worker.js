@@ -379,8 +379,8 @@ class WorkerAgent {
     }
 
     _completeRetraining() {
-        // Update skills based on program
-        if (this.retrainingProgram.skillsProvided) {
+        // Update skills based on program (with null safety)
+        if (this.retrainingProgram && this.retrainingProgram.skillsProvided) {
             Object.entries(this.retrainingProgram.skillsProvided).forEach(([skill, value]) => {
                 this.skills[skill] = Math.min(1, (this.skills[skill] || 0) + value);
             });
@@ -391,7 +391,7 @@ class WorkerAgent {
 
         // Record in history
         this.retrainingHistory.push({
-            program: this.retrainingProgram.id,
+            program: this.retrainingProgram?.id || 'unknown',
             completedMonth: Date.now(),
             success: true
         });
@@ -412,7 +412,7 @@ class WorkerAgent {
 
     _dropoutRetraining() {
         this.retrainingHistory.push({
-            program: this.retrainingProgram.id,
+            program: this.retrainingProgram?.id || 'unknown',
             completedMonth: Date.now(),
             success: false
         });

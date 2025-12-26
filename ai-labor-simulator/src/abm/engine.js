@@ -5,30 +5,16 @@
  * Coordinates workers, firms, training programs, and market dynamics over time.
  */
 
-// Import agent classes in Node.js environment
-// In browser, these are loaded via script tags before this file
-if (typeof module !== 'undefined' && module.exports) {
-    try {
-        const { WorkerAgent: WA } = require('./agents/worker.js');
-        const { FirmAgent: FA } = require('./agents/firm.js');
-        const { TrainingProgramAgent: TPA } = require('./agents/training-program.js');
-        const { LaborMarket: LM } = require('./market/labor-market.js');
-        const { WageDynamics: WD } = require('./market/wage-dynamics.js');
-        const { InformationDiffusion: ID } = require('./market/information.js');
-        const { AICapabilityFrontier: AICF } = require('./environment/ai-frontier.js');
-        const { RegionalMarketSystem: RMS } = require('./environment/regions.js');
-        global.WorkerAgent = WA;
-        global.FirmAgent = FA;
-        global.TrainingProgramAgent = TPA;
-        global.LaborMarket = LM;
-        global.WageDynamics = WD;
-        global.InformationDiffusion = ID;
-        global.AICapabilityFrontier = AICF;
-        global.RegionalMarketSystem = RMS;
-    } catch (e) {
-        console.warn('Some ABM classes not available:', e.message);
-    }
-}
+// Import agent classes as ES modules
+import { WorkerAgent } from './agents/worker.js';
+import { FirmAgent } from './agents/firm.js';
+import { TrainingProgramAgent } from './agents/training-program.js';
+import { LaborMarket } from './market/labor-market.js';
+import { WageDynamics } from './market/wage-dynamics.js';
+import { InformationDiffusion } from './market/information.js';
+import { AICapabilityFrontier } from './environment/ai-frontier.js';
+import { RegionalMarketSystem } from './environment/regions.js';
+
 
 class ABMSimulationEngine {
     constructor(config = {}) {
