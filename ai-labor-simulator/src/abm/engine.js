@@ -19,11 +19,11 @@ import { RegionalMarketSystem } from './environment/regions.js';
 class ABMSimulationEngine {
     constructor(config = {}) {
         this.config = {
-            numWorkers: config.numWorkers || 10000,      // Default 10K for performance
-            numFirms: config.numFirms || 500,
+            numWorkers: config.numWorkers || 1000,        // 1K default for fast iteration
+            numFirms: config.numFirms || 50,
             numRegions: config.numRegions || 10,
-            numTrainingPrograms: config.numTrainingPrograms || 50,
-            durationMonths: config.durationMonths || 60, // 5 years default
+            numTrainingPrograms: config.numTrainingPrograms || 25,
+            durationMonths: config.durationMonths || 60,  // 5 years default
             ...config
         };
 
