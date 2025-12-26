@@ -113,6 +113,15 @@
 [data-theme="dark"] .nav-tabs {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
+    scrollbar-color: var(--gray-400) transparent;
+}
+
+[data-theme="dark"] .nav-tabs::-webkit-scrollbar-thumb {
+    background: var(--gray-400);
+}
+
+[data-theme="dark"] .nav-tabs::after {
+    background: linear-gradient(to right, transparent, var(--bg-card));
 }
 
 [data-theme="dark"] .nav-tab {
@@ -252,7 +261,7 @@
 }
 
 /* Dark mode intervention modal */
-[data-theme="dark"] #interventionModal > div {
+[data-theme="dark"] #interventionModal>div {
     background: #1e293b;
     color: #f1f5f9;
 }
@@ -383,14 +392,53 @@ body {
 }
 
 /* Navigation */
+.nav-tabs-container {
+    position: relative;
+    margin-bottom: 24px;
+}
+
 .nav-tabs {
     display: flex;
     gap: 8px;
-    margin-bottom: 24px;
     background: white;
     padding: 8px;
     border-radius: var(--radius);
     box-shadow: var(--shadow);
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--gray-300) transparent;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+}
+
+.nav-tabs::-webkit-scrollbar {
+    height: 6px;
+}
+
+.nav-tabs::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.nav-tabs::-webkit-scrollbar-thumb {
+    background: var(--gray-300);
+    border-radius: 3px;
+}
+
+.nav-tabs::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 40px;
+    background: linear-gradient(to right, transparent, white);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.nav-tabs.can-scroll-right::after {
+    opacity: 1;
 }
 
 .nav-tab {
@@ -402,6 +450,8 @@ body {
     cursor: pointer;
     border-radius: 6px;
     transition: all 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .nav-tab:hover {
@@ -938,7 +988,9 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* Tooltips */
@@ -1062,6 +1114,7 @@ input[type="range"]::-webkit-slider-thumb {
 
 /* Mobile Styles */
 @media (max-width: 768px) {
+
     /* Show mobile menu toggle and FAB */
     .mobile-menu-toggle {
         display: flex;
@@ -1412,13 +1465,27 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 @keyframes fadeOut {
-    from { opacity: 1; transform: translateY(0); }
-    to { opacity: 0; transform: translateY(-10px); }
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
 }
 
 /* Collapsible Sections */
@@ -1576,9 +1643,18 @@ body {
 }
 
 @keyframes yearPulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); color: var(--secondary); }
-    100% { transform: scale(1); }
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+        color: var(--secondary);
+    }
+
+    100% {
+        transform: scale(1);
+    }
 }
 
 .timeline-btn {
@@ -1887,6 +1963,7 @@ body {
         opacity: 0;
         transform: translateY(-20px) scale(0.95);
     }
+
     to {
         opacity: 1;
         transform: translateY(0) scale(1);
@@ -2042,13 +2119,13 @@ body {
     }
 
     /* Skills gap grid responsive */
-    #skillsGapContent > div:first-child {
+    #skillsGapContent>div:first-child {
         grid-template-columns: 1fr !important;
         gap: 16px !important;
     }
 
     /* Demographics cards responsive */
-    #demographicsContent > div > div {
+    #demographicsContent>div>div {
         flex-wrap: wrap;
     }
 }
@@ -2285,6 +2362,7 @@ body {
 }
 
 @media (max-width: 480px) {
+
     .ai-analysis-inline h4,
     .ai-analysis h4 {
         font-size: 1rem;
@@ -2315,6 +2393,7 @@ body {
 
 /* Simulation Results Section responsive */
 @media (max-width: 900px) {
+
     /* Make nav tabs scrollable */
     .nav-tabs {
         overflow-x: auto;
@@ -2328,7 +2407,7 @@ body {
     }
 
     /* Header buttons stack */
-    .header > div:last-child {
+    .header>div:last-child {
         flex-wrap: wrap;
         gap: 8px;
     }

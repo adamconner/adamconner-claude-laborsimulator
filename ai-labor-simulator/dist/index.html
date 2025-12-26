@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Labor Market Impact Simulator</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="/adamconner-claude-laborsimulator/assets/main-LdNhZwsG.js"></script>
-  <link rel="stylesheet" crossorigin href="/adamconner-claude-laborsimulator/assets/main-D9w9uaJD.css">
+  <script type="module" crossorigin src="/adamconner-claude-laborsimulator/assets/main-ho8BYcuQ.js"></script>
+  <link rel="stylesheet" crossorigin href="/adamconner-claude-laborsimulator/assets/main-7kZsqari.css">
 </head>
 <body>
     <div class="app-container">
@@ -644,15 +644,15 @@
                             <h4 style="margin-bottom: 16px; color: var(--gray-700);">Simulation Scale</h4>
 
                             <div class="form-group">
-                                <label>Number of Workers: <span id="abmWorkersValue">10,000</span></label>
-                                <input type="range" id="abmWorkers" min="1000" max="100000" step="1000" value="10000"
+                                <label>Number of Workers: <span id="abmWorkersValue">1,000</span></label>
+                                <input type="range" id="abmWorkers" min="1000" max="100000" step="1000" value="1000"
                                        oninput="document.getElementById('abmWorkersValue').textContent = parseInt(this.value).toLocaleString()">
                                 <small style="color: var(--gray-500);">More workers = more accurate but slower</small>
                             </div>
 
                             <div class="form-group">
-                                <label>Number of Firms: <span id="abmFirmsValue">500</span></label>
-                                <input type="range" id="abmFirms" min="50" max="5000" step="50" value="500"
+                                <label>Number of Firms: <span id="abmFirmsValue">50</span></label>
+                                <input type="range" id="abmFirms" min="50" max="5000" step="50" value="50"
                                        oninput="document.getElementById('abmFirmsValue').textContent = parseInt(this.value).toLocaleString()">
                             </div>
 

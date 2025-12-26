@@ -104,13 +104,89 @@ async function initApp() {
  */
 function setupEventListeners() {
     // Range slider value displays
-    document.getElementById('targetUR').addEventListener('input', function() {
+    document.getElementById('targetUR').addEventListener('input', function () {
         document.getElementById('urValue').textContent = this.value;
+        saveScenarioConfig();
     });
 
-    document.getElementById('aiAdoption').addEventListener('input', function() {
+    document.getElementById('aiAdoption').addEventListener('input', function () {
         document.getElementById('aiValue').textContent = this.value;
+        saveScenarioConfig();
     });
+
+    // Other scenario inputs
+    const configInputs = ['scenarioName', 'targetYear', 'automationPace', 'adoptionCurve'];
+    configInputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('change', saveScenarioConfig);
+        }
+    });
+
+    // Restore saved config on load
+    restoreScenarioConfig();
+}
+
+/**
+ * Save scenario configuration to localStorage
+ */
+function saveScenarioConfig() {
+    const config = {
+        scenarioName: document.getElementById('scenarioName')?.value || '',
+        targetYear: document.getElementById('targetYear')?.value || '2029',
+        targetUR: document.getElementById('targetUR')?.value || 10,
+        aiAdoption: document.getElementById('aiAdoption')?.value || 70,
+        automationPace: document.getElementById('automationPace')?.value || 'moderate',
+        adoptionCurve: document.getElementById('adoptionCurve')?.value || 's_curve'
+    };
+    localStorage.setItem('ai_labor_sim_scenario_config', JSON.stringify(config));
+}
+
+/**
+ * Restore scenario configuration from localStorage
+ */
+function restoreScenarioConfig() {
+    try {
+        const saved = localStorage.getItem('ai_labor_sim_scenario_config');
+        if (!saved) return;
+
+        const config = JSON.parse(saved);
+
+        if (config.scenarioName) {
+            const el = document.getElementById('scenarioName');
+            if (el) el.value = config.scenarioName;
+        }
+        if (config.targetYear) {
+            const el = document.getElementById('targetYear');
+            if (el) el.value = config.targetYear;
+        }
+        if (config.targetUR) {
+            const el = document.getElementById('targetUR');
+            if (el) {
+                el.value = config.targetUR;
+                document.getElementById('urValue').textContent = config.targetUR;
+            }
+        }
+        if (config.aiAdoption) {
+            const el = document.getElementById('aiAdoption');
+            if (el) {
+                el.value = config.aiAdoption;
+                document.getElementById('aiValue').textContent = config.aiAdoption;
+            }
+        }
+        if (config.automationPace) {
+            const el = document.getElementById('automationPace');
+            if (el) el.value = config.automationPace;
+        }
+        if (config.adoptionCurve) {
+            const el = document.getElementById('adoptionCurve');
+            if (el) el.value = config.adoptionCurve;
+        }
+
+        console.log('Restored scenario config from localStorage');
+    } catch (error) {
+        console.warn('Failed to restore scenario config:', error);
+    }
 }
 
 /**
@@ -165,10 +241,9 @@ async function populateSectorTable() {
                 <td>${(data.employment / 1e6).toFixed(1)}M</td>
                 <td>
                     <div class="progress-bar" style="width: 100px; display: inline-block; vertical-align: middle;">
-                        <div class="fill" style="width: ${data.exposure * 100}%; background: ${
-            data.risk_level === 'high' ? 'var(--danger)' :
+                        <div class="fill" style="width: ${data.exposure * 100}%; background: ${data.risk_level === 'high' ? 'var(--danger)' :
                 data.risk_level.includes('medium') ? 'var(--warning)' : 'var(--secondary)'
-        }"></div>
+            }"></div>
                     </div>
                     <span style="margin-left: 8px;">${(data.exposure * 100).toFixed(0)}%</span>
                 </td>
@@ -517,7 +592,7 @@ async function calculateAndDisplayBaseline(config) {
         if (display && baselineUnemploymentRate !== null) {
             display.innerHTML = `${baselineUnemploymentRate.toFixed(1)}%`;
             display.style.color = baselineUnemploymentRate > 8 ? 'var(--danger)' :
-                                  baselineUnemploymentRate > 6 ? 'var(--warning)' : 'var(--secondary)';
+                baselineUnemploymentRate > 6 ? 'var(--warning)' : 'var(--secondary)';
 
             // Update helper text
             if (display.nextElementSibling) {
@@ -1402,7 +1477,7 @@ function displaySimulationResults(results) {
                         <tr>
                             <td><strong>Active Interventions</strong></td>
                             <td>${results.scenario.interventions.length > 0 ?
-        results.scenario.interventions.map(i => i.name).join(', ') : 'None'}</td>
+            results.scenario.interventions.map(i => i.name).join(', ') : 'None'}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -1470,11 +1545,11 @@ function displaySimulationResults(results) {
                 </div>
                 <div id="costCalculatorContent">
                     ${typeof interventionCostCalculator !== 'undefined'
-                        ? interventionCostCalculator.generateSummaryHTML(
-                            interventionCostCalculator.calculateAllCosts(results.scenario.interventions, results)
-                          )
-                        : '<p style="color: var(--gray-500);">Cost calculator not available.</p>'
-                    }
+                ? interventionCostCalculator.generateSummaryHTML(
+                    interventionCostCalculator.calculateAllCosts(results.scenario.interventions, results)
+                )
+                : '<p style="color: var(--gray-500);">Cost calculator not available.</p>'
+            }
                 </div>
             </div>
             ` : ''}
@@ -1489,9 +1564,9 @@ function displaySimulationResults(results) {
                 </div>
                 <div id="demographicsContent">
                     ${typeof demographicsAnalyzer !== 'undefined'
-                        ? generateDemographicsHTML(demographicsAnalyzer.analyzeImpacts(results))
-                        : '<p style="color: var(--gray-500);">Demographics analyzer not available.</p>'
-                    }
+            ? generateDemographicsHTML(demographicsAnalyzer.analyzeImpacts(results))
+            : '<p style="color: var(--gray-500);">Demographics analyzer not available.</p>'
+        }
                 </div>
             </div>
 
@@ -1505,9 +1580,9 @@ function displaySimulationResults(results) {
                 </div>
                 <div id="skillsGapContent">
                     ${typeof skillsGapAnalyzer !== 'undefined'
-                        ? generateSkillsGapHTML(skillsGapAnalyzer.analyzeSkillsGap(results))
-                        : '<p style="color: var(--gray-500);">Skills gap analyzer not available.</p>'
-                    }
+            ? generateSkillsGapHTML(skillsGapAnalyzer.analyzeSkillsGap(results))
+            : '<p style="color: var(--gray-500);">Skills gap analyzer not available.</p>'
+        }
                 </div>
             </div>
 
@@ -5667,12 +5742,12 @@ function displayEmergentPatterns(patterns) {
 
     patterns.forEach(pattern => {
         const icon = pattern.type === 'tipping_point' ? '⚠️' :
-                    pattern.type === 'feedback_loop' ? '🔄' :
-                    pattern.type === 'cascade' ? '📉' : '📊';
+            pattern.type === 'feedback_loop' ? '🔄' :
+                pattern.type === 'cascade' ? '📉' : '📊';
 
         const severity = pattern.severity || 'medium';
         const color = severity === 'high' ? 'var(--danger)' :
-                     severity === 'medium' ? 'var(--warning)' : 'var(--gray-500)';
+            severity === 'medium' ? 'var(--warning)' : 'var(--gray-500)';
 
         html += `
             <div style="background: var(--gray-50); border-radius: 8px; padding: 16px; border-left: 4px solid ${color};">
@@ -5724,9 +5799,9 @@ function displayABMDemographics(results) {
                 <h5 style="margin-bottom: 12px; color: var(--primary);">Top Policy Priorities</h5>
                 <div style="background: var(--gray-50); border-radius: 8px; padding: 16px;">
                     ${Object.entries(policySupport)
-                        .sort((a, b) => b[1].mean - a[1].mean)
-                        .slice(0, 3)
-                        .map(([policy, stats], i) => `
+            .sort((a, b) => b[1].mean - a[1].mean)
+            .slice(0, 3)
+            .map(([policy, stats], i) => `
                             <div style="display: flex; justify-content: space-between; padding: 8px 0; ${i < 2 ? 'border-bottom: 1px solid var(--gray-200);' : ''}">
                                 <span>${policy.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase())}</span>
                                 <span style="font-weight: 600; color: var(--primary);">${Math.round(stats.mean * 100)}%</span>
