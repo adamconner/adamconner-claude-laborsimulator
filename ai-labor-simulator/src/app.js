@@ -5793,13 +5793,23 @@ if (typeof window !== 'undefined' && !window.__VITE_MODULE_LOADED__) {
 }
 
 // Mark as loaded by Vite module system
+console.log('app.js module loading...');
+
+// Export all functions to window for onclick handlers IMMEDIATELY
+// Core functions
+window.initApp = initApp;
+window.showSection = showSection;
+window.loadPreset = loadPreset;
+window.runSimulation = runSimulation;
+window.getCurrentScenario = getCurrentScenario;
+
+console.log('Core functions exported to window:', typeof window.runSimulation);
+
+// Continue with remaining exports
 if (typeof window !== 'undefined') {
     window.__VITE_MODULE_LOADED__ = true;
-}
 
-// Export all functions to window for onclick handlers
-if (typeof window !== 'undefined') {
-    // Core functions
+    // Core functions (redundant but safe)
     window.initApp = initApp;
     window.showSection = showSection;
     window.loadPreset = loadPreset;
