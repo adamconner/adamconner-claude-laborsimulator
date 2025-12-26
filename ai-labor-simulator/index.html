@@ -645,6 +645,33 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Dynamic Sector Weight Adjustments -->
+                <div class="card">
+                    <div class="card-header" style="cursor: pointer;" onclick="toggleSectorWeights()">
+                        <h3>⚙️ Sector Weight Adjustments</h3>
+                        <button class="btn btn-sm btn-outline" id="sectorWeightToggleBtn">
+                            Expand
+                        </button>
+                    </div>
+                    <div id="sectorWeightsPanel" style="display: none;">
+                        <p style="font-size: 0.85rem; color: var(--gray-500); margin-bottom: 16px;">
+                            Adjust sector weights to customize how much each sector contributes to automation impact
+                            calculations. Higher weights = more impact on overall results.
+                        </p>
+                        <div class="sector-weights-grid" id="sectorWeightsGrid">
+                            <!-- Sector weight sliders populated by JavaScript -->
+                        </div>
+                        <div style="display: flex; gap: 8px; margin-top: 16px;">
+                            <button class="btn btn-sm btn-outline" onclick="resetSectorWeights()">
+                                Reset to Defaults
+                            </button>
+                            <button class="btn btn-sm btn-primary" onclick="applySectorWeights()">
+                                Apply & Recalculate
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </section>
 
             <!-- Sensitivity Analysis Section -->

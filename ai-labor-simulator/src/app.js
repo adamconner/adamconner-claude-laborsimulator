@@ -327,6 +327,132 @@ async function populateSectorTable() {
 
     // Create risk level chart
     createRiskLevelChart(riskSummary);
+
+    // Initialize sector weight sliders
+    initializeSectorWeights(sectorExposure);
+}
+
+/**
+ * Default sector weights (1.0 = normal, >1 = more impact, <1 = less impact)
+ */
+const defaultSectorWeights = {
+    manufacturing: 1.0,
+    retail_trade: 1.0,
+    finance_insurance: 1.0,
+    professional_services: 1.0,
+    healthcare: 1.0,
+    transportation: 1.0,
+    information: 1.0,
+    accommodation_food: 1.0,
+    construction: 1.0,
+    education: 1.0
+};
+
+// Current sector weights (modified by user)
+let sectorWeights = { ...defaultSectorWeights };
+
+/**
+ * Toggle sector weights panel visibility
+ */
+function toggleSectorWeights() {
+    const panel = document.getElementById('sectorWeightsPanel');
+    const btn = document.getElementById('sectorWeightToggleBtn');
+    if (panel.style.display === 'none') {
+        panel.style.display = 'block';
+        btn.textContent = 'Collapse';
+    } else {
+        panel.style.display = 'none';
+        btn.textContent = 'Expand';
+    }
+}
+
+/**
+ * Initialize sector weight sliders from sector data
+ */
+function initializeSectorWeights(sectorExposure) {
+    const grid = document.getElementById('sectorWeightsGrid');
+    if (!grid) return;
+
+    // Load saved weights from localStorage
+    const saved = localStorage.getItem('simulator_sectorWeights');
+    if (saved) {
+        try {
+            sectorWeights = { ...defaultSectorWeights, ...JSON.parse(saved) };
+        } catch (e) {
+            sectorWeights = { ...defaultSectorWeights };
+        }
+    }
+
+    let html = '';
+    for (const [key, data] of Object.entries(sectorExposure)) {
+        const weight = sectorWeights[key] ?? 1.0;
+        html += `
+            <div class="sector-weight-item">
+                <div class="sector-name">${data.name}</div>
+                <div class="weight-slider-row">
+                    <input type="range" 
+                           id="weight-${key}" 
+                           min="0" 
+                           max="2" 
+                           step="0.1" 
+                           value="${weight}"
+                           oninput="updateSectorWeightValue('${key}', this.value)">
+                    <span class="weight-value" id="weight-value-${key}">${weight.toFixed(1)}x</span>
+                </div>
+            </div>
+        `;
+    }
+    grid.innerHTML = html;
+}
+
+/**
+ * Update displayed sector weight value
+ */
+function updateSectorWeightValue(sectorKey, value) {
+    const valueSpan = document.getElementById(`weight-value-${sectorKey}`);
+    if (valueSpan) {
+        valueSpan.textContent = parseFloat(value).toFixed(1) + 'x';
+    }
+    sectorWeights[sectorKey] = parseFloat(value);
+}
+
+/**
+ * Reset all sector weights to defaults
+ */
+function resetSectorWeights() {
+    sectorWeights = { ...defaultSectorWeights };
+
+    // Update all sliders
+    for (const [key, weight] of Object.entries(sectorWeights)) {
+        const slider = document.getElementById(`weight-${key}`);
+        const valueSpan = document.getElementById(`weight-value-${key}`);
+        if (slider) slider.value = weight;
+        if (valueSpan) valueSpan.textContent = weight.toFixed(1) + 'x';
+    }
+
+    // Clear from localStorage
+    localStorage.removeItem('simulator_sectorWeights');
+    showNotification('Sector weights reset to defaults', 'info');
+}
+
+/**
+ * Apply sector weights and recalculate
+ */
+function applySectorWeights() {
+    // Save to localStorage
+    localStorage.setItem('simulator_sectorWeights', JSON.stringify(sectorWeights));
+
+    // Store globally for simulation engine access
+    window.sectorWeights = sectorWeights;
+
+    showNotification('Sector weights applied! Run simulation to see effects.', 'success');
+}
+
+/**
+ * Get sector weights for simulation engine
+ */
+function getSectorWeights() {
+    return sectorWeights;
 }
 
 /**
@@ -6063,6 +6189,13 @@ if (typeof window !== 'undefined') {
     window.getABMConfig = getABMConfig;
     window.toggleInterpretationDetails = toggleInterpretationDetails;
     window.exportABMResults = exportABMResults;
+
+    // Sector weight functions
+    window.toggleSectorWeights = toggleSectorWeights;
+    window.updateSectorWeightValue = updateSectorWeightValue;
+    window.resetSectorWeights = resetSectorWeights;
+    window.applySectorWeights = applySectorWeights;
+    window.getSectorWeights = getSectorWeights;
 }
 
 // Export for ES modules
