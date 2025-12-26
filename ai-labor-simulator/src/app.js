@@ -497,20 +497,32 @@ async function calculateAndDisplayBaseline(config) {
 
         // Run baseline simulation
         const baselineResults = await simulationEngine.runSimulation();
-        baselineUnemploymentRate = baselineResults.summary.final_unemployment_rate;
+
+        // Safely get unemployment rate from results
+        if (baselineResults && baselineResults.summary && typeof baselineResults.summary.final_unemployment_rate === 'number') {
+            baselineUnemploymentRate = baselineResults.summary.final_unemployment_rate;
+        } else if (baselineResults && baselineResults.projections && baselineResults.projections.length > 0) {
+            // Fallback: get from last projection
+            const lastProjection = baselineResults.projections[baselineResults.projections.length - 1];
+            baselineUnemploymentRate = lastProjection.unemployment_rate || lastProjection.unemploymentRate || 5.0;
+        } else {
+            baselineUnemploymentRate = 5.0; // Default fallback
+        }
 
         // Restore interventions
         interventionSystem.interventions = savedInterventions;
 
         // Update display
         const display = document.getElementById('baselineUnemploymentDisplay');
-        if (display) {
+        if (display && baselineUnemploymentRate !== null) {
             display.innerHTML = `${baselineUnemploymentRate.toFixed(1)}%`;
             display.style.color = baselineUnemploymentRate > 8 ? 'var(--danger)' :
                                   baselineUnemploymentRate > 6 ? 'var(--warning)' : 'var(--secondary)';
 
             // Update helper text
-            display.nextElementSibling.textContent = `By ${config.end_year}`;
+            if (display.nextElementSibling) {
+                display.nextElementSibling.textContent = `By ${config.end_year}`;
+            }
         }
 
         // Re-run original simulation with interventions to restore state
