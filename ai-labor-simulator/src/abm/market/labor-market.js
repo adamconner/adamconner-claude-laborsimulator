@@ -75,6 +75,33 @@ class LaborMarket {
             const positions = firm.getOpenPositions();
             this.jobPostings.push(...positions);
         });
+
+        // OPTIMIZATION: Pre-index jobs by region for faster lookup
+        this._jobsByRegion = new Map();
+        this.jobPostings.forEach(job => {
+            if (!job.filled) {
+                if (!this._jobsByRegion.has(job.region)) {
+                    this._jobsByRegion.set(job.region, []);
+                }
+                this._jobsByRegion.get(job.region).push(job);
+            }
+        });
+
+        // OPTIMIZATION: Build firm connection cache for network lookup
+        this._firmConnections = new Map();
+        this.workers.forEach(worker => {
+            if (worker.employer) {
+                if (!this._firmConnections.has(worker.employer.id)) {
+                    this._firmConnections.set(worker.employer.id, new Set());
+                }
+                // Add network contacts who work at this firm
+                (worker.network || []).forEach(contact => {
+                    if (contact.id) {
+                        this._firmConnections.get(worker.employer.id).add(contact.id);
+                    }
+                });
+            }
+        });
     }
 
     _workerApplicationPhase() {
@@ -83,9 +110,15 @@ class LaborMarket {
             w.activelySearching || w.status === 'unemployed'
         );
 
-        searchingWorkers.forEach(worker => {
-            // Get jobs visible to this worker
-            const visibleJobs = this.getVisibleJobs(worker);
+        // OPTIMIZATION: Sample if too many searchers (statistical sampling still gives valid results)
+        const MAX_SEARCHERS = 500;
+        const workersToProcess = searchingWorkers.length > MAX_SEARCHERS
+            ? searchingWorkers.sort(() => Math.random() - 0.5).slice(0, MAX_SEARCHERS)
+            : searchingWorkers;
+
+        workersToProcess.forEach(worker => {
+            // Get jobs visible to this worker (using optimized method)
+            const visibleJobs = this._getVisibleJobsOptimized(worker);
 
             // Worker applies to suitable jobs
             const applications = worker.searchForJobs({ getVisibleJobs: () => visibleJobs });
@@ -98,6 +131,52 @@ class LaborMarket {
                 });
             });
         });
+    }
+
+    // OPTIMIZATION: Region-based job lookup with cached network
+    _getVisibleJobsOptimized(worker) {
+        const visibleJobs = [];
+        const MAX_JOBS_TO_PROCESS = 50; // Limit total jobs processed
+        let jobsProcessed = 0;
+
+        // Get jobs in same region (most likely to be visible)
+        const sameRegionJobs = this._jobsByRegion ? (this._jobsByRegion.get(worker.region) || []) : [];
+
+        // Process same-region jobs first (high visibility)
+        for (let i = 0; i < sameRegionJobs.length && jobsProcessed < MAX_JOBS_TO_PROCESS; i++) {
+            const job = sameRegionJobs[i];
+            if (job.filled) continue;
+            jobsProcessed++;
+            let visibility = 1;
+            visibility *= (0.5 + (worker.informationLevel || 0.5) * 0.5);
+            if (Math.random() < visibility) {
+                visibleJobs.push(job);
+            }
+        }
+
+        // Process nearby jobs if we haven't hit limit
+        if (jobsProcessed < MAX_JOBS_TO_PROCESS && this._jobsByRegion) {
+            for (let r = worker.region - this.searchRadius; r <= worker.region + this.searchRadius && jobsProcessed < MAX_JOBS_TO_PROCESS; r++) {
+                if (r === worker.region) continue;
+                const nearbyJobs = this._jobsByRegion.get(r) || [];
+                for (let i = 0; i < nearbyJobs.length && jobsProcessed < MAX_JOBS_TO_PROCESS; i++) {
+                    const job = nearbyJobs[i];
+                    if (job.filled) continue;
+                    jobsProcessed++;
+                    let visibility = 0.5 * (worker.mobilityWillingness || 0.3);
+                    visibility *= (0.5 + (worker.informationLevel || 0.5) * 0.5);
+                    if (Math.random() < visibility) {
+                        visibleJobs.push(job);
+                    }
+                }
+            }
+        }
+
+        // Return top 20 by wage (avoid expensive sort on full array)
+        if (visibleJobs.length <= 20) {
+            return visibleJobs;
+        }
+        return visibleJobs.sort((a, b) => (b.wage || 0) - (a.wage || 0)).slice(0, 20);
     }
 
     _firmSelectionPhase() {

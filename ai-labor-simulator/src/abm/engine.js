@@ -388,16 +388,38 @@ class ABMSimulationEngine {
     }
 
     _buildWorkerNetworks() {
-        // Simple network: each worker connected to ~10-50 other workers
+        // OPTIMIZATION: Pre-index workers by region to avoid O(n²) filtering
+        const workersByRegion = new Map();
         this.workers.forEach(worker => {
-            const networkSize = worker.networkSize;
-            const potentialContacts = this.workers.filter(w =>
-                w.id !== worker.id &&
-                (w.region === worker.region || Math.random() < 0.1) // Same region or random
-            );
+            if (!workersByRegion.has(worker.region)) {
+                workersByRegion.set(worker.region, []);
+            }
+            workersByRegion.get(worker.region).push(worker);
+        });
 
-            // Shuffle and select
-            const shuffled = potentialContacts.sort(() => Math.random() - 0.5);
+        // Also create a small pool of random cross-region contacts
+        const crossRegionPool = this.workers
+            .sort(() => Math.random() - 0.5)
+            .slice(0, Math.min(100, this.workers.length));
+
+        // Build networks using pre-indexed regions
+        this.workers.forEach(worker => {
+            const networkSize = Math.min(worker.networkSize, 30); // Cap network size for performance
+            const sameRegion = workersByRegion.get(worker.region) || [];
+
+            // Filter out self from same-region pool
+            const potentialContacts = sameRegion.filter(w => w.id !== worker.id);
+
+            // Add some cross-region contacts (10% chance per contact)
+            const crossRegionContacts = crossRegionPool
+                .filter(w => w.id !== worker.id && w.region !== worker.region)
+                .slice(0, Math.floor(networkSize * 0.1));
+
+            // Combine and shuffle
+            const allPotential = [...potentialContacts, ...crossRegionContacts];
+            const shuffled = allPotential.sort(() => Math.random() - 0.5);
+
+            // Select network
             worker.network = shuffled.slice(0, Math.min(networkSize, shuffled.length));
 
             // Add closeness scores
