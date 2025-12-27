@@ -243,6 +243,7 @@ class SimulationEngine {
         const adoptionChange = aiAdoption.rate - state.ai.adoption_rate;
         const automationPace = this.getAutomationPaceMultiplier(scenario.targets.automation_pace);
         const productivityGrowth = state.productivity.growth_rate;
+        const stepsPerYear = scenario.timeframe.steps_per_year || 12;
 
         // Calculate job displacement by sector using task-based model
         let totalDisplaced = 0;
@@ -262,10 +263,12 @@ class SimulationEngine {
             );
 
             // Calculate displaced based on task-based effective job loss
-            const displaced = Math.round(employment * taskImpact.displacement.effectiveJobLoss);
+            // Divide by stepsPerYear to get per-step (monthly) incremental impact
+            const displaced = Math.round(employment * taskImpact.displacement.effectiveJobLoss / stepsPerYear);
 
-            // New jobs from reinstatement effect
-            const newJobs = Math.round(employment * taskImpact.reinstatement.totalReinstatement);
+            // New jobs from reinstatement effect (also per-step)
+            const newJobs = Math.round(employment * taskImpact.reinstatement.totalReinstatement / stepsPerYear);
+
 
             sectorImpacts[sector] = {
                 displaced,

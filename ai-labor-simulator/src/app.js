@@ -732,7 +732,7 @@ async function calculateAndDisplayBaseline(config) {
         interventionSystem.interventions = [];
 
         // Create scenario without interventions
-        const baselineScenario = simulationEngine.createScenario({
+        simulationEngine.createScenario({
             ...config,
             interventions: []
         });
@@ -769,7 +769,9 @@ async function calculateAndDisplayBaseline(config) {
 
         // Re-run original simulation with interventions to restore state
         simulationEngine.createScenario(config);
-        simulationEngine.scenario.interventions = savedInterventions.filter(i => i.active);
+        if (simulationEngine.currentScenario) {
+            simulationEngine.currentScenario.interventions = savedInterventions.filter(i => i.active);
+        }
 
     } catch (error) {
         console.error('Error calculating baseline:', error);
