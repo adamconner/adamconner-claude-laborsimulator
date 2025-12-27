@@ -541,6 +541,112 @@ class InterventionSystem {
                     gig_job_availability: { direction: 'decrease', magnitude: 'small' }
                 },
                 cost_model: 'economy_wide'
+            },
+
+            skills_based_immigration: {
+                name: 'Skills-Based Immigration Policy',
+                description: 'Immigration policy prioritizing high-skill workers (H-1B style)',
+                category: 'workforce_development',
+                parameters: {
+                    annual_visa_cap: {
+                        type: 'number',
+                        default: 200000,
+                        min: 50000,
+                        max: 1000000,
+                        unit: 'visas/year',
+                        description: 'Annual limit on skilled worker visas'
+                    },
+                    skill_threshold: {
+                        type: 'select',
+                        options: ['advanced_degree', 'bachelors', 'vocational', 'any_skilled'],
+                        default: 'bachelors',
+                        description: 'Minimum qualification requirement'
+                    },
+                    wage_floor: {
+                        type: 'number',
+                        default: 60000,
+                        min: 30000,
+                        max: 150000,
+                        unit: 'USD/year',
+                        description: 'Minimum salary for visa eligibility'
+                    },
+                    labor_market_test: {
+                        type: 'boolean',
+                        default: true,
+                        description: 'Require proof no domestic workers available'
+                    },
+                    priority_sectors: {
+                        type: 'multiselect',
+                        options: ['technology', 'healthcare', 'engineering', 'research', 'finance', 'all'],
+                        default: ['technology', 'healthcare', 'research']
+                    },
+                    path_to_residency: {
+                        type: 'boolean',
+                        default: true,
+                        description: 'Allow transition to permanent residency'
+                    }
+                },
+                effects: {
+                    skill_supply: { direction: 'increase', magnitude: 'large' },
+                    innovation: { direction: 'increase', magnitude: 'medium' },
+                    wage_pressure_skilled: { direction: 'decrease', magnitude: 'small' },
+                    entrepreneurship: { direction: 'increase', magnitude: 'medium' }
+                },
+                cost_model: 'revenue_generating'
+            },
+
+            public_private_retraining: {
+                name: 'Public-Private Retraining Partnerships',
+                description: 'Employer-funded retraining with government matching',
+                category: 'workforce_development',
+                parameters: {
+                    government_match_rate: {
+                        type: 'number',
+                        default: 50,
+                        min: 0,
+                        max: 100,
+                        unit: '%',
+                        description: 'Government matches employer contribution'
+                    },
+                    employer_commitment_minimum: {
+                        type: 'number',
+                        default: 5000,
+                        min: 1000,
+                        max: 50000,
+                        unit: 'USD per worker',
+                        description: 'Minimum employer investment per trainee'
+                    },
+                    job_guarantee_requirement: {
+                        type: 'boolean',
+                        default: true,
+                        description: 'Require employers to offer job post-training'
+                    },
+                    training_duration: {
+                        type: 'number',
+                        default: 6,
+                        min: 1,
+                        max: 24,
+                        unit: 'months'
+                    },
+                    eligible_workers: {
+                        type: 'select',
+                        options: ['displaced_only', 'at_risk', 'any_unemployed', 'incumbent_workers'],
+                        default: 'at_risk',
+                        description: 'Who qualifies for the program'
+                    },
+                    certification_standards: {
+                        type: 'boolean',
+                        default: true,
+                        description: 'Require industry-recognized credentials'
+                    }
+                },
+                effects: {
+                    skill_mismatch: { direction: 'decrease', magnitude: 'large' },
+                    employment_placement: { direction: 'increase', magnitude: 'large' },
+                    wages_post_training: { direction: 'increase', magnitude: 'medium' },
+                    employer_training_investment: { direction: 'increase', magnitude: 'medium' }
+                },
+                cost_model: 'participant_based'
             }
         };
     }
@@ -705,6 +811,12 @@ class InterventionSystem {
                 break;
             case 'gig_economy_regulations':
                 effect = this.calculateGigEconomyEffect(params, state);
+                break;
+            case 'skills_based_immigration':
+                effect = this.calculateImmigrationEffect(params, state);
+                break;
+            case 'public_private_retraining':
+                effect = this.calculatePublicPrivateRetrainingEffect(params, state, laborImpact);
                 break;
         }
 
@@ -1196,6 +1308,115 @@ class InterventionSystem {
             wage_effect: wageBoost * (reclassificationRate + 0.2), // Spillover to other gig workers
             lfpr_effect: 0.02, // Better conditions attract workers
             fiscal_cost: portableBenefitsCost / 12,
+            economic_impact: economicImpact / 12
+        };
+    }
+
+    /**
+     * Skills-Based Immigration Effect Calculation
+     */
+    calculateImmigrationEffect(params, state) {
+        const avgWage = state.wages.average_hourly * 2080;
+
+        // Skill threshold affects average productivity of immigrants
+        const productivityMultiplier = {
+            advanced_degree: 1.8,  // 80% above average
+            bachelors: 1.4,        // 40% above average
+            vocational: 1.1,       // 10% above average
+            any_skilled: 1.0       // Average
+        }[params.skill_threshold] || 1.4;
+
+        // Annual immigrant workers
+        const annualWorkers = params.annual_visa_cap;
+        const monthlyWorkers = annualWorkers / 12;
+
+        // Wage floor effect - immigrants earn at least this wage
+        const avgImmigrantWage = Math.max(params.wage_floor, avgWage * productivityMultiplier);
+
+        // Labor market test reduces job competition
+        const competitionFactor = params.labor_market_test ? 0.3 : 0.7;
+
+        // Job effects: 
+        // - Immigrants fill open positions (positive)
+        // - Some wage pressure on similar workers (negative for natives)
+        // - But also create jobs through consumption and entrepreneurship (positive)
+        const jobsFilled = monthlyWorkers * 0.95; // 95% employment rate
+        const jobsCreated = monthlyWorkers * 0.3; // Each immigrant creates 0.3 additional jobs
+        const netJobEffect = jobsFilled + jobsCreated;
+
+        // Wage pressure on skilled workers (negative) but entrepreneurship premium (positive)
+        const wagePressure = -0.005 * (monthlyWorkers / 10000) * competitionFactor;
+        const innovationBoost = 0.002 * productivityMultiplier * (monthlyWorkers / 10000);
+        const netWageEffect = wagePressure + innovationBoost;
+
+        // Visa fees generate revenue (~$5000 per visa average)
+        const visaRevenue = annualWorkers * 5000;
+
+        // Path to residency increases long-term economic contribution
+        const residencyBonus = params.path_to_residency ? 1.2 : 1.0;
+
+        // Economic impact: wages earned + innovation + entrepreneurship
+        const earningsValue = monthlyWorkers * avgImmigrantWage;
+        const innovationValue = monthlyWorkers * avgImmigrantWage * 0.2 * productivityMultiplier;
+        const entrepreneurshipValue = monthlyWorkers * 0.15 * avgImmigrantWage * 2; // 15% start businesses
+        const economicImpact = (earningsValue + innovationValue + entrepreneurshipValue) * residencyBonus;
+
+        return {
+            job_effect: Math.round(netJobEffect),
+            wage_effect: netWageEffect,
+            lfpr_effect: 0.01, // Slight increase in overall labor force
+            fiscal_cost: -visaRevenue / 12, // Negative = revenue
+            economic_impact: economicImpact / 12
+        };
+    }
+
+    /**
+     * Public-Private Retraining Partnership Effect Calculation
+     */
+    calculatePublicPrivateRetrainingEffect(params, state, laborImpact) {
+        const displacedMonthly = laborImpact.total_displaced || 0;
+        const atRiskWorkers = state.labor_market.total_employment * 0.1; // 10% at risk
+        const avgWage = state.wages.average_hourly * 2080;
+
+        // Eligible pool depends on policy
+        const eligiblePool = {
+            displaced_only: displacedMonthly * 12,
+            at_risk: atRiskWorkers * 0.1, // 10% of at-risk participate
+            any_unemployed: (state.labor_market.labor_force - state.labor_market.total_employment) * 0.1,
+            incumbent_workers: state.labor_market.total_employment * 0.02 // 2% upskilling
+        }[params.eligible_workers] || atRiskWorkers * 0.1;
+
+        // Training capacity limited by employer commitment
+        const trainingCostPerWorker = params.employer_commitment_minimum * (1 + params.government_match_rate / 100);
+        const participants = Math.min(eligiblePool, 500000); // Cap at 500k annual
+
+        // Government cost = match rate of employer contribution
+        const annualGovCost = participants * params.employer_commitment_minimum * (params.government_match_rate / 100);
+
+        // Success rate higher with job guarantee and certification
+        let successRate = 0.6; // Base 60%
+        if (params.job_guarantee_requirement) successRate += 0.2; // +20%
+        if (params.certification_standards) successRate += 0.1; // +10%
+
+        const successfulRetrains = participants * successRate;
+
+        // Job effects - successful retrains find employment
+        const jobEffect = successfulRetrains * 0.85; // 85% of successful find jobs
+
+        // Wage effect - retrained workers earn more
+        const wageBoost = params.certification_standards ? 0.15 : 0.08; // 15% or 8% wage increase
+
+        // Economic impact: reduced unemployment costs + higher productivity + employer investment
+        const unemploymentSavings = successfulRetrains * avgWage * 0.4; // 40% of wage was unemployment cost
+        const productivityGain = successfulRetrains * avgWage * 0.1; // 10% productivity boost
+        const employerInvestment = participants * params.employer_commitment_minimum; // Private investment
+        const economicImpact = unemploymentSavings + productivityGain + employerInvestment * 0.5;
+
+        return {
+            job_effect: Math.round(jobEffect / 12),
+            wage_effect: wageBoost * (successfulRetrains / 1000000), // Scale by participants
+            lfpr_effect: 0.03 * (successfulRetrains / 1000000), // Brings people back to workforce
+            fiscal_cost: annualGovCost / 12,
             economic_impact: economicImpact / 12
         };
     }

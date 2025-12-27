@@ -24,8 +24,8 @@
 
 #### New Intervention Types
 - [x] Negative Income Tax (alternative to UBI)
-- [ ] Skills-based immigration policy
-- [ ] Public-private retraining partnerships
+- [x] Skills-based immigration policy
+- [x] Public-private retraining partnerships
 - [x] Gig economy regulations
 - [x] AI licensing/certification requirements
 - [x] Worker ownership/co-op incentives
