@@ -2551,3 +2551,73 @@ body {
 [data-theme="dark"] .sector-weight-item input[type="range"] {
     background: var(--gray-600);
 }
+
+/* ABM Live Simulation Log */
+.abm-log-panel {
+    background: var(--gray-900);
+    border: 1px solid var(--gray-700);
+    border-radius: 6px;
+    max-height: 200px;
+    overflow-y: auto;
+    font-family: 'Monaco', 'Menlo', monospace;
+    font-size: 0.75rem;
+    padding: 12px;
+}
+
+.abm-log-panel::-webkit-scrollbar {
+    width: 6px;
+}
+
+.abm-log-panel::-webkit-scrollbar-thumb {
+    background: var(--gray-600);
+    border-radius: 3px;
+}
+
+.log-entry {
+    padding: 4px 0;
+    border-bottom: 1px solid var(--gray-800);
+    color: var(--gray-400);
+    display: flex;
+    gap: 8px;
+}
+
+.log-entry:last-child {
+    border-bottom: none;
+}
+
+.log-entry .log-time {
+    color: var(--gray-500);
+    min-width: 60px;
+}
+
+.log-entry.log-info {
+    color: var(--gray-400);
+}
+
+.log-entry.log-success {
+    color: #10b981;
+}
+
+.log-entry.log-warning {
+    color: #f59e0b;
+}
+
+.log-entry.log-error {
+    color: #ef4444;
+}
+
+.log-entry.log-milestone {
+    color: #8b5cf6;
+    font-weight: 500;
+}
+
+/* Light mode adjustments */
+[data-theme="light"] .abm-log-panel {
+    background: #1e293b;
+}
+
+/* Paused spinner state */
+.abm-spinner-paused {
+    animation: none !important;
+    border-top-color: var(--warning) !important;
+}

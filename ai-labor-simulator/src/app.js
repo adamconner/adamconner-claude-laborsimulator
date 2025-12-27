@@ -4980,6 +4980,79 @@ let currentABMEngine = null;
 let currentABMResults = null;
 let abmCharts = {};
 let abmWorkerManager = null;
+let isABMPaused = false;
+
+/**
+ * Toggle pause/resume for ABM simulation
+ */
+function toggleABMPause() {
+    if (!currentABMEngine) return;
+
+    isABMPaused = !isABMPaused;
+    const btn = document.getElementById('abmPauseBtn');
+    const spinner = document.getElementById('abmSpinner');
+
+    if (isABMPaused) {
+        currentABMEngine.pause();
+        btn.innerHTML = '▶️ Resume';
+        spinner?.classList.add('abm-spinner-paused');
+        addABMLog('Simulation paused', 'warning');
+    } else {
+        currentABMEngine.resume();
+        btn.innerHTML = '⏸️ Pause';
+        spinner?.classList.remove('abm-spinner-paused');
+        addABMLog('Simulation resumed', 'success');
+        // Re-run simulation from paused state
+        currentABMEngine.runSimulation();
+    }
+}
+
+/**
+ * Stop ABM simulation
+ */
+function stopABMSimulation() {
+    if (!currentABMEngine) return;
+
+    currentABMEngine.stop();
+    isABMPaused = false;
+
+    addABMLog('Simulation stopped by user', 'error');
+    document.getElementById('abmProgress').style.display = 'none';
+    showNotification('ABM simulation stopped', 'info');
+}
+
+/**
+ * Add log entry to ABM log panel
+ */
+function addABMLog(message, type = 'info') {
+    const panel = document.getElementById('abmLogPanel');
+    if (!panel) return;
+
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    const entry = document.createElement('div');
+    entry.className = `log-entry log-${type}`;
+    entry.innerHTML = `<span class="log-time">${timeStr}</span> ${message}`;
+
+    panel.appendChild(entry);
+    panel.scrollTop = panel.scrollHeight;
+
+    // Keep max 100 entries
+    while (panel.children.length > 100) {
+        panel.removeChild(panel.firstChild);
+    }
+}
+
+/**
+ * Clear ABM log panel
+ */
+function clearABMLog() {
+    const panel = document.getElementById('abmLogPanel');
+    if (panel) {
+        panel.innerHTML = '<div class="log-entry log-info">Log cleared</div>';
+    }
+}
 
 /**
  * Run full ABM simulation
@@ -6189,6 +6262,10 @@ if (typeof window !== 'undefined') {
     window.getABMConfig = getABMConfig;
     window.toggleInterpretationDetails = toggleInterpretationDetails;
     window.exportABMResults = exportABMResults;
+    window.toggleABMPause = toggleABMPause;
+    window.stopABMSimulation = stopABMSimulation;
+    window.addABMLog = addABMLog;
+    window.clearABMLog = clearABMLog;
 
     // Sector weight functions
     window.toggleSectorWeights = toggleSectorWeights;

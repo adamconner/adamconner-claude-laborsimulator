@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Labor Market Impact Simulator</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="/adamconner-claude-laborsimulator/assets/main-DwzXEJkE.js"></script>
-  <link rel="stylesheet" crossorigin href="/adamconner-claude-laborsimulator/assets/main-CvPFbtNC.css">
+  <script type="module" crossorigin src="/adamconner-claude-laborsimulator/assets/main-DSbMXgWk.js"></script>
+  <link rel="stylesheet" crossorigin href="/adamconner-claude-laborsimulator/assets/main-COgVDGXl.css">
 </head>
 
 <body>
@@ -847,7 +847,7 @@
                     </div>
                     <div style="padding: 20px;">
                         <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
-                            <div class="loading-spinner"
+                            <div class="loading-spinner" id="abmSpinner"
                                 style="width: 30px; height: 30px; border: 3px solid var(--gray-200); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite;">
                             </div>
                             <span id="abmProgressText">Initializing agents...</span>
@@ -862,6 +862,34 @@
                             <span>Month <span id="abmCurrentMonth">0</span> of <span
                                     id="abmTotalMonths">60</span></span>
                             <span id="abmProgressPercent">0%</span>
+                        </div>
+
+                        <!-- ABM Control Buttons -->
+                        <div class="abm-controls" style="display: flex; gap: 12px; margin-top: 16px;">
+                            <button id="abmPauseBtn" class="btn btn-sm btn-outline" onclick="toggleABMPause()"
+                                style="flex: 1;">
+                                ⏸️ Pause
+                            </button>
+                            <button id="abmStopBtn" class="btn btn-sm" onclick="stopABMSimulation()"
+                                style="flex: 1; background: var(--danger); color: white;">
+                                ⏹️ Stop
+                            </button>
+                        </div>
+
+                        <!-- Live Simulation Log -->
+                        <div style="margin-top: 16px;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="font-weight: 500; font-size: 0.875rem; color: var(--gray-600);">📋 Live
+                                    Simulation Log</span>
+                                <button class="btn btn-sm btn-outline" onclick="clearABMLog()"
+                                    style="padding: 4px 8px; font-size: 0.75rem;">
+                                    Clear
+                                </button>
+                            </div>
+                            <div id="abmLogPanel" class="abm-log-panel">
+                                <div class="log-entry log-info">Simulation ready to start...</div>
+                            </div>
                         </div>
                     </div>
                 </div>
