@@ -6,14 +6,8 @@
 - [x] Live simulation log panel
 - [x] Gemini 3 Flash Preview integration
 - [x] Unit test fixes (32/32 passing)
-
----
-
-## 🔧 In Progress
-
-### GitHub Actions Fixes
-- Fix workflow configuration errors
-- Ensure automated data updates work correctly
+- [x] GitHub Actions workflow verification
+- [x] New intervention: Gig Economy Regulations
 
 ---
 
@@ -29,14 +23,14 @@
 - [ ] Sector interdependency effects
 
 #### New Intervention Types
-- [ ] Negative Income Tax (alternative to UBI)
+- [x] Negative Income Tax (alternative to UBI)
 - [ ] Skills-based immigration policy
 - [ ] Public-private retraining partnerships
-- [ ] Gig economy regulations
-- [ ] AI licensing/certification requirements
-- [ ] Worker ownership/co-op incentives
-- [ ] Sectoral bargaining support
-- [ ] Universal basic services (healthcare, housing, childcare)
+- [x] Gig economy regulations
+- [x] AI licensing/certification requirements
+- [x] Worker ownership/co-op incentives
+- [x] Sectoral bargaining support
+- [x] Universal basic services (healthcare, housing, childcare)
 
 ### Medium Priority
 

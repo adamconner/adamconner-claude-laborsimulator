@@ -496,6 +496,51 @@ class InterventionSystem {
                     productivity: { direction: 'increase', magnitude: 'small' }
                 },
                 cost_model: 'participant_based'
+            },
+
+            gig_economy_regulations: {
+                name: 'Gig Economy Regulations',
+                description: 'Labor protections for gig and platform workers (AB5-style)',
+                category: 'labor_rights',
+                parameters: {
+                    classification_strictness: {
+                        type: 'select',
+                        options: ['strict', 'moderate', 'flexible'],
+                        default: 'moderate',
+                        description: 'How strictly worker vs contractor is defined'
+                    },
+                    minimum_wage_enforcement: {
+                        type: 'boolean',
+                        default: true,
+                        description: 'Require minimum wage for gig work hours'
+                    },
+                    benefits_requirement: {
+                        type: 'select',
+                        options: ['none', 'partial', 'full'],
+                        default: 'partial',
+                        description: 'Employer benefit obligations for gig workers'
+                    },
+                    portable_benefits_fund: {
+                        type: 'number',
+                        default: 3,
+                        min: 0,
+                        max: 10,
+                        unit: '% of earnings',
+                        description: 'Mandatory contribution to portable benefits'
+                    },
+                    platform_transparency: {
+                        type: 'boolean',
+                        default: true,
+                        description: 'Require platforms to disclose algorithm/pay info'
+                    }
+                },
+                effects: {
+                    gig_worker_wages: { direction: 'increase', magnitude: 'medium' },
+                    gig_worker_security: { direction: 'increase', magnitude: 'large' },
+                    platform_costs: { direction: 'increase', magnitude: 'medium' },
+                    gig_job_availability: { direction: 'decrease', magnitude: 'small' }
+                },
+                cost_model: 'economy_wide'
             }
         };
     }
@@ -657,6 +702,9 @@ class InterventionSystem {
                 break;
             case 'worker_ownership':
                 effect = this.calculateWorkerOwnershipEffect(params, state);
+                break;
+            case 'gig_economy_regulations':
+                effect = this.calculateGigEconomyEffect(params, state);
                 break;
         }
 
@@ -1088,6 +1136,66 @@ class InterventionSystem {
             wage_effect: 0.02, // Profit sharing increases effective wages
             lfpr_effect: 0.01, // Better job quality attracts workers
             fiscal_cost: annualCost / 12,
+            economic_impact: economicImpact / 12
+        };
+    }
+
+    /**
+     * Gig Economy Regulations Effect Calculation
+     */
+    calculateGigEconomyEffect(params, state) {
+        // Estimate gig workforce (~15% of total employment)
+        const gigWorkforce = state.labor_market.total_employment * 0.15;
+        const avgGigWage = state.wages.average_hourly * 0.75; // Gig wages typically lower
+        const avgWage = state.wages.average_hourly * 2080;
+
+        // Classification strictness affects how many workers get reclassified
+        const reclassificationRate = {
+            strict: 0.6,    // 60% of gig workers reclassified as employees
+            moderate: 0.3,  // 30% reclassified
+            flexible: 0.1   // 10% reclassified
+        }[params.classification_strictness] || 0.3;
+
+        const reclassifiedWorkers = gigWorkforce * reclassificationRate;
+
+        // Wage effects
+        let wageBoost = 0;
+        if (params.minimum_wage_enforcement) {
+            wageBoost += 0.15; // 15% wage increase for affected workers
+        }
+
+        // Benefits cost to platforms
+        const benefitsCostMultiplier = {
+            none: 0,
+            partial: 0.15,  // 15% of wages for partial benefits
+            full: 0.30      // 30% of wages for full benefits
+        }[params.benefits_requirement] || 0.15;
+
+        // Platform compliance costs (passed to economy, not government)
+        const complianceCost = reclassifiedWorkers * avgGigWage * 2080 * benefitsCostMultiplier;
+
+        // Job reduction due to higher costs (some platforms reduce workforce)
+        const jobReductionRate = reclassificationRate * 0.1; // ~10% of reclassified rate
+        const jobsLost = gigWorkforce * jobReductionRate;
+
+        // But reclassified workers are now regular employees (net neutral on jobs, positive on quality)
+        const netJobEffect = -jobsLost + (reclassifiedWorkers * 0.05); // 5% new traditional jobs created
+
+        // Portable benefits fund contribution (government cost if subsidized)
+        const portableBenefitsCost = gigWorkforce * avgGigWage * 2080 * (params.portable_benefits_fund / 100) * 0.2; // 20% gov subsidy
+
+        // Economic impact: Higher wages = more consumption, but some platform cost drag
+        const wageGains = (reclassifiedWorkers + gigWorkforce * 0.5) * avgGigWage * 2080 * wageBoost;
+        const consumptionGain = wageGains * 0.85; // High MPC for low-wage workers
+        const stabilitybenefit = reclassifiedWorkers * avgWage * 0.1; // 10% benefit from job security
+        const platformDrag = complianceCost * 0.3; // Some innovation/service reduction
+        const economicImpact = consumptionGain + stabilitybenefit - platformDrag;
+
+        return {
+            job_effect: Math.round(netJobEffect / 12),
+            wage_effect: wageBoost * (reclassificationRate + 0.2), // Spillover to other gig workers
+            lfpr_effect: 0.02, // Better conditions attract workers
+            fiscal_cost: portableBenefitsCost / 12,
             economic_impact: economicImpact / 12
         };
     }
