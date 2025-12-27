@@ -317,6 +317,185 @@ class InterventionSystem {
                     skill_preservation: { direction: 'increase', magnitude: 'medium' }
                 },
                 cost_model: 'displaced_based'
+            },
+
+            negative_income_tax: {
+                name: 'Negative Income Tax',
+                description: 'Cash transfers that phase out as income increases',
+                category: 'income_support',
+                parameters: {
+                    base_amount: {
+                        type: 'number',
+                        default: 12000,
+                        min: 0,
+                        max: 30000,
+                        unit: 'USD/year'
+                    },
+                    phase_out_rate: {
+                        type: 'number',
+                        default: 50,
+                        min: 10,
+                        max: 100,
+                        unit: '%',
+                        description: 'Rate at which benefit reduces per dollar earned'
+                    },
+                    breakeven_income: {
+                        type: 'number',
+                        default: 24000,
+                        min: 10000,
+                        max: 100000,
+                        unit: 'USD/year',
+                        description: 'Income level where benefit reaches zero'
+                    }
+                },
+                effects: {
+                    poverty_reduction: { direction: 'decrease', magnitude: 'large' },
+                    work_incentive: { direction: 'increase', magnitude: 'small' },
+                    administrative_simplicity: { direction: 'increase', magnitude: 'medium' }
+                },
+                cost_model: 'income_based'
+            },
+
+            sectoral_bargaining: {
+                name: 'Sectoral Bargaining',
+                description: 'Industry-wide collective bargaining for wages and conditions',
+                category: 'labor_rights',
+                parameters: {
+                    coverage_rate: {
+                        type: 'number',
+                        default: 50,
+                        min: 0,
+                        max: 100,
+                        unit: '%',
+                        description: 'Percentage of workforce covered'
+                    },
+                    wage_floor_increase: {
+                        type: 'number',
+                        default: 15,
+                        min: 0,
+                        max: 50,
+                        unit: '%',
+                        description: 'Minimum wage increase in covered sectors'
+                    },
+                    sectors_covered: {
+                        type: 'multiselect',
+                        options: ['all', 'manufacturing', 'retail', 'healthcare', 'technology', 'hospitality'],
+                        default: ['retail', 'hospitality', 'healthcare']
+                    }
+                },
+                effects: {
+                    wage_inequality: { direction: 'decrease', magnitude: 'large' },
+                    worker_power: { direction: 'increase', magnitude: 'large' },
+                    business_flexibility: { direction: 'decrease', magnitude: 'small' }
+                },
+                cost_model: 'economy_wide'
+            },
+
+            ai_licensing: {
+                name: 'AI Licensing & Certification',
+                description: 'Regulatory requirements for deploying AI in workplaces',
+                category: 'regulation',
+                parameters: {
+                    compliance_cost: {
+                        type: 'number',
+                        default: 50000,
+                        min: 0,
+                        max: 500000,
+                        unit: 'USD per deployment'
+                    },
+                    approval_delay: {
+                        type: 'number',
+                        default: 6,
+                        min: 1,
+                        max: 24,
+                        unit: 'months'
+                    },
+                    exemptions: {
+                        type: 'multiselect',
+                        options: ['small_business', 'research', 'healthcare', 'safety_critical'],
+                        default: ['small_business', 'research']
+                    },
+                    worker_impact_assessment: {
+                        type: 'boolean',
+                        default: true,
+                        description: 'Require assessment of worker displacement'
+                    }
+                },
+                effects: {
+                    automation_pace: { direction: 'decrease', magnitude: 'medium' },
+                    ai_safety: { direction: 'increase', magnitude: 'medium' },
+                    regulatory_burden: { direction: 'increase', magnitude: 'medium' }
+                },
+                cost_model: 'revenue_generating'
+            },
+
+            universal_basic_services: {
+                name: 'Universal Basic Services',
+                description: 'Free access to essential services for all citizens',
+                category: 'safety_net',
+                parameters: {
+                    services: {
+                        type: 'multiselect',
+                        options: ['healthcare', 'childcare', 'housing', 'transit', 'internet', 'education'],
+                        default: ['healthcare', 'childcare', 'transit']
+                    },
+                    coverage_level: {
+                        type: 'select',
+                        options: ['basic', 'standard', 'comprehensive'],
+                        default: 'standard'
+                    },
+                    income_cap: {
+                        type: 'number',
+                        default: 0,
+                        min: 0,
+                        max: 200000,
+                        unit: 'USD/year',
+                        description: 'Income limit for eligibility (0 = universal)'
+                    }
+                },
+                effects: {
+                    cost_of_living: { direction: 'decrease', magnitude: 'large' },
+                    labor_mobility: { direction: 'increase', magnitude: 'medium' },
+                    entrepreneurship: { direction: 'increase', magnitude: 'small' }
+                },
+                cost_model: 'population_based'
+            },
+
+            worker_ownership: {
+                name: 'Worker Ownership Incentives',
+                description: 'Tax incentives and support for employee-owned businesses',
+                category: 'economic_democracy',
+                parameters: {
+                    tax_credit_rate: {
+                        type: 'number',
+                        default: 25,
+                        min: 0,
+                        max: 50,
+                        unit: '%',
+                        description: 'Tax credit for converting to worker ownership'
+                    },
+                    conversion_subsidy: {
+                        type: 'number',
+                        default: 10000,
+                        min: 0,
+                        max: 100000,
+                        unit: 'USD per worker'
+                    },
+                    min_employee_stake: {
+                        type: 'number',
+                        default: 30,
+                        min: 10,
+                        max: 100,
+                        unit: '%',
+                        description: 'Minimum employee ownership for eligibility'
+                    }
+                },
+                effects: {
+                    wage_inequality: { direction: 'decrease', magnitude: 'medium' },
+                    job_stability: { direction: 'increase', magnitude: 'medium' },
+                    productivity: { direction: 'increase', magnitude: 'small' }
+                },
+                cost_model: 'participant_based'
             }
         };
     }
@@ -463,6 +642,21 @@ class InterventionSystem {
                 break;
             case 'transition_assistance':
                 effect = this.calculateTransitionEffect(params, state, laborImpact);
+                break;
+            case 'negative_income_tax':
+                effect = this.calculateNITEffect(params, state);
+                break;
+            case 'sectoral_bargaining':
+                effect = this.calculateSectoralBargainingEffect(params, state);
+                break;
+            case 'ai_licensing':
+                effect = this.calculateAILicensingEffect(params, state, laborImpact);
+                break;
+            case 'universal_basic_services':
+                effect = this.calculateUBSEffect(params, state);
+                break;
+            case 'worker_ownership':
+                effect = this.calculateWorkerOwnershipEffect(params, state);
                 break;
         }
 
@@ -711,6 +905,188 @@ class InterventionSystem {
             job_effect: Math.round(displaced * jobMatchImprovement / 12),
             wage_effect: 0.05, // Better matches = better wages
             lfpr_effect: 0.02, // Keeps people searching
+            fiscal_cost: annualCost / 12,
+            economic_impact: economicImpact / 12
+        };
+    }
+
+    /**
+     * Negative Income Tax Effect Calculation
+     */
+    calculateNITEffect(params, state) {
+        // NIT provides base_amount that phases out at phase_out_rate
+        // More targeted than UBI, lower total cost
+        const adultPopulation = 210000000 * 0.78;
+
+        // Estimate eligible population (those below breakeven)
+        const eligibleRate = Math.min(1, params.breakeven_income / 50000); // Rough estimate
+        const eligiblePop = adultPopulation * eligibleRate * 0.6; // 60% take-up
+
+        // Average benefit is roughly half of base_amount due to phase-out
+        const avgBenefit = params.base_amount * 0.5;
+        const annualCost = eligiblePop * avgBenefit;
+
+        // NIT preserves work incentives better than cliff-based programs
+        const lfprEffect = 0.03; // Slight positive - encourages partial work
+
+        // Consumption boost and poverty reduction
+        const consumptionMultiplier = 0.85; // Higher than UBI - targeted to those who spend more
+        const economicImpact = annualCost * consumptionMultiplier * 1.3;
+
+        return {
+            job_effect: Math.round(annualCost * 0.000005), // Small job creation from consumption
+            wage_effect: 0.02, // Slight wage floor effect
+            lfpr_effect: lfprEffect / 12,
+            fiscal_cost: annualCost / 12,
+            economic_impact: economicImpact / 12
+        };
+    }
+
+    /**
+     * Sectoral Bargaining Effect Calculation
+     */
+    calculateSectoralBargainingEffect(params, state) {
+        const coveredEmployment = state.labor_market.total_employment * (params.coverage_rate / 100);
+        const wageIncrease = params.wage_floor_increase / 100;
+        const avgWage = state.wages.average_hourly * 2080;
+
+        // Direct wage increase for covered workers
+        const wageEffect = wageIncrease * (params.coverage_rate / 100);
+
+        // Some job losses from higher wages, but offset by increased consumption
+        const jobLossRate = 0.02 * wageIncrease; // ~2% job loss per 100% wage increase
+        const jobLoss = coveredEmployment * jobLossRate;
+
+        // Economic impact: Higher wages = higher consumption, but some business costs
+        const wageGains = coveredEmployment * avgWage * wageIncrease;
+        const consumptionGain = wageGains * 0.75; // 75% of wage gains go to consumption
+        const productivityGain = coveredEmployment * avgWage * 0.02; // 2% productivity from worker engagement
+        const economicImpact = consumptionGain + productivityGain;
+
+        return {
+            job_effect: Math.round(-jobLoss / 12),
+            wage_effect: wageEffect,
+            lfpr_effect: 0.01, // Slightly more attractive to work
+            fiscal_cost: 0, // No direct government cost
+            economic_impact: economicImpact / 12
+        };
+    }
+
+    /**
+     * AI Licensing Effect Calculation
+     */
+    calculateAILicensingEffect(params, state, laborImpact) {
+        // Licensing creates delays and costs that slow automation
+        const baseDisplacement = laborImpact.total_displaced || 0;
+        const delayFactor = params.approval_delay / 12; // Months of delay
+        const costFactor = params.compliance_cost / 100000; // Relative cost burden
+
+        // Reduced automation pace
+        const automationReduction = 0.15 * delayFactor + 0.1 * costFactor;
+        const jobsSaved = baseDisplacement * automationReduction;
+
+        // License fees generate revenue
+        const numDeployments = state.labor_market.total_employment * 0.001; // Estimate AI deployments
+        const licenseRevenue = numDeployments * params.compliance_cost * 0.1; // 10% are new each year
+
+        // Economic impact: Jobs saved vs innovation slowdown
+        const avgWage = state.wages.average_hourly * 2080;
+        const jobsSavedValue = jobsSaved * avgWage * 0.8;
+        const innovationDrag = state.labor_market.total_employment * avgWage * 0.001; // Small innovation cost
+        const economicImpact = jobsSavedValue - innovationDrag;
+
+        return {
+            job_effect: Math.round(jobsSaved / 12),
+            wage_effect: 0,
+            lfpr_effect: 0,
+            fiscal_cost: -licenseRevenue / 12, // Negative = revenue
+            economic_impact: economicImpact / 12
+        };
+    }
+
+    /**
+     * Universal Basic Services Effect Calculation
+     */
+    calculateUBSEffect(params, state) {
+        const adultPopulation = 210000000 * 0.78;
+
+        // Cost per service (annual per person)
+        const serviceCosts = {
+            healthcare: 8000,
+            childcare: 6000,
+            housing: 12000,
+            transit: 1500,
+            internet: 600,
+            education: 4000
+        };
+
+        // Coverage level multiplier
+        const coverageMultiplier = {
+            basic: 0.5,
+            standard: 0.75,
+            comprehensive: 1.0
+        }[params.coverage_level] || 0.75;
+
+        // Calculate total cost based on selected services
+        const services = params.services || ['healthcare', 'childcare', 'transit'];
+        const eligiblePop = params.income_cap > 0
+            ? adultPopulation * (params.income_cap / 100000) * 0.5
+            : adultPopulation;
+
+        let annualCost = 0;
+        for (const service of services) {
+            annualCost += (serviceCosts[service] || 2000) * coverageMultiplier * eligiblePop;
+        }
+
+        // Reduces cost of living, increases disposable income
+        const disposableIncomeBoost = annualCost * 0.6; // 60% translates to freed income
+
+        // Economic impact: Freed income + public service jobs + reduced inequality
+        const serviceJobs = annualCost / 60000; // ~$60k per service job
+        const consumptionMultiplier = 1.4;
+        const economicImpact = disposableIncomeBoost * consumptionMultiplier + (serviceJobs * 60000);
+
+        return {
+            job_effect: Math.round(serviceJobs / 12),
+            wage_effect: 0.03, // Reduces desperation, improves bargaining
+            lfpr_effect: 0.02, // Childcare/transit improves access to work
+            fiscal_cost: annualCost / 12,
+            economic_impact: economicImpact / 12
+        };
+    }
+
+    /**
+     * Worker Ownership Incentives Effect Calculation
+     */
+    calculateWorkerOwnershipEffect(params, state) {
+        const totalFirms = 6000000; // Approximate US businesses
+        const eligibleFirms = totalFirms * 0.1; // 10% might consider conversion
+        const conversionRate = 0.05 * (params.tax_credit_rate / 25); // 5% baseline at 25% credit
+        const convertingFirms = eligibleFirms * conversionRate;
+
+        // Average workers per converting firm
+        const avgWorkers = 15;
+        const workersAffected = convertingFirms * avgWorkers;
+
+        // Costs
+        const taxCreditCost = workersAffected * state.wages.average_hourly * 2080 * (params.tax_credit_rate / 100) * 0.1;
+        const subsidyCost = workersAffected * params.conversion_subsidy;
+        const annualCost = (taxCreditCost + subsidyCost) / 5; // Spread over 5 years
+
+        // Worker-owned firms have lower turnover, higher productivity
+        const productivityGain = 0.04; // 4% productivity boost
+        const turnoverReduction = 0.3; // 30% less turnover
+
+        // Economic impact: Productivity gains + reduced inequality
+        const avgWage = state.wages.average_hourly * 2080;
+        const productivityValue = workersAffected * avgWage * productivityGain;
+        const turnoverSavings = workersAffected * avgWage * 0.2 * turnoverReduction; // 20% of wage is turnover cost
+        const economicImpact = productivityValue + turnoverSavings;
+
+        return {
+            job_effect: Math.round(workersAffected * 0.02 / 12), // 2% more jobs from growth
+            wage_effect: 0.02, // Profit sharing increases effective wages
+            lfpr_effect: 0.01, // Better job quality attracts workers
             fiscal_cost: annualCost / 12,
             economic_impact: economicImpact / 12
         };
