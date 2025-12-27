@@ -3,6 +3,8 @@
  * Models AI impact scenarios on employment and economic indicators
  */
 
+import { EconomicModelManager } from '../models/economic-models.js';
+
 class SimulationEngine {
     constructor(economicData, indicators) {
         this.dataService = economicData;
@@ -10,6 +12,9 @@ class SimulationEngine {
         this.baselineSnapshot = null;
         this.currentScenario = null;
         this.results = [];
+
+        // Initialize advanced economic models
+        this.economicModels = new EconomicModelManager();
     }
 
     /**
@@ -145,11 +150,15 @@ class SimulationEngine {
         return 35;
     }
 
-    /**
-     * Initialize simulation state from baseline
-     */
     initializeState() {
         const baseline = this.baselineSnapshot;
+
+        // Initialize skill distribution using SBTC model
+        const totalEmployment = baseline.labor_market.total_employment;
+        const skillEmployment = this.economicModels.sbtcModel.calculateEmploymentBySkill(
+            totalEmployment,
+            this.getAIAdoptionValue(baseline.ai_indicators)
+        );
 
         return {
             labor_market: {
@@ -174,6 +183,18 @@ class SimulationEngine {
                 adoption_rate: this.getAIAdoptionValue(baseline.ai_indicators),
                 displaced_workers: 0,
                 new_jobs_created: 0
+            },
+            // Enhanced: Skill-based tracking
+            skills: {
+                high: skillEmployment.high,
+                mid: skillEmployment.mid,
+                low: skillEmployment.low
+            },
+            // Enhanced: Macroeconomic factors from Solow model
+            macroeconomic: {
+                labor_share: this.economicModels.solowModel.getLaborShare(),
+                ai_capital_share: this.economicModels.solowModel.beta,
+                tfp_growth: this.economicModels.solowModel.techGrowth
             }
         };
     }
@@ -216,40 +237,71 @@ class SimulationEngine {
 
     /**
      * Calculate labor market impacts from AI adoption
+     * Enhanced with task-based labor model (Acemoglu & Restrepo) and SBTC
      */
     calculateLaborImpact(state, aiAdoption, scenario) {
         const adoptionChange = aiAdoption.rate - state.ai.adoption_rate;
         const automationPace = this.getAutomationPaceMultiplier(scenario.targets.automation_pace);
+        const productivityGrowth = state.productivity.growth_rate;
 
-        // Calculate job displacement by sector
+        // Calculate job displacement by sector using task-based model
         let totalDisplaced = 0;
         let totalNewJobs = 0;
         const sectorImpacts = {};
+        let aggregatePolarizationRisk = 0;
 
         for (const [sector, data] of Object.entries(state.sectors)) {
-            const exposure = data.automation_exposure;
             const employment = data.employment;
 
-            // Displacement based on automation exposure and AI adoption increase
-            const displacementRate = exposure * (adoptionChange / 100) * automationPace * 0.1;
-            const displaced = Math.round(employment * displacementRate);
+            // Use task-based model for more nuanced displacement calculation
+            const taskImpact = this.economicModels.taskModel.calculateNetImpact(
+                sector,
+                aiAdoption.rate,
+                productivityGrowth,
+                automationPace
+            );
 
-            // New jobs created (AI-complementary roles)
-            const newJobRate = scenario.ai_parameters.new_job_multiplier * (adoptionChange / 100) * 0.05;
-            const newJobs = Math.round(employment * newJobRate * (1 - exposure));
+            // Calculate displaced based on task-based effective job loss
+            const displaced = Math.round(employment * taskImpact.displacement.effectiveJobLoss);
+
+            // New jobs from reinstatement effect
+            const newJobs = Math.round(employment * taskImpact.reinstatement.totalReinstatement);
 
             sectorImpacts[sector] = {
                 displaced,
                 new_jobs: newJobs,
-                net_change: newJobs - displaced
+                net_change: newJobs - displaced,
+                polarization_risk: taskImpact.polarizationRisk,
+                task_details: taskImpact.displacement.taskImpacts
             };
 
             totalDisplaced += displaced;
             totalNewJobs += newJobs;
+
+            // Track polarization
+            if (taskImpact.polarizationRisk === 'high') aggregatePolarizationRisk += 2;
+            else if (taskImpact.polarizationRisk === 'medium') aggregatePolarizationRisk += 1;
         }
 
         // Calculate target-based adjustment
         const targetAdjustment = this.calculateTargetAdjustment(state, scenario);
+
+        // Calculate skill-biased wage effects
+        const skillPremiums = this.economicModels.sbtcModel.calculateSkillPremiums(
+            aiAdoption.rate,
+            productivityGrowth
+        );
+
+        // Update Solow model's AI capital share based on adoption
+        this.economicModels.solowModel.updateAICapitalShare(aiAdoption.rate);
+        const laborShare = this.economicModels.solowModel.getLaborShare();
+
+        // Wage pressure now incorporates skill-biased effects
+        const avgWageEffect = (
+            skillPremiums.high.wageChange * 0.3 +
+            skillPremiums.mid.wageChange * 0.4 +
+            skillPremiums.low.wageChange * 0.3
+        );
 
         return {
             total_displaced: totalDisplaced,
@@ -257,7 +309,11 @@ class SimulationEngine {
             net_job_change: totalNewJobs - totalDisplaced + targetAdjustment,
             sector_impacts: sectorImpacts,
             productivity_gain: adoptionChange * 0.02,
-            wage_pressure: -adoptionChange * 0.01
+            wage_pressure: avgWageEffect,
+            // Enhanced metrics
+            skill_effects: skillPremiums,
+            labor_share: laborShare,
+            polarization_index: aggregatePolarizationRisk / Object.keys(state.sectors).length
         };
     }
 
