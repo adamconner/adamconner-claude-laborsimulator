@@ -578,14 +578,618 @@ class SkillBiasedTechModel {
 
 
 /**
+ * Regional Labor Market Model
+ * 
+ * Models geographic variations in AI impact:
+ * - Different regions have varying industry concentrations
+ * - Labor mobility between regions
+ * - Regional cost of living affects wage dynamics
+ * - Tech hub effects on AI adoption speed
+ */
+class RegionalLaborMarketModel {
+    constructor() {
+        // US Census regions with economic characteristics
+        this.regions = {
+            northeast: {
+                name: 'Northeast',
+                states: ['CT', 'ME', 'MA', 'NH', 'RI', 'VT', 'NJ', 'NY', 'PA'],
+                population: 56000000,
+                employmentShare: 0.17,
+                avgWageMultiplier: 1.20,  // 20% above national average
+                costOfLiving: 1.25,
+                techConcentration: 0.85,  // Moderate tech presence
+                aiAdoptionSpeed: 1.1,     // 10% faster adoption
+                sectorConcentration: {
+                    finance: 1.5,
+                    healthcare: 1.2,
+                    education: 1.3,
+                    technology: 1.1,
+                    manufacturing: 0.7,
+                    retail: 0.9,
+                    transportation: 1.0,
+                    professional_services: 1.3
+                }
+            },
+            midwest: {
+                name: 'Midwest',
+                states: ['IL', 'IN', 'MI', 'OH', 'WI', 'IA', 'KS', 'MN', 'MO', 'NE', 'ND', 'SD'],
+                population: 68000000,
+                employmentShare: 0.21,
+                avgWageMultiplier: 0.95,
+                costOfLiving: 0.90,
+                techConcentration: 0.50,
+                aiAdoptionSpeed: 0.9,
+                sectorConcentration: {
+                    finance: 0.8,
+                    healthcare: 1.0,
+                    education: 1.0,
+                    technology: 0.6,
+                    manufacturing: 1.6,
+                    retail: 1.0,
+                    transportation: 1.2,
+                    professional_services: 0.8
+                }
+            },
+            south: {
+                name: 'South',
+                states: ['DE', 'FL', 'GA', 'MD', 'NC', 'SC', 'VA', 'WV', 'AL', 'KY', 'MS', 'TN', 'AR', 'LA', 'OK', 'TX'],
+                population: 125000000,
+                employmentShare: 0.38,
+                avgWageMultiplier: 0.92,
+                costOfLiving: 0.92,
+                techConcentration: 0.70,
+                aiAdoptionSpeed: 1.0,
+                sectorConcentration: {
+                    finance: 0.9,
+                    healthcare: 1.1,
+                    education: 0.9,
+                    technology: 1.0,
+                    manufacturing: 1.1,
+                    retail: 1.1,
+                    transportation: 1.1,
+                    professional_services: 0.9
+                }
+            },
+            west: {
+                name: 'West',
+                states: ['AZ', 'CO', 'ID', 'MT', 'NV', 'NM', 'UT', 'WY', 'AK', 'CA', 'HI', 'OR', 'WA'],
+                population: 78000000,
+                employmentShare: 0.24,
+                avgWageMultiplier: 1.15,
+                costOfLiving: 1.20,
+                techConcentration: 1.40,  // High tech concentration (Silicon Valley, Seattle)
+                aiAdoptionSpeed: 1.3,     // Fastest adoption
+                sectorConcentration: {
+                    finance: 0.9,
+                    healthcare: 1.0,
+                    education: 1.0,
+                    technology: 1.8,
+                    manufacturing: 0.8,
+                    retail: 1.0,
+                    transportation: 0.9,
+                    professional_services: 1.2
+                }
+            }
+        };
+
+        // Labor mobility parameters
+        this.mobilityParameters = {
+            baseMobilityRate: 0.02,      // 2% annual inter-regional migration
+            wageDifferentialSensitivity: 0.3,  // Migration response to wage gaps
+            employmentOpportunitySensitivity: 0.4,
+            movingCostFactor: 0.5        // Friction reducing mobility
+        };
+    }
+
+    /**
+     * Calculate regional AI impact variations
+     */
+    calculateRegionalImpact(nationalImpact, region) {
+        const regionData = this.regions[region];
+        if (!regionData) return nationalImpact;
+
+        // Adjust displacement based on sector concentration
+        let adjustedDisplacement = 0;
+        let adjustedNewJobs = 0;
+
+        for (const [sector, concentration] of Object.entries(regionData.sectorConcentration)) {
+            const sectorImpact = nationalImpact.sector_impacts?.[sector];
+            if (sectorImpact) {
+                adjustedDisplacement += sectorImpact.displaced * concentration;
+                adjustedNewJobs += sectorImpact.new_jobs * concentration;
+            }
+        }
+
+        // Apply AI adoption speed multiplier
+        adjustedDisplacement *= regionData.aiAdoptionSpeed;
+        adjustedNewJobs *= regionData.aiAdoptionSpeed * regionData.techConcentration;
+
+        // Scale by regional employment share
+        const scaleFactor = regionData.employmentShare;
+
+        return {
+            region: regionData.name,
+            displaced: Math.round(adjustedDisplacement * scaleFactor),
+            new_jobs: Math.round(adjustedNewJobs * scaleFactor),
+            net_change: Math.round((adjustedNewJobs - adjustedDisplacement) * scaleFactor),
+            wage_effect: nationalImpact.wage_pressure * regionData.avgWageMultiplier,
+            adoption_rate_modifier: regionData.aiAdoptionSpeed,
+            vulnerability_index: this.calculateVulnerabilityIndex(regionData)
+        };
+    }
+
+    /**
+     * Calculate all regional impacts
+     */
+    calculateAllRegionalImpacts(nationalImpact) {
+        const regionalImpacts = {};
+
+        for (const region of Object.keys(this.regions)) {
+            regionalImpacts[region] = this.calculateRegionalImpact(nationalImpact, region);
+        }
+
+        return {
+            regions: regionalImpacts,
+            mostVulnerable: this.getMostVulnerableRegion(regionalImpacts),
+            mostResilient: this.getMostResilientRegion(regionalImpacts),
+            divergenceIndex: this.calculateDivergenceIndex(regionalImpacts)
+        };
+    }
+
+    /**
+     * Calculate regional vulnerability to AI displacement
+     */
+    calculateVulnerabilityIndex(regionData) {
+        // High manufacturing + low tech + low education = high vulnerability
+        const manufacturingRisk = (regionData.sectorConcentration.manufacturing || 1) * 0.3;
+        const techBuffer = (1 / regionData.techConcentration) * 0.3;
+        const mobilityFactor = (1 - this.mobilityParameters.baseMobilityRate) * 0.2;
+        const costFactor = regionData.costOfLiving * 0.2;
+
+        return Math.min(1, manufacturingRisk + techBuffer + mobilityFactor - (1 / costFactor));
+    }
+
+    /**
+     * Calculate labor migration flows between regions
+     */
+    calculateMigrationFlows(regionalImpacts) {
+        const flows = [];
+        const regions = Object.keys(this.regions);
+
+        for (let i = 0; i < regions.length; i++) {
+            for (let j = i + 1; j < regions.length; j++) {
+                const region1 = regions[i];
+                const region2 = regions[j];
+
+                const impact1 = regionalImpacts[region1];
+                const impact2 = regionalImpacts[region2];
+
+                // Calculate pull factors
+                const wageDiff = (this.regions[region2].avgWageMultiplier -
+                    this.regions[region1].avgWageMultiplier);
+                const jobDiff = (impact2.net_change - impact1.net_change) / 1000000;
+
+                // Net migration direction and magnitude
+                const pullFactor = wageDiff * this.mobilityParameters.wageDifferentialSensitivity +
+                    jobDiff * this.mobilityParameters.employmentOpportunitySensitivity;
+
+                const migrationFlow = this.mobilityParameters.baseMobilityRate *
+                    pullFactor *
+                    (1 - this.mobilityParameters.movingCostFactor);
+
+                flows.push({
+                    from: migrationFlow > 0 ? region1 : region2,
+                    to: migrationFlow > 0 ? region2 : region1,
+                    magnitude: Math.abs(migrationFlow),
+                    annualWorkers: Math.round(Math.abs(migrationFlow) *
+                        this.regions[region1].population * 0.6 * 0.01)
+                });
+            }
+        }
+
+        return flows.sort((a, b) => b.magnitude - a.magnitude);
+    }
+
+    /**
+     * Get most vulnerable region
+     */
+    getMostVulnerableRegion(regionalImpacts) {
+        let mostVulnerable = null;
+        let worstNetChange = Infinity;
+
+        for (const [region, impact] of Object.entries(regionalImpacts)) {
+            if (impact.net_change < worstNetChange) {
+                worstNetChange = impact.net_change;
+                mostVulnerable = { region, ...impact };
+            }
+        }
+
+        return mostVulnerable;
+    }
+
+    /**
+     * Get most resilient region
+     */
+    getMostResilientRegion(regionalImpacts) {
+        let mostResilient = null;
+        let bestNetChange = -Infinity;
+
+        for (const [region, impact] of Object.entries(regionalImpacts)) {
+            if (impact.net_change > bestNetChange) {
+                bestNetChange = impact.net_change;
+                mostResilient = { region, ...impact };
+            }
+        }
+
+        return mostResilient;
+    }
+
+    /**
+     * Calculate divergence between regions (inequality measure)
+     */
+    calculateDivergenceIndex(regionalImpacts) {
+        const netChanges = Object.values(regionalImpacts).map(r => r.net_change);
+        const max = Math.max(...netChanges);
+        const min = Math.min(...netChanges);
+        const avg = netChanges.reduce((a, b) => a + b, 0) / netChanges.length;
+
+        return {
+            range: max - min,
+            coefficientOfVariation: this.standardDeviation(netChanges) / Math.abs(avg || 1),
+            maxMinRatio: max !== 0 ? min / max : 0
+        };
+    }
+
+    /**
+     * Helper: Calculate standard deviation
+     */
+    standardDeviation(values) {
+        const avg = values.reduce((a, b) => a + b, 0) / values.length;
+        const squareDiffs = values.map(v => Math.pow(v - avg, 2));
+        return Math.sqrt(squareDiffs.reduce((a, b) => a + b, 0) / values.length);
+    }
+
+    /**
+     * Get region summary for display
+     */
+    getRegionSummary(region) {
+        const data = this.regions[region];
+        if (!data) return null;
+
+        return {
+            name: data.name,
+            population: data.population,
+            topSectors: Object.entries(data.sectorConcentration)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 3)
+                .map(([sector, concentration]) => ({ sector, concentration })),
+            aiReadiness: data.techConcentration * data.aiAdoptionSpeed,
+            economicProfile: {
+                wageLevel: data.avgWageMultiplier > 1 ? 'above_average' : 'below_average',
+                costOfLiving: data.costOfLiving > 1 ? 'high' : 'low',
+                techHub: data.techConcentration > 1 ? true : false
+            }
+        };
+    }
+}
+
+
+/**
+ * Sector Interdependency Model (Input-Output Framework)
+ * 
+ * Models how AI impacts ripple through the economy:
+ * - Direct effects: AI adoption in a sector
+ * - Indirect effects: Upstream supplier impacts
+ * - Induced effects: Downstream customer impacts
+ * - Based on Leontief input-output analysis
+ */
+class SectorInterdependencyModel {
+    constructor() {
+        // Simplified input-output matrix (how much each sector buys from others)
+        // Values represent share of inputs from row sector to column sector
+        this.inputOutputMatrix = {
+            technology: {
+                technology: 0.25,        // Tech buys from tech (software, cloud)
+                manufacturing: 0.15,     // Hardware components
+                professional_services: 0.20,
+                finance: 0.10,
+                retail: 0.05,
+                transportation: 0.05,
+                healthcare: 0.02,
+                education: 0.03
+            },
+            manufacturing: {
+                technology: 0.15,
+                manufacturing: 0.30,     // Intermediate goods
+                professional_services: 0.10,
+                finance: 0.08,
+                retail: 0.05,
+                transportation: 0.15,
+                healthcare: 0.02,
+                education: 0.02
+            },
+            retail: {
+                technology: 0.12,
+                manufacturing: 0.25,
+                professional_services: 0.08,
+                finance: 0.08,
+                retail: 0.10,
+                transportation: 0.20,
+                healthcare: 0.02,
+                education: 0.02
+            },
+            finance: {
+                technology: 0.25,
+                manufacturing: 0.05,
+                professional_services: 0.25,
+                finance: 0.15,
+                retail: 0.05,
+                transportation: 0.03,
+                healthcare: 0.05,
+                education: 0.05
+            },
+            healthcare: {
+                technology: 0.15,
+                manufacturing: 0.20,     // Medical devices, pharma
+                professional_services: 0.15,
+                finance: 0.10,
+                retail: 0.08,
+                transportation: 0.05,
+                healthcare: 0.15,
+                education: 0.08
+            },
+            education: {
+                technology: 0.20,
+                manufacturing: 0.08,
+                professional_services: 0.15,
+                finance: 0.08,
+                retail: 0.10,
+                transportation: 0.05,
+                healthcare: 0.05,
+                education: 0.20
+            },
+            transportation: {
+                technology: 0.12,
+                manufacturing: 0.25,     // Vehicles, parts
+                professional_services: 0.10,
+                finance: 0.12,
+                retail: 0.08,
+                transportation: 0.15,
+                healthcare: 0.03,
+                education: 0.02
+            },
+            professional_services: {
+                technology: 0.30,
+                manufacturing: 0.05,
+                professional_services: 0.25,
+                finance: 0.15,
+                retail: 0.05,
+                transportation: 0.05,
+                healthcare: 0.05,
+                education: 0.08
+            }
+        };
+
+        // Multiplier effects (total impact per unit of direct impact)
+        this.multipliers = {
+            technology: 2.1,           // High multiplier due to broad impact
+            manufacturing: 2.4,        // Manufacturing has strongest backward linkages
+            retail: 1.6,
+            finance: 1.8,
+            healthcare: 1.9,
+            education: 1.5,
+            transportation: 2.0,
+            professional_services: 1.7
+        };
+
+        // Employment intensity (jobs per $1M output)
+        this.employmentIntensity = {
+            technology: 3.2,
+            manufacturing: 4.5,
+            retail: 8.5,
+            finance: 2.8,
+            healthcare: 9.2,
+            education: 12.0,
+            transportation: 5.5,
+            professional_services: 4.0
+        };
+    }
+
+    /**
+     * Calculate ripple effects from a sector shock
+     */
+    calculateRippleEffects(sourceSector, directImpact) {
+        const effects = {
+            direct: {
+                sector: sourceSector,
+                employment_change: directImpact,
+                gdp_impact: directImpact / (this.employmentIntensity[sourceSector] || 5)
+            },
+            indirect: [],
+            induced: [],
+            total: {
+                employment_change: directImpact,
+                gdp_impact: 0
+            }
+        };
+
+        // Calculate indirect effects (upstream - suppliers affected)
+        const inputShares = this.inputOutputMatrix[sourceSector] || {};
+
+        for (const [supplierSector, share] of Object.entries(inputShares)) {
+            if (supplierSector === sourceSector) continue;
+
+            const indirectImpact = directImpact * share * 0.5;  // 50% transmission rate
+
+            if (Math.abs(indirectImpact) > 100) {  // Only track meaningful impacts
+                effects.indirect.push({
+                    sector: supplierSector,
+                    relationship: 'supplier',
+                    employment_change: Math.round(indirectImpact),
+                    transmission_rate: share
+                });
+                effects.total.employment_change += indirectImpact;
+            }
+        }
+
+        // Calculate induced effects (downstream - customers affected)
+        for (const [customerSector, customerInputs] of Object.entries(this.inputOutputMatrix)) {
+            if (customerSector === sourceSector) continue;
+
+            const purchaseShare = customerInputs[sourceSector] || 0;
+            if (purchaseShare > 0) {
+                const inducedImpact = directImpact * purchaseShare * 0.3;  // 30% downstream transmission
+
+                if (Math.abs(inducedImpact) > 100) {
+                    effects.induced.push({
+                        sector: customerSector,
+                        relationship: 'customer',
+                        employment_change: Math.round(inducedImpact),
+                        dependency: purchaseShare
+                    });
+                    effects.total.employment_change += inducedImpact;
+                }
+            }
+        }
+
+        // Apply multiplier for total impact
+        const multiplier = this.multipliers[sourceSector] || 1.5;
+        effects.total.employment_change = Math.round(effects.total.employment_change * multiplier);
+        effects.total.gdp_impact = effects.total.employment_change /
+            (this.employmentIntensity[sourceSector] || 5) * 1000000;
+        effects.total.multiplier_used = multiplier;
+
+        return effects;
+    }
+
+    /**
+     * Calculate economy-wide interdependency effects
+     */
+    calculateEconomyWideEffects(sectorImpacts) {
+        const economyEffects = {
+            sectors: {},
+            totalIndirect: 0,
+            totalInduced: 0,
+            cascadeRisk: 'low'
+        };
+
+        let totalNegativeImpact = 0;
+
+        for (const [sector, impact] of Object.entries(sectorImpacts)) {
+            const netChange = impact.net_change || 0;
+            const rippleEffects = this.calculateRippleEffects(sector, netChange);
+
+            economyEffects.sectors[sector] = {
+                direct: netChange,
+                indirect: rippleEffects.indirect.reduce((sum, e) => sum + e.employment_change, 0),
+                induced: rippleEffects.induced.reduce((sum, e) => sum + e.employment_change, 0),
+                total: rippleEffects.total.employment_change,
+                multiplier: rippleEffects.total.multiplier_used
+            };
+
+            economyEffects.totalIndirect += economyEffects.sectors[sector].indirect;
+            economyEffects.totalInduced += economyEffects.sectors[sector].induced;
+
+            if (netChange < 0) {
+                totalNegativeImpact += Math.abs(netChange);
+            }
+        }
+
+        // Calculate cascade risk based on concentration of negative impacts
+        const negativeImpactRatio = totalNegativeImpact /
+            Math.abs(Object.values(sectorImpacts).reduce((sum, s) => sum + (s.net_change || 0), 0) || 1);
+
+        if (negativeImpactRatio > 0.7 && economyEffects.totalIndirect < -100000) {
+            economyEffects.cascadeRisk = 'high';
+        } else if (negativeImpactRatio > 0.5 && economyEffects.totalIndirect < -50000) {
+            economyEffects.cascadeRisk = 'medium';
+        }
+
+        return economyEffects;
+    }
+
+    /**
+     * Get sector dependency analysis
+     */
+    getSectorDependencyAnalysis(sector) {
+        const inputs = this.inputOutputMatrix[sector] || {};
+
+        // Find which sectors depend most on this sector (forward linkages)
+        const dependents = [];
+        for (const [otherSector, otherInputs] of Object.entries(this.inputOutputMatrix)) {
+            if (otherSector !== sector && otherInputs[sector]) {
+                dependents.push({
+                    sector: otherSector,
+                    dependency: otherInputs[sector]
+                });
+            }
+        }
+
+        // Sort suppliers and dependents by importance
+        const suppliers = Object.entries(inputs)
+            .filter(([s, _]) => s !== sector)
+            .map(([s, share]) => ({ sector: s, share }))
+            .sort((a, b) => b.share - a.share);
+
+        return {
+            sector,
+            topSuppliers: suppliers.slice(0, 3),
+            topDependents: dependents.sort((a, b) => b.dependency - a.dependency).slice(0, 3),
+            selfDependency: inputs[sector] || 0,
+            multiplier: this.multipliers[sector] || 1.5,
+            employmentIntensity: this.employmentIntensity[sector] || 5,
+            backwardLinkages: Object.values(inputs).reduce((a, b) => a + b, 0),
+            forwardLinkages: dependents.reduce((sum, d) => sum + d.dependency, 0)
+        };
+    }
+
+    /**
+     * Calculate supply chain vulnerability
+     */
+    calculateSupplyChainVulnerability(sectorExposures) {
+        const vulnerabilities = {};
+
+        for (const sector of Object.keys(this.inputOutputMatrix)) {
+            const inputs = this.inputOutputMatrix[sector];
+            let weightedExposure = 0;
+
+            // Calculate exposure based on supplier vulnerabilities
+            for (const [supplier, share] of Object.entries(inputs)) {
+                const supplierExposure = sectorExposures[supplier]?.automation_exposure || 0.5;
+                weightedExposure += share * supplierExposure;
+            }
+
+            vulnerabilities[sector] = {
+                directExposure: sectorExposures[sector]?.automation_exposure || 0.5,
+                supplyChainExposure: weightedExposure,
+                totalVulnerability: (sectorExposures[sector]?.automation_exposure || 0.5) * 0.6 +
+                    weightedExposure * 0.4,
+                criticalDependencies: Object.entries(inputs)
+                    .filter(([s, share]) => share > 0.15)
+                    .map(([s, share]) => ({
+                        sector: s,
+                        share,
+                        exposure: sectorExposures[s]?.automation_exposure || 0.5
+                    }))
+            };
+        }
+
+        return vulnerabilities;
+    }
+}
+
+
+/**
  * Integrated Economic Model Manager
- * Coordinates the three models for simulation use
+ * Coordinates all models for simulation use
  */
 class EconomicModelManager {
     constructor() {
         this.solowModel = new SolowGrowthModel();
         this.taskModel = new TaskBasedLaborModel();
         this.sbtcModel = new SkillBiasedTechModel();
+        this.regionalModel = new RegionalLaborMarketModel();
+        this.interdependencyModel = new SectorInterdependencyModel();
     }
 
     /**
@@ -633,15 +1237,46 @@ class EconomicModelManager {
     }
 
     /**
+     * Calculate full impact with regional and interdependency effects
+     */
+    calculateFullImpact(nationalImpact, sectorStates) {
+        // Regional variations
+        const regionalImpacts = this.regionalModel.calculateAllRegionalImpacts(nationalImpact);
+
+        // Migration flows
+        const migrationFlows = this.regionalModel.calculateMigrationFlows(regionalImpacts.regions);
+
+        // Sector interdependencies
+        const interdependencyEffects = this.interdependencyModel.calculateEconomyWideEffects(
+            nationalImpact.sector_impacts || {}
+        );
+
+        // Supply chain vulnerabilities
+        const supplyChainVulnerabilities = this.interdependencyModel.calculateSupplyChainVulnerability(
+            sectorStates || {}
+        );
+
+        return {
+            national: nationalImpact,
+            regional: regionalImpacts,
+            migration: migrationFlows,
+            interdependencies: interdependencyEffects,
+            supplyChain: supplyChainVulnerabilities
+        };
+    }
+
+    /**
      * Get enhanced sector exposure using task-based model
      */
     getEnhancedSectorExposure(sector, aiAdoptionRate) {
         const taskBreakdown = this.taskModel.getSectorTaskBreakdown(sector);
         const displacement = this.taskModel.calculateDisplacementEffect(sector, aiAdoptionRate);
+        const dependencies = this.interdependencyModel.getSectorDependencyAnalysis(sector);
 
         return {
             taskBreakdown,
             displacement,
+            dependencies,
             riskLevel: displacement.effectiveJobLoss > 0.1 ? 'high' :
                 displacement.effectiveJobLoss > 0.05 ? 'medium' : 'low'
         };
@@ -654,6 +1289,8 @@ export {
     SolowGrowthModel,
     TaskBasedLaborModel,
     SkillBiasedTechModel,
+    RegionalLaborMarketModel,
+    SectorInterdependencyModel,
     EconomicModelManager
 };
 
@@ -662,5 +1299,8 @@ if (typeof window !== 'undefined') {
     window.SolowGrowthModel = SolowGrowthModel;
     window.TaskBasedLaborModel = TaskBasedLaborModel;
     window.SkillBiasedTechModel = SkillBiasedTechModel;
+    window.RegionalLaborMarketModel = RegionalLaborMarketModel;
+    window.SectorInterdependencyModel = SectorInterdependencyModel;
     window.EconomicModelManager = EconomicModelManager;
 }
+

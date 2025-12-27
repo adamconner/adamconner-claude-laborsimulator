@@ -19,8 +19,8 @@
 - [x] Enhanced Solow growth model with AI capital dynamics
 - [x] Better task-based labor demand modeling (Acemoglu & Restrepo)
 - [x] Skill-biased technological change improvements
-- [ ] Geographic/regional labor market modeling
-- [ ] Sector interdependency effects
+- [x] Geographic/regional labor market modeling
+- [x] Sector interdependency effects
 
 #### New Intervention Types
 - [x] Negative Income Tax (alternative to UBI)
