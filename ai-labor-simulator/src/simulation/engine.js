@@ -4,6 +4,7 @@
  */
 
 import { EconomicModelManager } from '../models/economic-models.js';
+import { ForecastingService } from '../ml/forecasting-service.js';
 
 class SimulationEngine {
     constructor(economicData, indicators) {
@@ -15,6 +16,10 @@ class SimulationEngine {
 
         // Initialize advanced economic models
         this.economicModels = new EconomicModelManager();
+
+        // Initialize ML forecasting service
+        this.forecastingService = new ForecastingService();
+        this.mlForecasts = null;
     }
 
     /**
@@ -66,6 +71,12 @@ class SimulationEngine {
                 labor_elasticity: config.labor_elasticity || -0.5
             },
 
+            // ML Forecasting options
+            ml_options: {
+                useMlForecasting: config.useMlForecasting || false,
+                mlBlendWeight: config.mlBlendWeight || 0.3 // 0 = pure model, 1 = pure ML
+            },
+
             // Interventions (to be added later)
             interventions: []
         };
@@ -91,6 +102,18 @@ class SimulationEngine {
         const years = scenario.timeframe.end_year - scenario.timeframe.start_year;
         const totalSteps = years * scenario.timeframe.steps_per_year;
 
+        // Initialize ML forecasts if enabled
+        if (scenario.ml_options && scenario.ml_options.useMlForecasting) {
+            try {
+                await this.forecastingService.init();
+                this.mlForecasts = await this.forecastingService.getAllForecasts(totalSteps);
+                console.log('ML forecasts loaded:', Object.keys(this.mlForecasts));
+            } catch (error) {
+                console.warn('ML forecasting unavailable:', error);
+                this.mlForecasts = null;
+            }
+        }
+
         // Initialize state from baseline
         let state = this.initializeState();
 
@@ -111,6 +134,11 @@ class SimulationEngine {
             // Update state
             state = this.updateState(state, laborImpact, interventionEffects);
 
+            // Blend with ML forecasts if available
+            if (this.mlForecasts && scenario.ml_options.useMlForecasting) {
+                state = this.blendWithMlForecasts(state, step, scenario.ml_options.mlBlendWeight);
+            }
+
             // Record result
             results.push({
                 step,
@@ -122,7 +150,8 @@ class SimulationEngine {
                 productivity: { ...state.productivity },
                 sectors: JSON.parse(JSON.stringify(state.sectors)),
                 interventions: interventionEffects,
-                derived: this.calculateDerivedMetrics(state)
+                derived: this.calculateDerivedMetrics(state),
+                ml_applied: this.mlForecasts !== null && scenario.ml_options?.useMlForecasting
             });
         }
 
@@ -130,7 +159,8 @@ class SimulationEngine {
         return {
             scenario: this.currentScenario,
             results,
-            summary: this.generateSummary(results)
+            summary: this.generateSummary(results),
+            mlEnabled: this.mlForecasts !== null && scenario.ml_options?.useMlForecasting
         };
     }
 
@@ -446,6 +476,36 @@ class SimulationEngine {
         newState.ai.new_jobs_created += laborImpact.total_new_jobs;
 
         return newState;
+    }
+
+    /**
+     * Blend model predictions with ML forecasts
+     */
+    blendWithMlForecasts(state, step, weight = 0.3) {
+        const blendedState = JSON.parse(JSON.stringify(state));
+
+        // Blend unemployment rate if forecast available
+        if (this.mlForecasts.unemployment_rate && this.mlForecasts.unemployment_rate.predictions[step]) {
+            const mlPred = this.mlForecasts.unemployment_rate.predictions[step].value;
+            blendedState.labor_market.unemployment_rate =
+                state.labor_market.unemployment_rate * (1 - weight) + mlPred * weight;
+        }
+
+        // Blend wages if forecast available
+        if (this.mlForecasts.wages && this.mlForecasts.wages.predictions[step]) {
+            const mlPred = this.mlForecasts.wages.predictions[step].value;
+            blendedState.wages.average_hourly =
+                state.wages.average_hourly * (1 - weight) + mlPred * weight;
+        }
+
+        // Blend productivity if forecast available
+        if (this.mlForecasts.productivity && this.mlForecasts.productivity.predictions[step]) {
+            const mlPred = this.mlForecasts.productivity.predictions[step].value;
+            blendedState.productivity.output_per_hour =
+                state.productivity.output_per_hour * (1 - weight) + mlPred * weight;
+        }
+
+        return blendedState;
     }
 
     /**
