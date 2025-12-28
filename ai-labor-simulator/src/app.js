@@ -123,6 +123,15 @@ function setupEventListeners() {
         }
     });
 
+    // ML Forecasting toggle - show/hide blend weight slider
+    const mlCheckbox = document.getElementById('useMlForecasting');
+    const mlWeightGroup = document.getElementById('mlBlendWeightGroup');
+    if (mlCheckbox && mlWeightGroup) {
+        mlCheckbox.addEventListener('change', function () {
+            mlWeightGroup.style.display = this.checked ? 'block' : 'none';
+        });
+    }
+
     // Restore saved config on load
     restoreScenarioConfig();
 }
@@ -640,13 +649,20 @@ async function runSimulation() {
     // Reset AI simulation flag - regular simulations show the Generate AI Analysis button
     isAISimulationResult = false;
 
+    // Get ML forecasting settings
+    const mlCheckbox = document.getElementById('useMlForecasting');
+    const mlWeightSlider = document.getElementById('mlBlendWeight');
+
     const config = {
         name: document.getElementById('scenarioName').value,
         end_year: parseInt(document.getElementById('targetYear').value),
         target_unemployment: parseFloat(document.getElementById('targetUR').value),
         ai_adoption_rate: parseInt(document.getElementById('aiAdoption').value),
         automation_pace: document.getElementById('automationPace').value,
-        adoption_curve: document.getElementById('adoptionCurve').value
+        adoption_curve: document.getElementById('adoptionCurve').value,
+        // ML Forecasting options
+        useMlForecasting: mlCheckbox ? mlCheckbox.checked : false,
+        mlBlendWeight: mlWeightSlider ? parseInt(mlWeightSlider.value) / 100 : 0.3
     };
 
     // Show loading state

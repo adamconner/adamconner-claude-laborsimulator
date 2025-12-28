@@ -87,6 +87,28 @@
                         <option value="exponential">Exponential</option>
                     </select>
                 </div>
+
+                <!-- ML Forecasting Toggle -->
+                <div class="form-group"
+                    style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--gray-700);">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" id="useMlForecasting" style="width: 18px; height: 18px;">
+                        <span>Enable ML Forecasting</span>
+                        <span
+                            style="font-size: 0.7rem; background: var(--primary); color: white; padding: 2px 6px; border-radius: 4px;">BETA</span>
+                    </label>
+                    <p style="font-size: 0.75rem; color: var(--gray-400); margin-top: 6px;">
+                        Blend predictions with ML time series forecasts based on historical BLS data
+                    </p>
+                </div>
+
+                <!-- ML Blend Weight (shown when ML enabled) -->
+                <div class="form-group" id="mlBlendWeightGroup" style="display: none;">
+                    <label>ML Blend Weight: <span id="mlBlendValue">30</span>%</label>
+                    <input type="range" id="mlBlendWeight" min="10" max="70" step="10" value="30"
+                        oninput="document.getElementById('mlBlendValue').textContent = this.value">
+                    <small style="color: var(--gray-400);">Higher = more influence from ML forecasts</small>
+                </div>
             </div>
 
             <!-- Preset Scenarios -->

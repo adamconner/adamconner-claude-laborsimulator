@@ -267,7 +267,9 @@ class TaskBasedLaborModel {
         };
 
         // Task reinstatement rate (new tasks created per displaced task)
-        this.reinstatementRate = 0.4;  // Historical average ~0.3-0.5
+        // Reduced from 0.4 to 0.25 for more conservative estimates
+        // Research suggests reinstatement lags displacement by years
+        this.reinstatementRate = 0.25;
     }
 
     /**
@@ -296,10 +298,10 @@ class TaskBasedLaborModel {
             totalDisplacement,
             taskImpacts,
             // Not all displaced tasks mean job loss - partial automation
-            effectiveJobLoss: totalDisplacement * 0.6  // ~60% of task displacement translates to job loss
+            // Reduced from 0.6 to 0.4 - many displaced tasks lead to augmentation not elimination
+            effectiveJobLoss: totalDisplacement * 0.4
         };
     }
-
     /**
      * Calculate reinstatement effect (new tasks created for humans)
      * Based on Acemoglu & Restrepo's empirical findings
@@ -315,12 +317,19 @@ class TaskBasedLaborModel {
         const creativeShare = (composition.creative || 0) +
             (composition.nonroutine_cognitive_interpersonal || 0) * 0.5;
 
-        const baseReinstatement = this.reinstatementRate * (aiAdoptionRate / 100);
-        const productivityBonus = productivityGrowth * 0.02;
-        const sectorBonus = creativeShare * 0.1;
+        // Reduced multipliers to reflect that reinstatement historically lags displacement
+        const baseReinstatement = this.reinstatementRate * (aiAdoptionRate / 100) * 0.5;
+        const productivityBonus = productivityGrowth * 0.01;  // Reduced from 0.02
+        const sectorBonus = creativeShare * 0.05;  // Reduced from 0.1
+
+        // Cap total reinstatement to ensure displacement has net negative effect
+        const totalReinstatement = Math.min(
+            baseReinstatement + productivityBonus + sectorBonus,
+            0.15  // Cap at 15% to ensure net displacement
+        );
 
         return {
-            totalReinstatement: baseReinstatement + productivityBonus + sectorBonus,
+            totalReinstatement,
             newTaskCategories: {
                 'AI supervision': baseReinstatement * 0.3,
                 'Human-AI collaboration': baseReinstatement * 0.25,
