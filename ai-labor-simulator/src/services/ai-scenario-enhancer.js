@@ -168,7 +168,8 @@ Return this exact JSON structure with your chosen values:
 
 Adjust all values based on the specific inputs provided. Be realistic and consistent with economic research.`;
 
-        const response = await this.makeRequest(prompt, { temperature: 0.6, maxTokens: 2500 });
+        // Use higher token limit to prevent truncation (thoughts can consume 1500+ tokens)
+        const response = await this.makeRequest(prompt, { temperature: 0.6, maxTokens: 8000 });
 
         // Parse JSON from response
         return this.extractJSON(response, 'enhanceInputs');
@@ -277,7 +278,8 @@ Respond with ONLY a valid JSON object (no markdown) in this format:
     "narrative_analysis": "3-4 paragraph detailed narrative analysis of the scenario and its implications"
 }`;
 
-        const response = await this.makeRequest(prompt, { temperature: 0.5, maxTokens: 3000 });
+        // Use higher token limit to prevent truncation (thoughts consume tokens too)
+        const response = await this.makeRequest(prompt, { temperature: 0.5, maxTokens: 8000 });
 
         return this.extractJSON(response, 'analyzeResults');
     }
