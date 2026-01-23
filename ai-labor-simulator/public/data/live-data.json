@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-01-22T06:19:52.126Z",
+  "lastUpdated": "2026-01-23T06:19:12.080Z",
   "sources": {
     "bls": "success",
     "fred": "success"
@@ -495,7 +495,7 @@
       "data": [
         {
           "date": "2025-07-01",
-          "value": 4.3
+          "value": 4.4
         },
         {
           "date": "2025-04-01",
@@ -1201,7 +1201,7 @@
     "average_hourly_earnings": 37.02,
     "job_openings": 7146000,
     "data_date": "2025-December",
-    "real_gdp_growth": 4.3,
+    "real_gdp_growth": 4.4,
     "productivity_growth": 117.966,
     "cpi_inflation": 326.03
   }
