@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-02-20T06:40:15.016Z",
+  "lastUpdated": "2026-02-21T06:28:18.984Z",
   "sources": {
     "bls": "success",
     "fred": "success"
@@ -494,6 +494,10 @@
       "seriesId": "A191RL1Q225SBEA",
       "data": [
         {
+          "date": "2025-10-01",
+          "value": 1.4
+        },
+        {
           "date": "2025-07-01",
           "value": 4.4
         },
@@ -584,10 +588,6 @@
         {
           "date": "2020-01-01",
           "value": -5.2
-        },
-        {
-          "date": "2019-10-01",
-          "value": 2.8
         }
       ]
     },
@@ -1201,7 +1201,7 @@
     "average_hourly_earnings": 37.17,
     "job_openings": 6542000,
     "data_date": "2026-January",
-    "real_gdp_growth": 4.4,
+    "real_gdp_growth": 1.4,
     "productivity_growth": 117.962,
     "cpi_inflation": 326.588
   }
