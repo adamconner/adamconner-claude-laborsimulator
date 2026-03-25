@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-03-24T06:18:38.877Z",
+  "lastUpdated": "2026-03-25T06:18:19.520Z",
   "sources": {
     "bls": "success",
     "fred": "success"
@@ -596,7 +596,7 @@
       "data": [
         {
           "date": "2025-10-01",
-          "value": 119.642
+          "value": 119.338
         },
         {
           "date": "2025-07-01",
@@ -697,11 +697,11 @@
       "data": [
         {
           "date": "2025-10-01",
-          "value": 122.553
+          "value": 123.896
         },
         {
           "date": "2025-07-01",
-          "value": 121.721
+          "value": 122.564
         },
         {
           "date": "2025-04-01",
@@ -1202,7 +1202,7 @@
     "job_openings": 6946000,
     "data_date": "2026-February",
     "real_gdp_growth": 0.7,
-    "productivity_growth": 119.642,
+    "productivity_growth": 119.338,
     "cpi_inflation": 327.46
   }
 }
