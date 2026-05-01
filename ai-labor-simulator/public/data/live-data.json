@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-04-30T06:46:48.823Z",
+  "lastUpdated": "2026-05-01T06:49:17.055Z",
   "sources": {
     "bls": "success",
     "fred": "success"
@@ -494,6 +494,10 @@
       "seriesId": "A191RL1Q225SBEA",
       "data": [
         {
+          "date": "2026-01-01",
+          "value": 2
+        },
+        {
           "date": "2025-10-01",
           "value": 0.5
         },
@@ -584,10 +588,6 @@
         {
           "date": "2020-04-01",
           "value": -28
-        },
-        {
-          "date": "2020-01-01",
-          "value": -5.2
         }
       ]
     },
@@ -797,16 +797,20 @@
       "seriesId": "ECIALLCIV",
       "data": [
         {
+          "date": "2026-01-01",
+          "value": 175.618
+        },
+        {
           "date": "2025-10-01",
-          "value": 174.038
+          "value": 174.047
         },
         {
           "date": "2025-07-01",
-          "value": 172.745
+          "value": 172.752
         },
         {
           "date": "2025-04-01",
-          "value": 171.395
+          "value": 171.38
         },
         {
           "date": "2025-01-01",
@@ -887,10 +891,6 @@
         {
           "date": "2020-04-01",
           "value": 140.7
-        },
-        {
-          "date": "2020-01-01",
-          "value": 140
         }
       ]
     },
@@ -1201,7 +1201,7 @@
     "average_hourly_earnings": 37.38,
     "job_openings": 6882000,
     "data_date": "2026-March",
-    "real_gdp_growth": 0.5,
+    "real_gdp_growth": 2,
     "productivity_growth": 119.338,
     "cpi_inflation": 330.293
   }
