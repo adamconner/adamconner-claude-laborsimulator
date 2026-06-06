@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-06-05T07:21:46.725Z",
+  "lastUpdated": "2026-06-06T06:58:36.637Z",
   "sources": {
     "bls": "success",
     "fred": "success"
@@ -8,10 +8,15 @@
     "unemployment_rate": {
       "seriesId": "LNS14000000",
       "value": 4.3,
-      "period": "M04",
+      "period": "M05",
       "year": "2026",
-      "date": "2026-April",
+      "date": "2026-May",
       "history": [
+        {
+          "period": "M05",
+          "year": "2026",
+          "value": 4.3
+        },
         {
           "period": "M04",
           "year": "2026",
@@ -66,30 +71,30 @@
           "period": "M06",
           "year": "2025",
           "value": 4.1
-        },
-        {
-          "period": "M05",
-          "year": "2025",
-          "value": 4.3
         }
       ]
     },
     "total_employment": {
       "seriesId": "CES0000000001",
-      "value": 158736000,
-      "period": "M04",
+      "value": 159001000,
+      "period": "M05",
       "year": "2026",
-      "date": "2026-April",
+      "date": "2026-May",
       "history": [
+        {
+          "period": "M05",
+          "year": "2026",
+          "value": 159001000
+        },
         {
           "period": "M04",
           "year": "2026",
-          "value": 158736000
+          "value": 158829000
         },
         {
           "period": "M03",
           "year": "2026",
-          "value": 158621000
+          "value": 158650000
         },
         {
           "period": "M02",
@@ -135,21 +140,21 @@
           "period": "M06",
           "year": "2025",
           "value": 158478000
-        },
-        {
-          "period": "M05",
-          "year": "2025",
-          "value": 158498000
         }
       ]
     },
     "labor_force_participation": {
       "seriesId": "LNS11300000",
       "value": 61.8,
-      "period": "M04",
+      "period": "M05",
       "year": "2026",
-      "date": "2026-April",
+      "date": "2026-May",
       "history": [
+        {
+          "period": "M05",
+          "year": "2026",
+          "value": 61.8
+        },
         {
           "period": "M04",
           "year": "2026",
@@ -204,21 +209,21 @@
           "period": "M06",
           "year": "2025",
           "value": 62.3
-        },
-        {
-          "period": "M05",
-          "year": "2025",
-          "value": 62.4
         }
       ]
     },
     "average_hourly_earnings": {
       "seriesId": "CES0500000003",
-      "value": 37.41,
-      "period": "M04",
+      "value": 37.53,
+      "period": "M05",
       "year": "2026",
-      "date": "2026-April",
+      "date": "2026-May",
       "history": [
+        {
+          "period": "M05",
+          "year": "2026",
+          "value": 37.53
+        },
         {
           "period": "M04",
           "year": "2026",
@@ -273,11 +278,6 @@
           "period": "M06",
           "year": "2025",
           "value": 36.36
-        },
-        {
-          "period": "M05",
-          "year": "2025",
-          "value": 36.28
         }
       ]
     },
@@ -1196,11 +1196,11 @@
   },
   "summary": {
     "unemployment_rate": 4.3,
-    "total_employment": 158736000,
+    "total_employment": 159001000,
     "labor_force_participation": 61.8,
-    "average_hourly_earnings": 37.41,
+    "average_hourly_earnings": 37.53,
     "job_openings": 7618000,
-    "data_date": "2026-April",
+    "data_date": "2026-May",
     "real_gdp_growth": 1.6,
     "productivity_growth": 119.437,
     "cpi_inflation": 332.407
