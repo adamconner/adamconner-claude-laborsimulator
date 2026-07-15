@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-07-14T07:44:02.124Z",
+  "lastUpdated": "2026-07-15T07:47:15.040Z",
   "sources": {
     "bls": "success",
     "fred": "success"
@@ -898,6 +898,10 @@
       "seriesId": "CPIAUCSL",
       "data": [
         {
+          "date": "2026-06-01",
+          "value": 332.568
+        },
+        {
           "date": "2026-05-01",
           "value": 333.979
         },
@@ -984,10 +988,6 @@
         {
           "date": "2024-07-01",
           "value": 313.569
-        },
-        {
-          "date": "2024-06-01",
-          "value": 313.044
         }
       ]
     },
@@ -1203,6 +1203,6 @@
     "data_date": "2026-June",
     "real_gdp_growth": 2.1,
     "productivity_growth": 119.437,
-    "cpi_inflation": 333.979
+    "cpi_inflation": 332.568
   }
 }
