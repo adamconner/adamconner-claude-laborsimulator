@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-07-31T08:29:58.528Z",
+  "lastUpdated": "2026-08-01T07:59:43.168Z",
   "sources": {
     "bls": "success",
     "fred": "success"
@@ -797,6 +797,10 @@
       "seriesId": "ECIALLCIV",
       "data": [
         {
+          "date": "2026-04-01",
+          "value": 177.178
+        },
+        {
           "date": "2026-01-01",
           "value": 175.618
         },
@@ -887,10 +891,6 @@
         {
           "date": "2020-07-01",
           "value": 141.4
-        },
-        {
-          "date": "2020-04-01",
-          "value": 140.7
         }
       ]
     },
