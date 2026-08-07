@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-08-06T08:12:07.409Z",
+  "lastUpdated": "2026-08-07T06:57:32.978Z",
   "sources": {
     "bls": "success",
     "fred": "success"
@@ -595,8 +595,12 @@
       "seriesId": "OPHNFB",
       "data": [
         {
+          "date": "2026-04-01",
+          "value": 120.017
+        },
+        {
           "date": "2026-01-01",
-          "value": 119.437
+          "value": 119.594
         },
         {
           "date": "2025-10-01",
@@ -685,10 +689,6 @@
         {
           "date": "2020-07-01",
           "value": 111.491
-        },
-        {
-          "date": "2020-04-01",
-          "value": 109.772
         }
       ]
     },
@@ -696,8 +696,12 @@
       "seriesId": "ULCNFB",
       "data": [
         {
+          "date": "2026-04-01",
+          "value": 124.022
+        },
+        {
           "date": "2026-01-01",
-          "value": 123.777
+          "value": 123.62
         },
         {
           "date": "2025-10-01",
@@ -786,10 +790,6 @@
         {
           "date": "2020-07-01",
           "value": 104.121
-        },
-        {
-          "date": "2020-04-01",
-          "value": 107.332
         }
       ]
     },
@@ -1202,7 +1202,7 @@
     "job_openings": 7359000,
     "data_date": "2026-June",
     "real_gdp_growth": 1.5,
-    "productivity_growth": 119.437,
+    "productivity_growth": 120.017,
     "cpi_inflation": 332.568
   }
 }
