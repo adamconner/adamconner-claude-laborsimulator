@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-09-03T10:16:53.295Z",
+  "lastUpdated": "2026-09-04T10:05:05.973Z",
   "sources": {
     "bls": "success",
     "fred": "success"
@@ -697,7 +697,7 @@
       "data": [
         {
           "date": "2026-04-01",
-          "value": 124.022
+          "value": 123.979
         },
         {
           "date": "2026-01-01",
