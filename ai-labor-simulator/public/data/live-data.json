@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-09-29T11:43:35.582Z",
+  "lastUpdated": "2026-09-30T11:30:02.325Z",
   "sources": {
     "bls": "success",
     "fred": "success"
@@ -283,15 +283,20 @@
     },
     "job_openings": {
       "seriesId": "JTS000000000000000JOL",
-      "value": 7271000,
-      "period": "M07",
+      "value": 7079000,
+      "period": "M08",
       "year": "2026",
-      "date": "2026-July",
+      "date": "2026-August",
       "history": [
+        {
+          "period": "M08",
+          "year": "2026",
+          "value": 7079000
+        },
         {
           "period": "M07",
           "year": "2026",
-          "value": 7271000
+          "value": 7335000
         },
         {
           "period": "M06",
@@ -342,21 +347,21 @@
           "period": "M09",
           "year": "2025",
           "value": 7169000
-        },
-        {
-          "period": "M08",
-          "year": "2025",
-          "value": 6919000
         }
       ]
     },
     "quits_rate": {
       "seriesId": "JTS000000000000000QUR",
       "value": 1.9,
-      "period": "M07",
+      "period": "M08",
       "year": "2026",
-      "date": "2026-July",
+      "date": "2026-August",
       "history": [
+        {
+          "period": "M08",
+          "year": "2026",
+          "value": 1.9
+        },
         {
           "period": "M07",
           "year": "2026",
@@ -411,21 +416,21 @@
           "period": "M09",
           "year": "2025",
           "value": 1.9
-        },
-        {
-          "period": "M08",
-          "year": "2025",
-          "value": 2
         }
       ]
     },
     "hires_rate": {
       "seriesId": "JTS000000000000000HIR",
-      "value": 3.2,
-      "period": "M07",
+      "value": 3.3,
+      "period": "M08",
       "year": "2026",
-      "date": "2026-July",
+      "date": "2026-August",
       "history": [
+        {
+          "period": "M08",
+          "year": "2026",
+          "value": 3.3
+        },
         {
           "period": "M07",
           "year": "2026",
@@ -480,11 +485,6 @@
           "period": "M09",
           "year": "2025",
           "value": 3.3
-        },
-        {
-          "period": "M08",
-          "year": "2025",
-          "value": 3.2
         }
       ]
     }
@@ -1199,7 +1199,7 @@
     "total_employment": 159075000,
     "labor_force_participation": 61.6,
     "average_hourly_earnings": 37.75,
-    "job_openings": 7271000,
+    "job_openings": 7079000,
     "data_date": "2026-August",
     "real_gdp_growth": 1.5,
     "productivity_growth": 120.017,
