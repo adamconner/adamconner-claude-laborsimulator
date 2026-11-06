@@ -1,286 +1,10 @@
 {
-  "lastUpdated": "2026-11-05T13:39:00.333Z",
+  "lastUpdated": "2026-11-06T13:22:49.753Z",
   "sources": {
     "bls": "success",
     "fred": "success"
   },
   "bls": {
-    "unemployment_rate": {
-      "seriesId": "LNS14000000",
-      "value": 4.2,
-      "period": "M09",
-      "year": "2026",
-      "date": "2026-September",
-      "history": [
-        {
-          "period": "M09",
-          "year": "2026",
-          "value": 4.2
-        },
-        {
-          "period": "M08",
-          "year": "2026",
-          "value": 4.1
-        },
-        {
-          "period": "M07",
-          "year": "2026",
-          "value": 4.1
-        },
-        {
-          "period": "M06",
-          "year": "2026",
-          "value": 4.2
-        },
-        {
-          "period": "M05",
-          "year": "2026",
-          "value": 4.3
-        },
-        {
-          "period": "M04",
-          "year": "2026",
-          "value": 4.3
-        },
-        {
-          "period": "M03",
-          "year": "2026",
-          "value": 4.3
-        },
-        {
-          "period": "M02",
-          "year": "2026",
-          "value": 4.4
-        },
-        {
-          "period": "M01",
-          "year": "2026",
-          "value": 4.3
-        },
-        {
-          "period": "M12",
-          "year": "2025",
-          "value": 4.4
-        },
-        {
-          "period": "M11",
-          "year": "2025",
-          "value": 4.5
-        },
-        {
-          "period": "M10",
-          "year": "2025",
-          "value": null
-        }
-      ]
-    },
-    "total_employment": {
-      "seriesId": "CES0000000001",
-      "value": 159044000,
-      "period": "M09",
-      "year": "2026",
-      "date": "2026-September",
-      "history": [
-        {
-          "period": "M09",
-          "year": "2026",
-          "value": 159044000
-        },
-        {
-          "period": "M08",
-          "year": "2026",
-          "value": 159015000
-        },
-        {
-          "period": "M07",
-          "year": "2026",
-          "value": 158882000
-        },
-        {
-          "period": "M06",
-          "year": "2026",
-          "value": 158892000
-        },
-        {
-          "period": "M05",
-          "year": "2026",
-          "value": 158861000
-        },
-        {
-          "period": "M04",
-          "year": "2026",
-          "value": 158798000
-        },
-        {
-          "period": "M03",
-          "year": "2026",
-          "value": 158650000
-        },
-        {
-          "period": "M02",
-          "year": "2026",
-          "value": 158436000
-        },
-        {
-          "period": "M01",
-          "year": "2026",
-          "value": 158592000
-        },
-        {
-          "period": "M12",
-          "year": "2025",
-          "value": 158432000
-        },
-        {
-          "period": "M11",
-          "year": "2025",
-          "value": 158449000
-        },
-        {
-          "period": "M10",
-          "year": "2025",
-          "value": 158408000
-        }
-      ]
-    },
-    "labor_force_participation": {
-      "seriesId": "LNS11300000",
-      "value": 61.8,
-      "period": "M09",
-      "year": "2026",
-      "date": "2026-September",
-      "history": [
-        {
-          "period": "M09",
-          "year": "2026",
-          "value": 61.8
-        },
-        {
-          "period": "M08",
-          "year": "2026",
-          "value": 61.6
-        },
-        {
-          "period": "M07",
-          "year": "2026",
-          "value": 61.4
-        },
-        {
-          "period": "M06",
-          "year": "2026",
-          "value": 61.5
-        },
-        {
-          "period": "M05",
-          "year": "2026",
-          "value": 61.8
-        },
-        {
-          "period": "M04",
-          "year": "2026",
-          "value": 61.8
-        },
-        {
-          "period": "M03",
-          "year": "2026",
-          "value": 61.9
-        },
-        {
-          "period": "M02",
-          "year": "2026",
-          "value": 62
-        },
-        {
-          "period": "M01",
-          "year": "2026",
-          "value": 62.1
-        },
-        {
-          "period": "M12",
-          "year": "2025",
-          "value": 62.4
-        },
-        {
-          "period": "M11",
-          "year": "2025",
-          "value": 62.5
-        },
-        {
-          "period": "M10",
-          "year": "2025",
-          "value": null
-        }
-      ]
-    },
-    "average_hourly_earnings": {
-      "seriesId": "CES0500000003",
-      "value": 37.81,
-      "period": "M09",
-      "year": "2026",
-      "date": "2026-September",
-      "history": [
-        {
-          "period": "M09",
-          "year": "2026",
-          "value": 37.81
-        },
-        {
-          "period": "M08",
-          "year": "2026",
-          "value": 37.76
-        },
-        {
-          "period": "M07",
-          "year": "2026",
-          "value": 37.64
-        },
-        {
-          "period": "M06",
-          "year": "2026",
-          "value": 37.59
-        },
-        {
-          "period": "M05",
-          "year": "2026",
-          "value": 37.49
-        },
-        {
-          "period": "M04",
-          "year": "2026",
-          "value": 37.41
-        },
-        {
-          "period": "M03",
-          "year": "2026",
-          "value": 37.35
-        },
-        {
-          "period": "M02",
-          "year": "2026",
-          "value": 37.27
-        },
-        {
-          "period": "M01",
-          "year": "2026",
-          "value": 37.15
-        },
-        {
-          "period": "M12",
-          "year": "2025",
-          "value": 37.02
-        },
-        {
-          "period": "M11",
-          "year": "2025",
-          "value": 37
-        },
-        {
-          "period": "M10",
-          "year": "2025",
-          "value": 36.85
-        }
-      ]
-    },
     "job_openings": {
       "seriesId": "JTS000000000000000JOL",
       "value": 7523000,
@@ -696,100 +420,100 @@
       "seriesId": "ULCNFB",
       "data": [
         {
+          "date": "2026-07-01",
+          "value": 124.393
+        },
+        {
           "date": "2026-04-01",
-          "value": 123.979
+          "value": 124.6
         },
         {
           "date": "2026-01-01",
-          "value": 123.62
+          "value": 124.018
         },
         {
           "date": "2025-10-01",
-          "value": 123.216
+          "value": 122.904
         },
         {
           "date": "2025-07-01",
-          "value": 122.57
+          "value": 121.494
         },
         {
           "date": "2025-04-01",
-          "value": 122.27
+          "value": 121.475
         },
         {
           "date": "2025-01-01",
-          "value": 123.17
+          "value": 121.807
         },
         {
           "date": "2024-10-01",
-          "value": 121.032
+          "value": 120.284
         },
         {
           "date": "2024-07-01",
-          "value": 120.171
+          "value": 119.747
         },
         {
           "date": "2024-04-01",
-          "value": 119.844
+          "value": 119.462
         },
         {
           "date": "2024-01-01",
-          "value": 119.531
+          "value": 119.232
         },
         {
           "date": "2023-10-01",
-          "value": 117.93
+          "value": 117.991
         },
         {
           "date": "2023-07-01",
-          "value": 117.571
+          "value": 117.768
         },
         {
           "date": "2023-04-01",
-          "value": 117.231
+          "value": 117.361
         },
         {
           "date": "2023-01-01",
-          "value": 116.544
+          "value": 116.439
         },
         {
           "date": "2022-10-01",
-          "value": 115.899
+          "value": 115.782
         },
         {
           "date": "2022-07-01",
-          "value": 116.407
+          "value": 116.184
         },
         {
           "date": "2022-04-01",
-          "value": 114.442
+          "value": 114.191
         },
         {
           "date": "2022-01-01",
-          "value": 113.45
+          "value": 113.285
         },
         {
           "date": "2021-10-01",
-          "value": 111.499
+          "value": 111.185
         },
         {
           "date": "2021-07-01",
-          "value": 110.544
+          "value": 110.357
         },
         {
           "date": "2021-04-01",
-          "value": 108.449
+          "value": 108.199
         },
         {
           "date": "2021-01-01",
-          "value": 106.937
+          "value": 106.743
         },
         {
           "date": "2020-10-01",
           "value": 107.625
-        },
-        {
-          "date": "2020-07-01",
-          "value": 104.121
         }
       ]
     },
@@ -1195,12 +919,7 @@
     }
   },
   "summary": {
-    "unemployment_rate": 4.2,
-    "total_employment": 159044000,
-    "labor_force_participation": 61.8,
-    "average_hourly_earnings": 37.81,
     "job_openings": 7523000,
-    "data_date": "2026-September",
     "real_gdp_growth": 3.4,
     "productivity_growth": 121.922,
     "cpi_inflation": 336.298
